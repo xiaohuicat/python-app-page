@@ -1,6 +1,6 @@
 **/__pycache__/
 *.pyc
-*.app_page.egg-info/
+app_page.egg-info/
 build/
 __pycache__
 
