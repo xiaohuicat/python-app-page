@@ -1,5 +1,5 @@
 import os
-from core.Param import Param
+from .Param import Param
 
 class Children(object):
   def __init__(self):

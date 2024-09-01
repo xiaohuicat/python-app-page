@@ -2,7 +2,6 @@
 # -*- coding:utf-8-*-
 # 全局变量管理模块global_variable
 
-
 def _init():
     """在主模块初始化"""
     global IS_INIT

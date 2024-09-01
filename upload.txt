@@ -1,2 +1,4 @@
+python setup.py sdist
+python setup.py sdist upload
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 twine upload dist/* --verbose

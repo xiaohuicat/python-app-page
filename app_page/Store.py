@@ -1,4 +1,4 @@
-import core.Store.global_variable as glv
+from . import global_variable as glv
 
 class Store:
   def __init__(self, dict=None):

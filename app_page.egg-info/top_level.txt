@@ -1,3 +1,1 @@
-core
-plugin
-utils
+app_page

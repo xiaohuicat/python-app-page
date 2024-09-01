@@ -1,9 +1,9 @@
 import time, os
 from nanoid import generate
-from core.Store.Store import Store
-from core.Callback import Callback
-from core.Children import Children
-from core.Param import Param
+from .Store import Store
+from .Callback import Callback
+from .Children import Children
+from .Param import Param
 
 class Page:
   def __init__(self, name=None):

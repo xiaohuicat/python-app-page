@@ -1,5 +1,5 @@
 import os
-from core.LocalStore import LocalStore
+from .LocalStore import LocalStore
 
 # 高效参数存取模块
 class Param(object):

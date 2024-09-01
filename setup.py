@@ -1,7 +1,7 @@
 import setuptools
 
 package_name = "app-page"
-version = '0.0.3'
+version = '0.0.2'
 long_description = open("README.md", encoding="utf-8").read()
 
 setuptools.setup(
@@ -14,6 +14,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/xiaohuicat/python-app-page", # 库的官方地址
     license="MIT",
-    packages=["core", "plugin", "utils"],
+    packages=["app_page"],
+    install_requires=[
+        "nanoid"
+    ],
     zip_safe=False,
 )
