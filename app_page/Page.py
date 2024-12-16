@@ -35,12 +35,12 @@ class Page:
     # 添加回到函数
     addCallback(self, self.props.get('functions', {}))
     # 绑定事件
-    execute_binds(self)
+    executeBinds(self)
     # print(f'页面[{self.name}]{self.id}初始化完成 props:{self.props.get()}')
   
   def bind(self, signal:str, id:str, func:callable):
     self.events.set(f'{signal}/{id}', func)
-    execute_bind(self, signal, id, func)
+    executeBind(self, signal, id, func)
     
   # 关闭页面
   def close(self):
@@ -130,17 +130,17 @@ def loadProps(self:Page, props:any):
     self.props = Param()
 
 # 执行绑定列表
-def execute_binds(page:Page):
+def executeBinds(page:Page):
   dataList = page.events.data
   for signal in dataList.keys():
     idDict = dataList[signal]
     if type(idDict) == dict:
       for id in idDict.keys():
         slot = page.events.data[signal][id]
-        execute_bind(page, signal, id, slot)
+        executeBind(page, signal, id, slot)
 
 # 执行绑定
-def execute_bind(page:Page, signal:str, id:str, slot):
+def executeBind(page:Page, signal:str, id:str, slot):
   functions = page.store.get('functions')
   if type(functions) == dict and '__signal_slots_func' in functions:
     __signal_slots_func = functions['__signal_slots_func']

@@ -5,8 +5,10 @@ app_page/Children.py
 app_page/EventHook.py
 app_page/LocalStore.py
 app_page/Page.py
+app_page/PageManager.py
 app_page/Param.py
 app_page/Store.py
+app_page/Thread.py
 app_page/__init__.py
 app_page/global_variable.py
 app_page.egg-info/PKG-INFO

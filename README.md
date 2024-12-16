@@ -13,7 +13,7 @@ store      全局变量管理对象
 应用首页，初始化全局对象，页面对象，加载页面
 app.py
 ```python
-from app-page import Store, Page
+from app_page import Store, Page
 
 def signal_slots_func(signal, id, func):
   # 绑定信号与槽函数
