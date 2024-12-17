@@ -1,4 +1,4 @@
-import sys, time
+import time
 from PySide6.QtCore import QThread, Signal
 
 def default_fun(*args):

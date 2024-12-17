@@ -2,10 +2,9 @@ from . import global_variable as glv
 
 class Store:
   def __init__(self, dict=None):
-    if not hasattr(glv, "GLOBALS_DICT"):
+    if dict:
       glv._init()
-      if dict:
-        glv.GLOBALS_DICT = dict
+      glv.GLOBALS_DICT = dict
 
   def set(self, key, value):
     """设置值"""
