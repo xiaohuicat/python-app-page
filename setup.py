@@ -1,7 +1,7 @@
 import setuptools
 
 package_name = "app-page"
-version = '0.0.10'
+version = '0.0.11'
 long_description = open("README.md", encoding="utf-8").read()
 
 setuptools.setup(
@@ -16,7 +16,8 @@ setuptools.setup(
     license="MIT",
     packages=["app_page"],
     install_requires=[
-        "nanoid"
+        "nanoid",
+        "app-page-core"
     ],
     zip_safe=False,
 )

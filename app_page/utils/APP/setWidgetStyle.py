@@ -11,7 +11,7 @@ def setWidgetStyle(widget:QWidget, style:dict|list, id=None, cover:bool = False)
       config["styleSheetList"] = widget.styleSheet().split('\n')
   except:
     pass
-  # print("styleSheetList:", config["styleSheetList"])
+
   if id:
     ret = f'#{id}'+'{'+ ";".join([key+":"+style[key] for key in style.keys()]) + '}'
   else:

@@ -1,7 +1,7 @@
 import json
 import paho.mqtt.client as mqtt
-from core.Thread import EasyThread
 from nanoid import generate
+from ..core.Thread import EasyThread
 
 class MQTT(EasyThread):
   def __init__(self, option):

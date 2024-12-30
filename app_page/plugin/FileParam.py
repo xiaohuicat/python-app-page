@@ -1,5 +1,5 @@
 import os, hashlib
-from core.Param import Param
+from app_page_core import Param
 
 def md5_file(path):
 # 打开文件，并以二进制模式读取
