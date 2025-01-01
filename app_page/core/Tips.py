@@ -1,10 +1,11 @@
-from PySide6.QtWidgets import QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QCloseEvent, QFont, QFontMetrics
-from PySide6.QtGui import QGuiApplication
-from ..animation.FadeEffect import FadeEffect
-from ..utils.loadUI import loadUI
-from app_page import Callback
+from PySide6.QtWidgets import QVBoxLayout, QWidget
+from PySide6.QtGui import QGuiApplication, QCloseEvent, QFont, QFontMetrics
+from app_page_core import Callback
+from ..animation import FadeEffect
+from ..core import Setting
+from ..utils import loadUI
+from ..config import tips_ui
 
 color_dict = {
     'success': '#28be28',
@@ -18,7 +19,7 @@ class Tips(QWidget):
         super().__init__()
         self.callback = Callback()
 
-        self.ui = loadUI('./assets/UI/tips.ui')
+        self.ui = loadUI(Setting.getSetting("tips_ui", tips_ui))
 
         self.setWindowTitle("提示消息")
         self.ui.tips.setText(message)

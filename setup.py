@@ -1,7 +1,7 @@
 import setuptools
 
 package_name = "app-page"
-version = '0.0.11'
+version = '0.0.13'
 long_description = open("README.md", encoding="utf-8").read()
 
 setuptools.setup(
@@ -14,10 +14,17 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/xiaohuicat/python-app-page", # 库的官方地址
     license="MIT",
-    packages=["app_page"],
+    packages=setuptools.find_packages(),
+    package_data={'app_page': ['*', 'assets/*', 'assets/*/*']},
     install_requires=[
+        "app-page-core",
         "nanoid",
-        "app-page-core"
+        "PySide6",
+        "pywin32",
+        "numpy",
+        "openpyxl",
+        "paho-mqtt==1.6.1",
+        "pillow"
     ],
     zip_safe=False,
 )

@@ -1,20 +1,16 @@
-from app_page import LocalStore
+SETTING = {}
 
-# 本地存储
-class Setting(object):
-  def __init__(self) -> None:
-    self.local_storage = LocalStore("./assets/data/setting.json")
-    self.data = self.local_storage.getAll()
+def getSetting(key=None, defaultValue=None):
+  """获取配置"""
+  return SETTING.get(key, defaultValue)
 
-  def load(self):
-    self.data = self.local_storage.getAll()
-    return self.data
-
-  def get(self, key, default=None):
-    if self.data and key in self.data.keys():
-      return self.data[key]
-    else:
-      default
-  
-  def save(self):
-    self.local_storage.save(self.data)
+def applySetting(key:str|dict, value=None):
+  """设置配置"""
+  if isinstance(key, dict):
+    keys = list(key.keys())
+    for each in keys:
+      SETTING[each] = key[each]
+  else:
+    SETTING[key] = value
+    
+  return SETTING

@@ -32,6 +32,8 @@ class FileParam:
         ret_path = file_path.replace(self.filePath, dir_name).replace("\\","/")
         self.param.set(ret_path, [md5, size])
     
+    # size_mb = total_size/1024/1024
+    # print(f"fileSize={size_mb:.3f}Mb")
     return self.param.data
   
 
@@ -50,3 +52,32 @@ class FileParam:
           "ext": os.path.splitext(filename)[1],
           "filename": filename
         })
+    
+
+  def update(self):
+    # self._size = 0
+    # zip = ZIP()
+    # zip.setMode("7z")
+    # def download(path, value):
+    #   _dir_name, full_file_name = os.path.split(path)
+    #   dir_name = _dir_name.replace("dist","zip")
+    #   file_name, file_ext = os.path.splitext(full_file_name)
+    #   dist_path = os.path.join(dir_name, file_name+"."+zip.mode)
+    #   if not os.path.exists(dir_name):
+    #     os.makedirs(dir_name)
+    #   if zip.zip_file(path, dist_path):
+    #     print("压缩成功...")
+    #   else:
+    #     print("压缩失败...")
+
+    #   # if md5_file(path) == value[0]:
+    #   #   # print("path:", path, value[0])
+    #   #   print("文件已存在")
+    #   # else:
+    #   #   print("正在下载 path:", path, value[0])
+    #   #   self._size += value[1]
+
+    # self.param.walk(pick=download, type="dict", path="dist/main")
+    # size_kb = self._size/1024
+    # print(f"下载的文件大小{size_kb:.3f}kb")
+    pass

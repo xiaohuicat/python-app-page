@@ -21,7 +21,7 @@ class EventBus(object):
       }
       return connectMap.get(event, None)
     
-  def register(self, id:str, event:str, callback:function):
+  def register(self, id:str, event:str, callback):
     connect = self.getConnect(id, event)
     if connect:
       connect(lambda *args: callback(self, *args))

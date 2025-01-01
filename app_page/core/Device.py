@@ -1,6 +1,8 @@
 import os, sys, hashlib, platform
 from PySide6.QtGui import QGuiApplication
 from win32com.shell import shell
+from ..core import Setting
+from ..config import PING_HOST
 
 # 获取屏幕信息
 def getScreenInfo():
@@ -15,11 +17,11 @@ def getScreenInfo():
     })
   return result
 
+
 # 检查网络连接
 def internetConnection():
     import subprocess
-    # host = 'baidu.com'
-    host = 'greatnote.cn'
+    host = Setting.getSetting('PING_HOST', PING_HOST)
     # Determine the ping command based on the OS
     param = '-n' if platform.system().lower() == 'windows' else '-c'
     
@@ -28,6 +30,7 @@ def internetConnection():
     ret = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     print("ret code:", ret.returncode)
     return True if ret.returncode == 0 else False
+
 
 # 检查权限
 def check_permissions(file_path):
@@ -52,6 +55,7 @@ def check_permissions(file_path):
   except Exception as e:
     print(f"发生错误: {e}")
 
+
 # 获取软件的版本
 def getSoftwareMD5():
   path = os.path.abspath(sys.argv[0])
@@ -68,6 +72,7 @@ def getSoftwareMD5():
       # 返回计算出的md5哈希值
       return md5.hexdigest()
 
+
 # 获取我的文档
 def getDocPath(pathID=5):
   # 默认返回我的文档路径，出错时返回当前工作路径
@@ -75,6 +80,7 @@ def getDocPath(pathID=5):
     return shell.SHGetFolderPath(0, pathID, None, 0)
   except:
     return os.getcwd()
+
 
 # 获取默认系统配置
 def defaultSystemConfig(version):
@@ -84,6 +90,7 @@ def defaultSystemConfig(version):
     "tempPath": os.path.join(getDocPath(), "GreatNoteData", "temp"),
     "systemPath": os.path.join(getDocPath(), "GreatNoteData", "system"),
   }
+
 
 # 获取平台信息
 def platformInfo():
@@ -115,3 +122,4 @@ def platformInfo():
     "processor_info": processor_info,
     "brief": f"{os_name},{os_version}"
   }
+

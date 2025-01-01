@@ -30,5 +30,3 @@ class FadeEffect:
     self.target._fade_animation.setStartValue(1)
     self.target._fade_animation.setEndValue(0)
     self.target._fade_animation.start()
-
-           

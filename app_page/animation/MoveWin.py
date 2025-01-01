@@ -6,7 +6,7 @@ from app_page import Param
 from ..core.EventHook import EventHook
 
 class MoveWin(QMainWindow):
-  def __init__(self, target:QMainWindow | QWidget, system_param:Param | None, id:str | None, get_window_position=None):
+  def __init__(self, target:QMainWindow | QWidget, system_param:Param | None, id:str | None):
     super().__init__(target)
     target.mousePressEvent = self.mousePressEvent
     target.mouseMoveEvent = self.mouseMoveEvent
@@ -33,8 +33,7 @@ class MoveWin(QMainWindow):
           rect = self.target.geometry()
           self.window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
           print('window_position:', self.window_position)
-      get_window_position and get_window_position(self.window_position)
-  
+
 
   # 将窗口移动屏幕中央
   def center(self):
@@ -73,6 +72,5 @@ class MoveWin(QMainWindow):
       new_window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
       isMove = not (np.array(self.window_position) == np.array(new_window_position)).all()
       if isMove:
-          print(f"窗口移动id={self.id}，更新位置信息position=", new_window_position)
           self.window_position = new_window_position
           self.system_param.set(key=self.id, value=self.window_position)

@@ -10,23 +10,23 @@ class Page(CorePage):
   # 挂载子页面
   def mount(self, pageDict:dict, btnList:list):
     # 添加栈
-    self.page_manager.add_stack(self.ui.stackedWidget)
+    self.pageManager.addStack(self.ui.stackedWidget)
     # 添加页面
     for key in pageDict.keys():
       value = pageDict[key]
-      self.page_manager.add_page(key, value)
+      self.pageManager.addPage(key, value)
     # 添加按钮
     for each in btnList:
       key = each.get("id", None)
       if key:
-        self.page_manager.add_btn(key, each)
+        self.pageManager.addButton(key, each)
 
   # 导航到页面
   def navigateTo(self, id, param=None):
     if param:
-      self.page_manager.open(id, param)
+      self.pageManager.open(id, param)
     else:
-      self.page_manager.open(id)
+      self.pageManager.open(id)
 
   # 提示信息
   def tips(self, msg, type='default', pos=None, close=None):
@@ -72,7 +72,7 @@ class Page(CorePage):
     self.children.remove()
 
   # 页面初始化
-  def init_page(self):
+  def initPage(self):
     # 页面初始化
     if hasattr(self, 'setup'):
       self.setup()
@@ -88,7 +88,7 @@ class Page(CorePage):
   def closeApp(self):
     self.system_param.save()
     self.user_param.save()
-    self.thread_manager.remove()
+    self.threadManager.remove()
     self.children.remove()
     n = self.app.exec()
     try:

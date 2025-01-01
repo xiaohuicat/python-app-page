@@ -1,10 +1,9 @@
 from app_page_core import Store, PageManager, Param, Callback, LocalStore
-from .core.Page import Page
-from .core.EventBus import EventBus
-from .core.EventHook import EventHook
-from .core.Thread import EasyThread, ThreadManager, Waiting_time
+from .core import Page, EventBus, EventHook, EasyThread, ThreadManager, Waiting_time, Setting, Device, FileParam
+from .app import createApp
 
 __all__ = [
+  "createApp",
   "Store",
   "Page",
   "PageManager",
@@ -16,5 +15,8 @@ __all__ = [
   "EventBus",
   "EasyThread",
   "ThreadManager",
-  "Waiting_time"
+  "Waiting_time",
+  "Setting",
+  "Device",
+  "FileParam"
 ]

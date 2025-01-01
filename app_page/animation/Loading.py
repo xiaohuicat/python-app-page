@@ -1,7 +1,8 @@
 from PySide6.QtGui import QMovie
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QHBoxLayout, QGridLayout
-from ..utils.APP.setWidgetStyle import setWidgetStyle
-from ..utils.layout_clear import layout_clear
+from ..utils import setWidgetStyle
+from ..utils import layout_clear
+from ..config import loading_icon
 
 WHITE_STYLE = {
   "border-radius": "20px",
@@ -15,7 +16,7 @@ class Loading:
     self.layout = layout
   def create(self):
     # 加载GIF文件
-    movie = QMovie("./assets/loading.gif")
+    movie = QMovie(loading_icon)
     # movie.setCacheMode(QMovie.CacheAll)
     movie.setSpeed(120)                    # 可调整播放速度，默认为100%
     movie.finished.connect(movie.start)    # 电影结束后重新开始播放

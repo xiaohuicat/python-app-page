@@ -1,55 +1,27 @@
-# Python app framework
+# PySide6 app framework
 
 # Installation
 ```shell
 pip install app-page
 ```
-# Page页面属性
-callback   回调管理对象
-children   子页面管理对象
-store      全局变量管理对象
+# 模块说明
+core        程序核心模块
+animation   动画模块
+plugins     插件模块
 
 # Usage
-应用首页，初始化全局对象，页面对象，加载页面
-app.py
+使用案例
 ```python
-from app_page import Store, Page
+from app_page import Page, createApp
 
-def signal_slots_func(signal, id, func):
-  # 绑定信号与槽函数
-  print(signal, id, func)
+# 根页面，运行createApp函数初始化完成后进行根页面的初始化。
+class Root(Page):
+    def setup(self):
+        super().setup()
+        # 显示主窗口
+        self.store.get('main_win').show()
 
-# 初始化全局对象
-Store({
-  "version": "1.0.0",
-  "isLogin": False,
-  "functions": {
-    # 信号与槽绑定函数"__signal_slots_func"
-    "__signal_slots_func": signal_slots_func,
-  },
+createApp({
+    "Root": Root,
 })
-
-# 初始化页面对象
-page = Page()
-page.setup('app.json')
-```
-配置页面结构
-app.json
-```json
-{
-  "name": "main",
-  "id": "id001",
-  "style": "app.css",
-  "children": "children/page.json",
-  "events": {
-    "clicked": {
-      "btn1": "sendMessage",
-      "btn2": "cancel"
-    }
-  },
-  "functions": {
-    "sendMessage": "functions/sendMessage.py",
-    "cancel": "functions/cancel.py"
-  }
-}
 ```

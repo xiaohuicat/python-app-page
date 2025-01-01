@@ -1,7 +1,7 @@
 import time
 from PySide6.QtCore import QThread, Signal
 
-def default_fun(*args):
+def default_function(*args):
   # 此处调用函数
   print("6秒后返回数据")
   time.sleep(6)
@@ -11,7 +11,7 @@ class EasyThread(QThread):
   response = Signal(object)
   def __init__(self, function=None):
     super().__init__()
-    self.function = function if function else default_fun
+    self.function = function if function else default_function
 
   staticmethod
   def kill(self, Is_Wait=True):

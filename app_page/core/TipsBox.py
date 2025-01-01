@@ -1,11 +1,11 @@
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCloseEvent
-from ..animation.FadeEffect import FadeEffect
-from app_page import Callback, Param
-from ..utils.loadUI import loadUI
-from ..animation.MoveWin import MoveWin
-from ..animation.Shadow import Shadow
+from app_page_core import Callback, Param
+from ..animation import FadeEffect, MoveWin, Shadow
+from ..core import Setting
+from ..utils import loadUI
+from ..config import tipsBox_ui
 
 class TipsBox(QWidget):
   def __init__(self, system_param:Param, msg_dict={"topic":"更新提醒","title":"提示窗的标题","content":"提示的内容"}):
@@ -14,7 +14,7 @@ class TipsBox(QWidget):
 
     MoveWin(self, system_param, id="tips_box_position")
 
-    self.ui = loadUI('./assets/UI/tipsBox.ui')
+    self.ui = loadUI(Setting.getSetting("tipsBox_ui", tipsBox_ui))
     self.fadeEffect = FadeEffect(self, 100, self.close)
 
     Shadow(self.ui.container)
