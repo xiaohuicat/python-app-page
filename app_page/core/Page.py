@@ -2,6 +2,7 @@ import sys
 from app_page_core import Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
+from ..core.EventBus import EventBus
 
 class Page(CorePage):
   def __init__(self, name=None):
@@ -81,8 +82,10 @@ class Page(CorePage):
     if hasattr(self, "binds"):
       bind_dict = self.binds()
       for signal in bind_dict.keys():
-        for each in bind_dict[signal]:
-          self.ui[each[0]][signal].connect(each[1])
+        for [id, callback] in bind_dict[signal]:
+          bus = EventBus({'current': self.ui[id]}, isSendSelf=False)
+          bus.register('current', signal, callback)
+
 
   # 关闭app
   def closeApp(self):

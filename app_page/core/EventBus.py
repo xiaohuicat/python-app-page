@@ -1,11 +1,12 @@
 # 事件总线
 class EventBus(object):
-  def __init__(self, elements:dict={}):
+  def __init__(self, elements:dict={}, isSendSelf=True):
     self.elements:dict = elements
-    
+    self.isSendSelf = isSendSelf
+
   def getElement(self, id:str):
     return self.elements.get(id, None)
-  
+
   def getConnect(self, id:str, event:str):
     item = self.getElement(id)
     if item:
@@ -20,12 +21,15 @@ class EventBus(object):
         'currentIndexChanged': hasattr(item, 'currentIndexChanged') and hasattr(item.currentIndexChanged, 'connect') and item.currentIndexChanged.connect,
       }
       return connectMap.get(event, None)
-    
+
   def register(self, id:str, event:str, callback):
     connect = self.getConnect(id, event)
     if connect:
-      connect(lambda *args: callback(self, *args))
-    
+      if self.isSendSelf:
+        connect(lambda *args: callback(self, *args))
+      else:
+        connect(lambda *args: callback(*args))
+
   def clear(self):
     keys = list(self.elements.keys())
     for key in keys:
