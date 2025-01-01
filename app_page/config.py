@@ -22,7 +22,7 @@ PING_HOST = 'greatnote.cn'
 # 默认主题
 default_theme = {
   "skin": {
-    "current_skin_id": "skin001"
+    "current_skin_index": 0
   },
   "skinStyle": [
     {
@@ -30,24 +30,21 @@ default_theme = {
       "name": "\u9ed8\u8ba4",
       "header_bg_color": "#6a5acd",
       "main_bg_color": "#f0f0f0",
-      "app_bg_image": "./assets/image/skin/1703964016891.png",
-      "current": "skin001"
+      "app_bg_image": createPath("app_bg_image_1.png"),
     },
     {
       "id": "skin002",
       "name": "\u73ca\u745a\u7ea2",
       "header_bg_color": "#cd5a5a",
       "main_bg_color": "#fffbcb",
-      "app_bg_image": "./assets/image/skin/1703951087872.jpg",
-      "current": "skin001"
+      "app_bg_image": createPath("app_bg_image_2.png"),
     },
     {
       "id": "skin003",
       "name": "\u70ab\u9177\u9ed1",
       "header_bg_color": "#000",
       "main_bg_color": "#e4d5ff",
-      "app_bg_image": "./assets/image/skin/1703951426046.jpg",
-      "current": "skin001"
+      "app_bg_image": createPath("app_bg_image_3.png"),
     }
   ]
 }

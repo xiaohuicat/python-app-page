@@ -1,7 +1,7 @@
 import setuptools
 
 package_name = "app-page"
-version = '0.0.13'
+version = '0.0.14'
 long_description = open("README.md", encoding="utf-8").read()
 
 setuptools.setup(

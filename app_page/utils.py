@@ -20,28 +20,31 @@ def loadUI(filePath, target=None):
 # 根据参数设置样式
 def setAppStyle(target):
   setting = target.param.child(target.param.pathJoin("userPath", "setting.json"), default_theme)
-  current = setting.get("skin/current_skin_id")
-  style = list(filter(lambda x:x["id"]==current, setting.get("skinStyle")))[0] if current else ""
-  setWidgetStyleById(id='frame_header', style={"background-color": style['header_bg_color']})
+  current = setting.get("skin/current_skin_index", 0)
+  style = setting.get("skinStyle", default_theme['skinStyle'])[current]
+  setWidgetStyleById(id='frame_header', style={"background-color": style['header_bg_color']}, cover=True)
   setWidgetStyleById(id='frame_main', style={
     "background-color": style['main_bg_color'],
-    "border-image": f"url('{style['app_bg_image']}') stretch"
-  })
+    "border-image": f"url('{style['app_bg_image'].replace('\\', '/')}') stretch"
+  }, cover=True)
 
 
-def setWidgetStyleById(id:str, style:object):
+def setWidgetStyleById(id:str, style:dict, cover:bool = False):
   store = Store()
   ui = store.get('ui', None)
   if not ui:
     raise Exception("ui not found")
 
+  config = {"styleSheetList":[]}
   try:
-    styleSheetList = store.get('ui')[id].styleSheet().split('\n')
+    if not cover:
+      config["styleSheetList"] = ui[id].styleSheet().split('\n')
   except:
-    styleSheetList = []
+    pass
   ret = f'#{id}'+'{'+ ";".join([key+":"+style[key] for key in style.keys()]) + '}'
-  styleSheetList.append(ret)
-  store.get('ui')[id].setStyleSheet('\n'.join(styleSheetList))
+  config["styleSheetList"].append(ret)
+  styleText = '\n'.join(config["styleSheetList"])
+  ui[id].setStyleSheet(styleText)
 
 
 def setWidgetStyle(widget:QWidget, style:dict|list, id=None, cover:bool = False):
