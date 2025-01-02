@@ -15,7 +15,7 @@ setuptools.setup(
     version=version,
     author="xiaohuicat",  # 作者名称
     author_email="1258702350@qq.com", # 作者邮箱
-    description="python page application framework", # 库描述
+    description="PySide6 page application framework", # 库描述
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/xiaohuicat/python-app-page", # 库的官方地址
