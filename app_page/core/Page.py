@@ -88,7 +88,6 @@ class Page(CorePage):
           widget_dict = widget.__dict__
           widget_dict[signal].connect(callback)
 
-
   # 关闭app
   def closeApp(self):
     self.system_param.save()

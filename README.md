@@ -5,9 +5,9 @@
 pip install app-page
 ```
 # 模块说明
-core        程序核心模块
-animation   动画模块
-plugins     插件模块
+- core        程序核心模块
+- animation   动画模块
+- plugins     插件模块
 
 # Usage
 使用案例
