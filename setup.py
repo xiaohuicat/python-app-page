@@ -1,8 +1,14 @@
 import setuptools
+from pathlib import Path
 
 package_name = "app-page"
 version = '0.0.14'
+# 读取 README.md 作为长描述
 long_description = open("README.md", encoding="utf-8").read()
+# 读取 requirements.txt 文件
+requirements_path = Path(__file__).parent / "requirements.txt"
+with open(requirements_path, "r") as f:
+    requirements = f.read().splitlines()
 
 setuptools.setup(
     name=package_name,
@@ -16,15 +22,6 @@ setuptools.setup(
     license="MIT",
     packages=setuptools.find_packages(),
     package_data={'app_page': ['*', 'assets/*', 'assets/*/*']},
-    install_requires=[
-        "app-page-core",
-        "nanoid",
-        "PySide6",
-        "pywin32",
-        "numpy",
-        "openpyxl",
-        "paho-mqtt==1.6.1",
-        "pillow"
-    ],
+    install_requires=requirements,
     zip_safe=False,
 )
