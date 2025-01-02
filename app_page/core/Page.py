@@ -83,8 +83,10 @@ class Page(CorePage):
       bind_dict = self.binds()
       for signal in bind_dict.keys():
         for [id, callback] in bind_dict[signal]:
-          bus = EventBus({'current': self.ui[id]}, isSendSelf=False)
-          bus.register('current', signal, callback)
+          widget = self.ui[id]
+          # 将对象的__dict__属性储存为一个字典
+          widget_dict = widget.__dict__
+          widget_dict[signal].connect(callback)
 
 
   # 关闭app
