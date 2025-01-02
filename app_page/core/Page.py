@@ -1,26 +1,22 @@
 import sys
+from PySide6.QtWidgets import QApplication
 from app_page_core import Page as CorePage
+from app_page_core import Param
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
-
+from ..core.PageManager import PageManager
+from ..core.Thread import ThreadManager
+from ..core.MainWindow import MainWindow
 
 class Page(CorePage):
   def __init__(self, name=None):
     super().__init__(name)
-
-  # 挂载子页面
-  def mount(self, pageDict:dict, btnList:list):
-    # 添加栈
-    self.pageManager.addStack(self.ui.stackedWidget)
-    # 添加页面
-    for key in pageDict.keys():
-      value = pageDict[key]
-      self.pageManager.addPage(key, value)
-    # 添加按钮
-    for each in btnList:
-      key = each.get("id", None)
-      if key:
-        self.pageManager.addButton(key, each)
+    self.app:QApplication
+    self.main_win:MainWindow
+    self.pageManager:PageManager
+    self.threadManager:ThreadManager
+    self.system_param:Param
+    self.user_param:Param
 
   # 导航到页面
   def navigateTo(self, id, param=None):

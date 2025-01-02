@@ -6,6 +6,8 @@ from .Page import Page
 from .Thread import EasyThread, Waiting_time, ThreadManager
 from .MainWindow import MainWindow
 from .FileParam import FileParam
+from .Record import Record
+from .PageManager import PageManager
 from ..core import Setting, Device
 
 
@@ -13,7 +15,9 @@ __all__ = [
   "Device",
   "Setting",
   "EventBus",
+  "Record",
   "EventHook",
+  "PageManager",
   "MoveEventMechine",
   "Page",
   "EasyThread",

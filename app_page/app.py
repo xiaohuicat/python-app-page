@@ -1,8 +1,8 @@
 import os,sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
-from app_page_core import Store, Param, PageManager
-from .core import ThreadManager, Page, Device, Setting, MainWindow
+from app_page_core import Store, Param
+from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
 from .config import APP_ICON_PATH, APP_VERSION, APP_TITLE, PING_HOST, IS_DEBUG, tips_ui, tipsBox_ui, loading_icon, small_page_icon, maximize_page_icon
 from .utils import setAppStyle
 from .apprcc_rc import *

@@ -1,5 +1,5 @@
-from app_page_core import Store, PageManager, Param, Callback, LocalStore
-from .core import Page, EventBus, EventHook, EasyThread, ThreadManager, Waiting_time, Setting, Device, FileParam
+from app_page_core import Store, Param, Callback, LocalStore
+from .core import Page, EventBus, EventHook, EasyThread, ThreadManager, PageManager, Waiting_time, Setting, Device, FileParam
 from .app import createApp
 
 __all__ = [
