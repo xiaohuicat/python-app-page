@@ -7,14 +7,24 @@ from ..core import Setting
 from ..utils import loadUI
 from ..config import tipsBox_ui
 
+
 class TipsBox(QWidget):
-  def __init__(self, system_param:Param, msg_dict={"topic":"更新提醒","title":"提示窗的标题","content":"提示的内容"}):
+  def __init__(self, system_param:Param, msg_dict:dict={"topic":"更新提醒","title":"提示窗的标题","content":"提示的内容"}):
     super().__init__()
     self.callback = Callback()
-
     MoveWin(self, system_param, id="tips_box_position")
 
-    self.ui = loadUI(Setting.getSetting("tipsBox_ui", tipsBox_ui))
+    ui = Setting.getSetting("tipsBox_ui", tipsBox_ui)
+    # 如果ui是字符串
+    if isinstance(ui, str):
+        self.ui = loadUI(ui)
+        # 创建垂直布局
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.ui)
+    else:
+        self.ui = ui()
+        self.ui.setupUi(self)
+
     self.fadeEffect = FadeEffect(self, 100, self.close)
 
     Shadow(self.ui.container)
@@ -26,10 +36,6 @@ class TipsBox(QWidget):
     self.setTopic(msg_dict["topic"])
     self.setTitle(msg_dict["title"])
     self.setContent(msg_dict["content"])
-
-    # 创建垂直布局
-    layout = QVBoxLayout(self)
-    layout.addWidget(self.ui)
 
     # 设置弹出窗口的位置
     # self.setGeometry(pos[0], pos[1], 200, 100)

@@ -7,6 +7,7 @@ from ..core import Setting
 from ..utils import loadUI
 from ..config import tips_ui
 
+
 color_dict = {
     'success': '#28be28',
     'fail': '#e64035',
@@ -19,7 +20,16 @@ class Tips(QWidget):
         super().__init__()
         self.callback = Callback()
 
-        self.ui = loadUI(Setting.getSetting("tips_ui", tips_ui))
+        ui = Setting.getSetting("tips_ui", tips_ui)
+        # 如果ui是字符串
+        if isinstance(ui, str):
+            self.ui = loadUI(ui)
+            # 创建垂直布局
+            layout = QVBoxLayout(self)
+            layout.addWidget(self.ui)
+        else:
+            self.ui = ui()
+            self.ui.setupUi(self)
 
         self.setWindowTitle("提示消息")
         self.ui.tips.setText(message)
@@ -34,11 +44,6 @@ class Tips(QWidget):
         self.setFixedHeight(height + 60)
 
         self.setPos(pos)
-
-        # 创建垂直布局
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.ui)
-
         # 设置弹出窗口的位置
         # self.setGeometry(pos[0], pos[1], 200, 100)
         self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)  # 设置窗口置顶

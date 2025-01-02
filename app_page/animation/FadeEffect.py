@@ -14,10 +14,6 @@ class FadeEffect:
     self.finish = finish
 
   def show(self):
-    try:
-      self.target._fade_animation.finished.disconnect(self.finish)
-    except:
-      pass
     self.target._fade_animation.stop()
     self.target._fade_animation.setStartValue(0)
     self.target._fade_animation.setEndValue(1)

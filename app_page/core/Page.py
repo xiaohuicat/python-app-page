@@ -2,7 +2,7 @@ import sys
 from app_page_core import Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
-from ..core.EventBus import EventBus
+
 
 class Page(CorePage):
   def __init__(self, name=None):
