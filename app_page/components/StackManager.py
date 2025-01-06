@@ -69,14 +69,12 @@ class StackManager(Stack):
 
   # 创建左侧导航栏按钮
   def createButton(self, pageOptionList:list):
-    self.pageOptionList = [each for each in pageOptionList if each.get("parent", "") == self.filter_id]
+    self.pageOptionList = [each for each in pageOptionList if each.get("filter", "") == self.filter_id]
     self.button_frame.setFixedHeight(360)
     layout = self.button_container.layout()
     if layout:
-      print("有layout", layout)
       self.deleteLeftbarButton(layout)
     else:
-      print("没有layout")
       layout = QVBoxLayout(self.button_container)
       layout.setAlignment(Qt.AlignTop)
     self._layout = layout
@@ -178,7 +176,7 @@ class StackManager(Stack):
       current = int(time.perf_counter() * 1000)
       if not isActive and self.DEBOUNCE:
         if (current - self.timestamp) < self.DEBOUNCE_TIME:
-          print("过于频繁")
+          self.tips("过于频繁")
           return
 
       dataList = list(filter(lambda x:x.get("id")==id, self.pageOptionList))

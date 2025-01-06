@@ -1,9 +1,19 @@
-import sys
+import os, sys
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtWidgets import QWidget
-from .config import default_theme
 from app_page_core import Store
+from ..config import default_theme
+
+def assetsPath(*args):
+    """获取资源路径
+    Args:
+        args (tuple): 目录，文件名
+
+    Returns:
+        path (str): 资源绝对路径
+    """
+    return os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", *args)
 
 
 def loadUI(filePath, target=None):

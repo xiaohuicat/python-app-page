@@ -13,6 +13,7 @@ class Page(CorePage):
     super().__init__(name)
     self.app:QApplication
     self.main_win:MainWindow
+    self.ui:MainWindow.ui
     self.pageManager:PageManager
     self.threadManager:ThreadManager
     self.system_param:Param
