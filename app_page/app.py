@@ -14,7 +14,11 @@ class BindsRightTop(Page):
   def binds(self):
     return {
       "clicked": [
-        ("btn_skin", lambda :self.navigateTo('skin')),
+        ("btn_skin", lambda :self.tips('点击了皮肤', 'success')),
+        ("btn_login_icon", lambda :self.tips('点击了登录图标', 'success')),
+        ("btn_login_text", lambda :self.tips('点击了登录名称', 'success')),
+        ("btn_setting", lambda :self.tips('点击了设置', 'success')),
+        ("btn_message", lambda :self.tips('点击了消息', 'success')),
       ]
     }
 
