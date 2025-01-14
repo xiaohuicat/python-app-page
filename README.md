@@ -39,3 +39,5 @@ SETTINGS (dict): 设置参数
 """
 createApp(SETTINGS)
 ```
+# 运行结果
+<img src="./assets/example.png" alt="app-page" />

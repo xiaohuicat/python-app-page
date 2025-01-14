@@ -84,11 +84,12 @@ def getDocPath(pathID=5):
 
 # 获取默认系统配置
 def defaultSystemConfig(version):
+  APP_DATA_DIRNAME = Setting.getSetting('APP_DATA_DIRNAME', "GreatNoteData")
   return {
     "version": version,
-    "userPath": os.path.join(getDocPath(), "GreatNoteData", "user"),
-    "tempPath": os.path.join(getDocPath(), "GreatNoteData", "temp"),
-    "systemPath": os.path.join(getDocPath(), "GreatNoteData", "system"),
+    "userPath": os.path.join(getDocPath(), APP_DATA_DIRNAME, "user"),
+    "tempPath": os.path.join(getDocPath(), APP_DATA_DIRNAME, "temp"),
+    "systemPath": os.path.join(getDocPath(), APP_DATA_DIRNAME, "system"),
   }
 
 

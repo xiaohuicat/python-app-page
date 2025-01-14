@@ -20,6 +20,7 @@ maximize_page_icon = assetsPath("maximize_page.png")
 APP_VERSION = '1.0.0'
 APP_TITLE = '小灰妙记'
 APP_ICON_PATH = assetsPath('favicon.png')
+APP_DATA_DIRNAME = 'GreatNoteData'
 
 IS_DEBUG = False        #生产环境，使用远程服务器
 

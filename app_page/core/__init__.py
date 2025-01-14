@@ -9,6 +9,7 @@ from .FileParam import FileParam
 from .Record import Record
 from .PageManager import PageManager
 from ..core import Setting, Device
+from . import Setting
 
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
   "ThreadManager",
   "Waiting_time",
   "MainWindow",
-  "FileParam"
+  "FileParam",
+  "Setting",
 ]
