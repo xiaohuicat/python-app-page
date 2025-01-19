@@ -89,9 +89,7 @@ def loadStackPages(target:Page):
     "button_frame_id": button_frame_id,
     "button_container_id": button_container_id,
   })
-  stackManager.initPage()
   bindsRightTop = BindsRightTop()
-  bindsRightTop.initPage()
   target.children.add("bindsRightTop", bindsRightTop)
   target.children.add("stackManager", stackManager)
 
@@ -108,6 +106,7 @@ def createApp(SETTING:dict):
           button_close_id (str): 关闭按钮id
           button_login_id (str): 登录按钮id
           button_name_id (str): 按钮名称id
+          Ui_MainWindow (Ui_MainWindow): 主窗口ui对象
           APP_ICON_PATH (str): 应用图标路径
           APP_TITLE (str): 应用标题
           APP_VERSION (str): 应用版本
@@ -174,9 +173,9 @@ def createApp(SETTING:dict):
   setAppStyle(root)
   # 挂载栈页面
   loadStackPages(root)
-  # 根页面初始化
+  # 根页面初始化，会自动运行子页面的setup()方法
   root.setup()
-  # 显示窗口
+  # 显示主窗口
   main_win.show()
   print(f"----APP_TITLE:{APP_TITLE} APP_VERSION:{APP_VERSION}----")
   # 运行APP
