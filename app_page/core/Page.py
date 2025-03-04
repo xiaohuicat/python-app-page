@@ -97,7 +97,7 @@ class Page(CorePage):
     except SystemExit:
       print('程序退出了，顺手帮你把垃圾带走')
       sys.exit(n)
-      
+
   # 查看组件信息
   @property
   def info(self):

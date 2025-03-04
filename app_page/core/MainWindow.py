@@ -6,6 +6,7 @@ from ..animation import MoveWin
 from ..config import small_page_icon, maximize_page_icon, APP_TITLE
 from ..core import Setting
 from ..core.ui_main import Ui_MainWindow
+from ..utils import setupUiFromSetting
 
 
 # 程序主窗口的类
@@ -14,16 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.system_param = system_param
         self.callback = Callback()
-        UI = Setting.getSetting("Ui_MainWindow", Ui_MainWindow)
-        # 可以通过[]访问属性的UI 类
-        class MYUI(UI):
-            def __init__(self,*args,**kwargs):
-                    super().__init__(*args,**kwargs)
-            def __getitem__(self,__name):
-                return super().__getattribute__(__name)
-
-        self.ui = MYUI()  # 使用ui文件导入定义界面类
-        self.ui.setupUi(self)  # 初始化界面
+        self.ui = setupUiFromSetting(self, "Ui_MainWindow")
         self.normal_window_rect = [570, 79, 1080, 746]
         self.current_window_rect = [*self.normal_window_rect]
 

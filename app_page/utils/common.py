@@ -3,6 +3,7 @@ from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, QIODevice
 from PySide6.QtWidgets import QWidget
 from app_page_core import Store
+from ..core import Setting
 from ..config import default_theme
 
 def assetsPath(*args):
@@ -25,6 +26,20 @@ def loadUI(filePath, target=None):
     return QUiLoader(target).load(ui_file)
   else:
     return QUiLoader().load(ui_file)
+
+
+def setupUiFromSetting(self, key):
+  UI = Setting.getSetting(key)
+  # 可以通过[]访问属性的UI 类
+  class DictTypeUi(UI):
+    def __init__(self,*args,**kwargs):
+      super().__init__(*args,**kwargs)
+    def __getitem__(self,__name):
+      return super().__getattribute__(__name)
+    
+  ui = DictTypeUi()
+  ui.setupUi(self)
+  return ui
 
 
 # 根据参数设置样式

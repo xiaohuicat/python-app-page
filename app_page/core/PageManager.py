@@ -60,17 +60,11 @@ class PageManager:
         # 创建页面对象
         Page = self.page_dict[id]
         current = Page()                # 实例化页面
-        current.initPage()             # 初始化页面
+        current.initPage()              # 初始化页面
         try:
-          current["show"](param, *args)        # 展示页面
-        except:
-          try:
-            current["show"](param)
-          except:
-            try:
-              current["show"]()
-            except Exception as e:
-              pass
+          current["show"](*(param, *args)) # 展示页面
+        except Exception as error:
+          print('打开页面出错：', error)
         data["current"] = current
       
     # 刚才打开的页面将其隐藏
