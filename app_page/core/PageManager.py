@@ -1,5 +1,50 @@
-from PySide6.QtWidgets import QStackedWidget
+from PySide6.QtCore import Qt
+from PySide6.QtWidgets import QStackedWidget, QWidget, QVBoxLayout
+from .render import render
 
+def UI_Render(target, stack:QWidget, template:str):
+  layout = stack.layout()
+  if not layout:
+    layout = QVBoxLayout(stack)
+  layout.setAlignment(Qt.AlignTop)
+  layout.setContentsMargins(10, 10, 10, 10)
+  layout.setSpacing(15)
+  
+  # 判断是否挂载参数存储器
+  if not hasattr(target, "localStore"):
+    path = target.param.pathJoin("userPath", f"pages/{target.name}/config.json")
+    localStore = target.param.child(path, {})
+    target.localStore = localStore
+    
+  # 判断是否挂载layout容器
+  if hasattr(target, "_render_root_layout"):
+    UI_Remove(target)
+  else:
+    target._render_root_layout = layout
+  
+  # 渲染页面并挂载组件id列表
+  target.widgetIdMap = render(layout, template)
+
+def UI_Remove(target):
+  # 如果存在删除挂载layout对象
+  if hasattr(target, "_render_root_layout"):
+    layout = target._render_root_layout
+    while layout.count():
+      item = layout.takeAt(0)
+      if item.widget():
+        item.widget().deleteLater()
+    delattr(target, "_render_root_layout")
+    
+  # 如果存在持久化数据
+  if hasattr(target, "localStore"):
+    target.localStore.save()
+    delattr(target, "localStore")
+    
+  if hasattr(target, "widgetIdMap"):
+    for key in target.widgetIdMap.keys():
+      target.widgetIdMap[key].deleteLater()
+      target.widgetIdMap[key] = None
+    delattr(target, "widgetIdMap")
 
 class PageManager:
   def __init__(self):
@@ -62,20 +107,21 @@ class PageManager:
         current = Page()                # 实例化页面
         current.initPage()              # 初始化页面
         try:
-          current["show"](*(param, *args)) # 展示页面
+          stack = self.stack.widget(index)
+          if hasattr(current, "template") and current.template:
+            UI_Render(current, stack, current.template)
+          current["show"](*({**param, "stack": stack}, *args)) # 展示页面
         except Exception as error:
-          print('打开页面出错：', error)
+          print("打开页面出错：", error)
         data["current"] = current
       
     # 刚才打开的页面将其隐藏
     if "current" in self.data and self.data["current"]:
       try:
+        UI_Remove(self.data["current"])
         self.data["current"]["hide"](*args)
-      except:
-        try:
-          self.data["current"]["hide"]()
-        except Exception as e:
-          pass
+      except Exception as error:
+        print("隐藏页面出错：", error)
     # 将当前页面赋值
     if "id" in data:
       self.data["id"] = data["id"]
@@ -84,6 +130,12 @@ class PageManager:
 
   # 销毁页面
   def destroy(self):
+    # 隐藏当前页面
+    if "current" in self.data and self.data["current"]:
+      try:
+        self.data["current"]["hide"]()
+      except Exception as e:
+        pass
     self.page_dict = {}
     self.button_dict = {}
     self.data = {}

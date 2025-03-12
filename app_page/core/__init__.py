@@ -7,9 +7,9 @@ from .Thread import EasyThread, Waiting_time, ThreadManager
 from .MainWindow import MainWindow
 from .FileParam import FileParam
 from .Record import Record
-from .PageManager import PageManager
+from .PageManager import PageManager, UI_Remove, UI_Render
 from ..core import Setting, Device
-from . import Setting
+from .render import render
 
 
 __all__ = [
@@ -27,4 +27,7 @@ __all__ = [
   "MainWindow",
   "FileParam",
   "Setting",
+  "render",
+  "UI_Remove",
+  "UI_Render"
 ]
