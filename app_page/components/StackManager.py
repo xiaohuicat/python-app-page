@@ -165,6 +165,14 @@ class StackManager(Stack):
     self.button_frame.setStyleSheet('\n'.join(styleSheetList))
 
 
+  # 清除当前激活按钮的样式
+  def clearActiveStyle(self):
+    styleSheetList = self.button_frame.styleSheet().split('\n')
+    new_styleSheetList = [line for line in styleSheetList if not line.startswith(f'#{self.current_btn}')]
+    self.button_frame.setStyleSheet('\n'.join(new_styleSheetList))
+    self.current_btn = None
+
+
   # 点击事件，根据名称打开对应的页面
   def click(self, id, isActive=None):
     def fun(NO_RECORD=False):

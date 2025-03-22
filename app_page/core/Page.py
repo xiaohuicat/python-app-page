@@ -18,13 +18,28 @@ class Page(CorePage):
     self.threadManager:ThreadManager
     self.system_param:Param
     self.user_param:Param
+    self.localStore:Param
+    # 判断是否挂载参数存储器
+    if name and hasattr(self, "param"):
+      path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
+      print(f"当前页面name:{name} 配置文件path: {path}")
+      self.localStore = self.param.child(path, {})
+
+  def setup(self, props=None):
+    super().setup(props)
+    # 绑定函数
+    if hasattr(self, "binds"):
+      bind_dict = self.binds()
+      for signal in bind_dict.keys():
+        for [id, callback] in bind_dict[signal]:
+          widget = self.ui[id]
+          # 将对象的__dict__属性储存为一个字典
+          widget_dict = widget.__dict__
+          widget_dict[signal].connect(callback)
 
   # 导航到页面
-  def navigateTo(self, id, param=None):
-    if param:
-      self.pageManager.open(id, param)
-    else:
-      self.pageManager.open(id)
+  def navigateTo(self, id, *args):
+    self.pageManager.open(*(id, *args))
 
   # 提示信息
   def tips(self, msg, type='default', pos=None, close=None):
@@ -69,26 +84,11 @@ class Page(CorePage):
     # 移除子组件
     self.children.remove()
 
-  # 页面初始化
-  def initPage(self):
-    # 页面初始化
-    if hasattr(self, 'setup'):
-      self.setup()
-    
-    # 绑定函数
-    if hasattr(self, "binds"):
-      bind_dict = self.binds()
-      for signal in bind_dict.keys():
-        for [id, callback] in bind_dict[signal]:
-          widget = self.ui[id]
-          # 将对象的__dict__属性储存为一个字典
-          widget_dict = widget.__dict__
-          widget_dict[signal].connect(callback)
-
   # 关闭app
   def closeApp(self):
     self.system_param.save()
     self.user_param.save()
+    self.pageManager.destroy()
     self.threadManager.remove()
     self.children.remove()
     n = self.app.exec()
@@ -101,5 +101,4 @@ class Page(CorePage):
   # 查看组件信息
   @property
   def info(self):
-    info_string = f"\n当前页面有{len(self.children.components.keys())}子页面。\n"+self.children.info()
-    return info_string
+    return f"\n当前页面有{len(self.children.components.keys())}子页面。\n"+self.children.info()

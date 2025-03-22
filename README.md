@@ -1,6 +1,6 @@
 # PySide6 app framework
 
-# Installation
+# 安装库
 ```shell
 pip install app-page
 ```
@@ -10,13 +10,12 @@ pip install app-page
 - plugins     插件模块
 - utils       工具模块
 
-# Usage
-使用案例
+# 使用案例
 ```python
 from app_page import Page, createApp
 
 """
-SETTINGS (dict): 设置参数
+SETTING (dict): 设置参数
     stack_id (str): 栈组件id
     pages (dict): 页面字典
     pageOptionList (list): 页面配置项列表
@@ -37,7 +36,68 @@ SETTINGS (dict): 设置参数
     small_page_icon (str): 缩小图标路径
     maximize_page_icon (str): 最大窗口图标路径
 """
-createApp(SETTINGS)
+createApp(SETTING={})
+```
+# 自定义页面
+```python
+from app_page import Page, EventBus, createApp
+
+# 编辑页面
+class Editor(Page):
+  def __init__(self):
+    super().__init__("editor")
+    self.template = """
+    <template>
+      <widget type="QWidget" style="color:#333;background-color:#fff;border-radius:10px;" height="250">
+        <layout type="QVBoxLayout">
+          <label text="写点东西吧(自动保存)" style="font-size:20px;color:#333;" />
+          <text-edit id="editor" style="background-color:#e0e0e0;border-radius:10px;padding:10px;font-size:16px;" />
+          <button id="help" text="使用说明" height="32" width="100" style="background-color:#000;color:#fff;border-radius:10px;" />
+        </layout>
+      </widget>
+    </template>"""
+
+  def show(self, *args):
+    self.widgetIdMap["editor"].setPlainText(self.localStore.get("editor-value", ''))
+    eventBus = EventBus(self.widgetIdMap)
+    eventBus.register("editor", 'textChanged', lambda *args: self.textChange())
+    eventBus.register("help", 'clicked', lambda *args: self.tips('没别的说明了，自己摸索一下', 'success'))
+
+  def textChange(self):
+    self.localStore.set("editor-value", self.widgetIdMap["editor"].toPlainText())
+
+# 设置页面
+class Setting(Page):
+  def __init__(self):
+    super().__init__("setting")
+    self.template = """
+    <template>
+      <widget type="QWidget" style="color:#333;background-color:#fff;border-radius:10px;">
+        <layout type="QVBoxLayout">
+          <label text="系统设置" style="font-size:20px;color:#333;" />
+        </layout>
+      </widget>
+    </template>"""
+
+# 创建应用
+createApp(SETTING={
+  "APP_TITLE": "桌面软件",
+  "pages": {"editor": Editor, "setting": Setting},
+  "pageOptionList": [
+    {
+      "name": "随心笔记",
+      "id": "editor",
+      "filter": "leftBar",
+      "stack_id": "app_page_editor",
+    },
+    {
+      "name": "系统设置",
+      "id": "setting",
+      "filter": "leftBar",
+      "stack_id": "app_page_setting",
+    }
+  ],
+})
 ```
 # 运行结果
 <img src="./assets/example.png" alt="app-page" />

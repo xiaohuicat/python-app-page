@@ -15,7 +15,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.system_param = system_param
         self.callback = Callback()
-        self.ui = setupUiFromSetting(self, "Ui_MainWindow")
+        self.ui = setupUiFromSetting(self, "Ui_MainWindow", Ui_MainWindow)
         self.normal_window_rect = [570, 79, 1080, 746]
         self.current_window_rect = [*self.normal_window_rect]
 

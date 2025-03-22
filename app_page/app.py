@@ -177,7 +177,7 @@ def createApp(SETTING:dict):
   root.setup()
   # 显示主窗口
   main_win.show()
-  print(f"----APP_TITLE:{APP_TITLE} APP_VERSION:{APP_VERSION}----")
+  print(f"[APP_TITLE:{APP_TITLE} APP_VERSION:{APP_VERSION}]")
   # 运行APP
   n = app.exec()
   try:

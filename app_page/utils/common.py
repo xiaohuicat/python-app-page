@@ -28,8 +28,8 @@ def loadUI(filePath, target=None):
     return QUiLoader().load(ui_file)
 
 
-def setupUiFromSetting(self, key):
-  UI = Setting.getSetting(key)
+def setupUiFromSetting(self, key, defaultValue=None):
+  UI = Setting.getSetting(key, defaultValue)
   # 可以通过[]访问属性的UI 类
   class DictTypeUi(UI):
     def __init__(self,*args,**kwargs):
