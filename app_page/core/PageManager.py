@@ -19,6 +19,7 @@ def UI_Render(target, stack:QWidget, template:str):
   
   # 渲染页面并挂载组件id列表
   target.widgetIdMap = render(layout, template)
+  target.status = 'show'
 
 def UI_Remove(target):
   # 如果存在删除挂载layout对象
@@ -39,6 +40,8 @@ def UI_Remove(target):
       target.widgetIdMap[key].deleteLater()
       target.widgetIdMap[key] = None
     delattr(target, "widgetIdMap")
+    
+  target.status = 'hide'
 
 def UI_Rerender(target, stack: QWidget, template:str):
   UI_Remove(target)
@@ -111,7 +114,7 @@ class PageManager:
             stack = self.stack.widget(index)
             if hasattr(current, "template") and current.template:
               UI_Render(current, stack, current.template)
-              current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
+            current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
             current["show"](*({**param, "stack": stack}, *args)) # 展示页面
           except Exception as error:
             print("打开页面出错：", error)
@@ -119,7 +122,7 @@ class PageManager:
           stack = self.stack.widget(index)
           if hasattr(current, "template") and current.template:
             UI_Render(current, stack, current.template)
-            current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
+          current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
           current["show"](*({**param, "stack": stack}, *args))
 
     # 刚才打开的页面将其隐藏

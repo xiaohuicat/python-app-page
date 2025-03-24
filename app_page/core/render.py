@@ -11,7 +11,7 @@ renameWidgetMap = {
   'label': 'QLabel',
   'button': 'QPushButton',
   'line-edit': 'QLineEdit',
-  'text-edit': 'QTextEdit',
+  'text-edit': 'QPlainTextEdit',
   'selector': 'QComboBox',
 }
 
@@ -70,6 +70,9 @@ def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGr
           widget.setFixedWidth(value)
         elif key == 'height':
           widget.setFixedHeight(value)
+        elif key == 'disabled':
+          if hasattr(widget, 'setReadOnly'):
+            widget.setReadOnly(value != 'False')
         elif key == 'children':
           inner_render(widget, value if isinstance(value, list) else [value], widgetIdMap)
 

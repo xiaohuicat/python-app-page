@@ -14,7 +14,7 @@ class StackManager(Stack):
     Args:
         options (dict): 控制参数
             stack_id (str): 栈的id
-            filter_id (str): 过滤器id
+            filter_id (str|None): 过滤器id
             pageOptionList (list): 页面选项列表
             button_frame_id (str): 按钮容器的id
             button_container_id (str): 按钮容器的id
@@ -24,7 +24,7 @@ class StackManager(Stack):
     pageOptionList = options.get("pageOptionList", None)
     button_frame_id = options.get("button_frame_id", None)
     button_container_id = options.get("button_container_id", None)
-    if not (stack_id and filter_id and pageOptionList and button_frame_id and button_container_id):
+    if not (stack_id and pageOptionList and button_frame_id and button_container_id):
       raise Exception("StackManager初始化失败，options参数错误")
 
     super().__init__(id= stack_id)
@@ -92,34 +92,35 @@ class StackManager(Stack):
         each['stack_index'] = new_index
         self.insertWidget(new_index, stack)
 
-      button = QPushButton(each["name"], self.button_frame)
-      button.setObjectName(each["id"])
-      button.clicked.connect(self.click(each["id"]))
-      button.setFixedHeight(40)
+      if each.get('filter', None) == 'leftBar':
+        button = QPushButton(each["name"], self.button_frame)
+        button.setObjectName(each["id"])
+        button.clicked.connect(self.click(each["id"]))
+        button.setFixedHeight(40)
 
-      # 添加右键菜单
-      right_menu = []
-      index != 0  and right_menu.append({
-        "name": "上移",
-        "icon": "./assets/icon/menu/up-arrow.png",
-        "callback": self.refreshLeftBtn("up", each['id'])
-      })
-      index != len(self.pageOptionList)-1 and  right_menu.append({
-        "name": "下移",
-        "icon": "./assets/icon/menu/down-arrow.png",
-        "callback": self.refreshLeftBtn("down", each['id'])
-      })
-      if "right_menu" in each:
-        _right_menu = each["right_menu"]
-        for e in _right_menu:
-          right_menu.append({
-            "name":e["name"],
-            "icon":e["icon"],
-            "callback":self.right_click(e["name"], each["id"])
-          })
-      RightClick_Menu(button, right_menu)
-      # 添加到布局中
-      layout.addWidget(button)
+        # 添加右键菜单
+        right_menu = []
+        index != 0  and right_menu.append({
+          "name": "上移",
+          "icon": "./assets/icon/menu/up-arrow.png",
+          "callback": self.refreshLeftBtn("up", each['id'])
+        })
+        index != len(self.pageOptionList)-1 and  right_menu.append({
+          "name": "下移",
+          "icon": "./assets/icon/menu/down-arrow.png",
+          "callback": self.refreshLeftBtn("down", each['id'])
+        })
+        if "right_menu" in each:
+          _right_menu = each["right_menu"]
+          for e in _right_menu:
+            right_menu.append({
+              "name":e["name"],
+              "icon":e["icon"],
+              "callback":self.right_click(e["name"], each["id"])
+            })
+        RightClick_Menu(button, right_menu)
+        # 添加到布局中
+        layout.addWidget(button)
 
 
   def refreshLeftBtn(self, name, id):
@@ -154,7 +155,8 @@ class StackManager(Stack):
 
 
   # 设置当前激活按钮的样式
-  def setActiveStyle(self, id, old_id:str):
+  def setActiveStyle(self, id:str):
+    old_id = self.current_btn
     active_style = '#%s {background-color:rgba(0,0,0,0.04);font-weight:bold;font-size:18px}' % id
     styleSheetList = self.button_frame.styleSheet().split('\n')
     # 删除旧的值
@@ -194,7 +196,7 @@ class StackManager(Stack):
       else:
         index = 0
       self.setCurrentPage(index)
-      self.setActiveStyle(id, old_id=self.current_btn)
+      self.setActiveStyle(id)
 
       # 保存记录
       if not NO_RECORD:

@@ -11,6 +11,7 @@ from ..core.MainWindow import MainWindow
 class Page(CorePage):
   def __init__(self, name=None):
     super().__init__(name)
+    self.status:str
     self.app:QApplication
     self.main_win:MainWindow
     self.ui:MainWindow.ui
@@ -24,6 +25,7 @@ class Page(CorePage):
       path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
       print(f"当前页面name:{name} 配置文件path: {path}")
       self.localStore = self.param.child(path, {})
+    self.widgetIdMap = {}
 
   def setup(self, props=None):
     super().setup(props)
@@ -83,6 +85,8 @@ class Page(CorePage):
     self.callback and self.callback.destroy()
     # 移除子组件
     self.children.remove()
+    # 移除组件映射
+    self.widgetIdMap.clear()
 
   # 关闭app
   def closeApp(self):
@@ -97,6 +101,12 @@ class Page(CorePage):
     except SystemExit:
       print('程序退出了，顺手帮你把垃圾带走')
       sys.exit(n)
+
+  def getWidget(self, id:str|None):
+    return self.widgetIdMap.get(id, None) if type(id) is str else self.widgetIdMap
+
+  def getStatus(self):
+    return self.status
 
   # 查看组件信息
   @property

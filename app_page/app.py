@@ -14,13 +14,17 @@ class BindsRightTop(Page):
   def binds(self):
     return {
       "clicked": [
-        ("btn_skin", lambda :self.tips('点击了皮肤', 'success')),
+        ("btn_skin", lambda :self.jumpToOtherPage('skin')),
         ("btn_login_icon", lambda :self.tips('点击了登录图标', 'success')),
         ("btn_login_text", lambda :self.tips('点击了登录名称', 'success')),
-        ("btn_setting", lambda :self.tips('点击了设置', 'success')),
-        ("btn_message", lambda :self.tips('点击了消息', 'success')),
+        ("btn_setting", lambda :self.jumpToOtherPage('setting')),
+        ("btn_message", lambda :self.jumpToOtherPage('message')),
       ]
     }
+  
+  def jumpToOtherPage(self, id:str):
+    self.navigateTo(id)
+    self.stackManager.clearActiveStyle()
 
 # 需要加载的页面
 pages = {
@@ -92,6 +96,7 @@ def loadStackPages(target:Page):
   bindsRightTop = BindsRightTop()
   target.children.add("bindsRightTop", bindsRightTop)
   target.children.add("stackManager", stackManager)
+  return stackManager
 
 def createApp(SETTING:dict):
   """创建应用
@@ -154,7 +159,7 @@ def createApp(SETTING:dict):
   threadManager = ThreadManager()
   pageManager = PageManager()
   # 创建全局变量
-  Store({
+  store = Store({
     'app': app,
     'main_win': main_win,
     'ui': main_win.ui,
@@ -169,10 +174,11 @@ def createApp(SETTING:dict):
   main_win.ui[Setting.getSetting('button_close_id')].clicked.connect(lambda: root.closeApp())
   main_win.ui[Setting.getSetting('button_login_id')].setStyleSheet(f'image: url({avatar_url})')
   main_win.ui[Setting.getSetting('button_name_id')].setText(user_param.get('userInfo/name', "未命名")[:3])
+  main_win.ui[Setting.getSetting('button_name_id')].setStyleSheet('color: #fff')
   # 设置样式，必须在创建全局变量之后
   setAppStyle(root)
   # 挂载栈页面
-  loadStackPages(root)
+  store.set('stackManager', loadStackPages(root))
   # 根页面初始化，会自动运行子页面的setup()方法
   root.setup()
   # 显示主窗口

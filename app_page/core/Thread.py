@@ -14,8 +14,8 @@ class EasyThread(QThread):
     self.function = function if function else default_function
 
   staticmethod
-  def kill(self, Is_Wait=True):
-    if Is_Wait:
+  def kill(self, is_wait=True):
+    if is_wait:
       self.wait()
     else:
       self.quit()
@@ -53,21 +53,18 @@ class ThreadManager:
   # dict = {"thread", "function", "callback", "payload", "id"}
   def add(self, dict, isRun=False):
     thread = "thread" in dict and dict["thread"]
-    func = "function" in dict and dict["function"]
-    callback = "callback" in dict and dict["callback"]
-    payload = "payload" in dict and dict["payload"]
-    
     # 如果没有thread, 创建thread
     if not thread:
-      thread = EasyThread(func)
+      thread = EasyThread(lambda *args:dict["function"](*args))
       dict["thread"] = thread
     # 如果有payload，给thread设置payload
+    payload = "payload" in dict and dict["payload"]
     if payload:
       thread.setPayload(payload)
     # 如有有callback，绑定返回信号给callback函数
-    if callback:
-      # print("绑定callback：", callback)
-      thread.response.connect(callback)
+    callback = "callback" in dict and dict["callback"]
+    if callable(callback):
+      thread.response.connect(lambda *args:callback(*args))
     self.threadList.append(dict)
     isRun and thread.start()
 
@@ -87,20 +84,27 @@ class ThreadManager:
       print("没有可用线程")
 
   def get(self, id):
-    if hasattr(id, '__call__'):
+    if callable(id):
       # 如果id是规则函数，直接传入
       return list(filter(id, self.threadList))
     elif isinstance(id, str):
       # 如果id是字符串，与每项的id进行比较
-      return list(filter(lambda x:x.get("id")==id, self.threadList))
+      return list(filter(lambda each:each.get("id")==id, self.threadList))
 
   def getOne(self, id):
     threadList = self.get(id)
-    if len(threadList)>0:
+    if len(threadList) > 0:
       item = threadList.pop()
       return item
     else:
       return False
+
+  def changeCallback(self, id:str, callback):
+    thread = self.getOne(id)
+    if thread:
+      thread["callback"] = callback
+      return True
+    return False
 
   def remove(self, id=None, param="SYSTEM"):
     if not id:
@@ -117,7 +121,7 @@ class ThreadManager:
           thread.response.disconnect()      # 解除信号与回调函数的连接
         except Exception as e:
           print("解除信号与槽的绑定失败 e:", e)
-        if hasattr(thread, "ENABLE"):
+        if param == 'SYSTEM' or hasattr(thread, "ENABLE"):
           thread.kill(False)
         else:
           thread.kill()
@@ -136,7 +140,7 @@ class ThreadManager:
           thread.response.disconnect()      # 解除信号与回调函数的连接
         except Exception as e:
           print("解除信号与槽的绑定失败 e:", e)
-        if hasattr(thread, "ENABLE"):
+        if param == 'SYSTEM' or hasattr(thread, "ENABLE"):
           thread.kill(False)
         else:
           thread.kill()
