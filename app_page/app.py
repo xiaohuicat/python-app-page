@@ -77,7 +77,6 @@ def loadStackPages(target:Page):
       target (Page): 页面对象
   """
   stack_id:str = Setting.getSetting('stack_id')
-  filter_id:str = Setting.getSetting('filter_id')
   button_frame_id:str = Setting.getSetting('button_frame_id')
   button_container_id:str = Setting.getSetting('button_container_id')
   pages:dict = Setting.getSetting('pages')
@@ -88,7 +87,6 @@ def loadStackPages(target:Page):
   # 创建导航
   stackManager = StackManager({
     "stack_id": stack_id,
-    "filter_id": filter_id,
     "pageOptionList": pageOptionList,
     "button_frame_id": button_frame_id,
     "button_container_id": button_container_id,
@@ -105,7 +103,6 @@ def createApp(SETTING:dict):
           stack_id (str): 栈组件id
           pages (dict): 页面字典
           pageOptionList (list): 页面配置项列表
-          filter_id (str): 过滤器id，用来筛选当前显示的页面
           button_frame_id (str): 按钮框架id
           button_container_id (str): 按钮容器id
           button_close_id (str): 关闭按钮id
@@ -128,7 +125,6 @@ def createApp(SETTING:dict):
     'stack_id': 'stackedWidget',
     'pages': pages,
     'pageOptionList': pageOptionList,
-    'filter_id': filter_id,
     'button_frame_id': button_frame_id,
     'button_container_id': button_container_id,
     'button_close_id': button_close_id,
@@ -187,6 +183,6 @@ def createApp(SETTING:dict):
   # 运行APP
   n = app.exec()
   try:
-      sys.exit(n)
+    sys.exit(n)
   except SystemExit:
-      sys.exit(n)
+    sys.exit(n)

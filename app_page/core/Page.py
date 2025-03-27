@@ -38,6 +38,8 @@ class Page(CorePage):
           # 将对象的__dict__属性储存为一个字典
           widget_dict = widget.__dict__
           widget_dict[signal].connect(callback)
+          disconnect = lambda args: lambda:args.disconnect()
+          self.callback.add('onHide', disconnect(widget_dict[signal]))
 
   # 导航到页面
   def navigateTo(self, id, *args):

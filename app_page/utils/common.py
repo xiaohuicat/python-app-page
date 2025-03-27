@@ -45,12 +45,13 @@ def setupUiFromSetting(self, key, defaultValue=None):
 # 根据参数设置样式
 def setAppStyle(target):
   setting = target.param.child(target.param.pathJoin("userPath", "setting.json"), default_theme)
-  current = setting.get("skin/current_skin_index", 0)
-  style = setting.get("skinStyle", default_theme['skinStyle'])[current]
+  id = setting.get("skin/current_skin_id", "skin001")
+  style = list(filter( lambda each: each['id'] == id, setting.get("skinStyle", default_theme['skinStyle'])))[0]
+  image_path = style['app_bg_image'].replace('\\', '/')
   setWidgetStyleById(id='frame_header', style={"background-color": style['header_bg_color']}, cover=True)
   setWidgetStyleById(id='frame_main', style={
     "background-color": style['main_bg_color'],
-    "border-image": f"url('{style['app_bg_image'].replace('\\', '/')}') stretch"
+    "border-image": f"url('{image_path}') stretch",
   }, cover=True)
 
 

@@ -14,13 +14,11 @@ class StackManager(Stack):
     Args:
         options (dict): 控制参数
             stack_id (str): 栈的id
-            filter_id (str|None): 过滤器id
             pageOptionList (list): 页面选项列表
             button_frame_id (str): 按钮容器的id
             button_container_id (str): 按钮容器的id
     """
     stack_id = options.get("stack_id", None)
-    filter_id = options.get("filter_id", None)
     pageOptionList = options.get("pageOptionList", None)
     button_frame_id = options.get("button_frame_id", None)
     button_container_id = options.get("button_container_id", None)
@@ -28,7 +26,6 @@ class StackManager(Stack):
       raise Exception("StackManager初始化失败，options参数错误")
 
     super().__init__(id= stack_id)
-    self.filter_id = filter_id
     self.record = Record()
     self.NOREPEAT = True      # 禁止重复
     self.DEBOUNCE = True      # 防抖开启
@@ -69,7 +66,7 @@ class StackManager(Stack):
 
   # 创建左侧导航栏按钮
   def createButton(self, pageOptionList:list):
-    self.pageOptionList = [each for each in pageOptionList if each.get("filter", "") == self.filter_id]
+    self.pageOptionList = pageOptionList
     self.button_frame.setFixedHeight(360)
     layout = self.button_container.layout()
     if layout:
