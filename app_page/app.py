@@ -2,7 +2,7 @@ import os,sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from app_page_core import Store, Param
-from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
+from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow, Setting
 from .components import StackManager
 from .config import *
 from .utils import setAppStyle, assetsPath
@@ -12,13 +12,14 @@ from .apprcc_rc import *
 # 绑定顶部右侧按钮
 class BindsRightTop(Page):
   def binds(self):
+    rightTopBinds:dict = Setting.getSetting('rightTopBinds', {})
     return {
       "clicked": [
-        ("btn_skin", lambda :self.jumpToOtherPage('skin')),
-        ("btn_login_icon", lambda :self.tips('点击了登录图标', 'success')),
-        ("btn_login_text", lambda :self.tips('点击了登录名称', 'success')),
-        ("btn_setting", lambda :self.jumpToOtherPage('setting')),
-        ("btn_message", lambda :self.jumpToOtherPage('message')),
+        ("btn_skin", rightTopBinds.get('btn_skin', lambda :self.jumpToOtherPage('skin'))),
+        ("btn_login_icon", rightTopBinds.get('btn_login_icon', lambda :self.tips('点击了登录图标，可通过rightTopBinds更改绑定事件', 'success'))),
+        ("btn_login_text", rightTopBinds.get('btn_login_text', lambda :self.tips('点击了登录名称，可通过rightTopBinds更改绑定事件', 'success'))),
+        ("btn_setting", rightTopBinds.get('btn_setting', lambda :self.jumpToOtherPage('setting'))),
+        ("btn_message", rightTopBinds.get('btn_message', lambda :self.jumpToOtherPage('message'))),
       ]
     }
   
@@ -141,6 +142,8 @@ def createApp(SETTING:dict):
     'small_page_icon': small_page_icon,
     'maximize_page_icon': maximize_page_icon,
   })
+  if 'beforeCreate' in SETTING and callable(SETTING['beforeCreate']):
+    SETTING['beforeCreate']()
   # 应用用户配置
   Setting.applySetting(SETTING)
   # 创建应用，添加图标
@@ -166,11 +169,15 @@ def createApp(SETTING:dict):
     'system_param': system_param,
   })
   root = Page('root')
-  avatar_url = param.pathJoin("userPath", 'images/avatar.png')
+  def setUserInfo(userName:str, avatarPath:str):
+    if not os.path.exists(avatarPath):
+      avatarPath = assetsPath('image', 'avatar.png')
+    main_win.ui[Setting.getSetting('button_login_id', 'btn_login_icon')].setStyleSheet(f'image: url({avatarPath})')
+    main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setText(userName[:3])
+    main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setStyleSheet('color: #fff')
+  root.callback.add('setUserInfo', setUserInfo)
+  setUserInfo('请登录', '')
   main_win.ui[Setting.getSetting('button_close_id')].clicked.connect(lambda: root.closeApp())
-  main_win.ui[Setting.getSetting('button_login_id')].setStyleSheet(f'image: url({avatar_url})')
-  main_win.ui[Setting.getSetting('button_name_id')].setText(user_param.get('userInfo/name', "未命名")[:3])
-  main_win.ui[Setting.getSetting('button_name_id')].setStyleSheet('color: #fff')
   # 设置样式，必须在创建全局变量之后
   setAppStyle(root)
   # 挂载栈页面
@@ -180,6 +187,8 @@ def createApp(SETTING:dict):
   # 显示主窗口
   main_win.show()
   print(f"[APP_TITLE:{APP_TITLE} APP_VERSION:{APP_VERSION}]")
+  if 'onMounted' in SETTING and callable(SETTING['onMounted']):
+    SETTING['onMounted'](root)
   # 运行APP
   n = app.exec()
   try:

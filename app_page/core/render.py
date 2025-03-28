@@ -1,5 +1,6 @@
 import xmltodict
 from PySide6 import QtWidgets
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QBoxLayout, QFormLayout, QGraphicsAnchorLayout,QGraphicsGridLayout,QGraphicsLayout,QGraphicsLinearLayout,QGridLayout,QHBoxLayout,QLayout,QPlainTextDocumentLayout,QStackedLayout,QVBoxLayout
 from app_page.utils import setWidgetStyle
 
@@ -54,6 +55,9 @@ def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGr
           widget.setObjectName(value)
           widgetIdMap[value] = widget
         elif key == 'text':
+          if isinstance(widget, QtWidgets.QPlainTextEdit):
+            widget.setPlainText(value)
+            return
           widget.setText(value)
         elif key == 'style':
           if isinstance(value, str):
@@ -73,6 +77,15 @@ def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGr
         elif key == 'disabled':
           if hasattr(widget, 'setReadOnly'):
             widget.setReadOnly(value != 'False')
+        elif key == 'placeholder':
+          if hasattr(widget, 'setPlaceholderText'):
+            widget.setPlaceholderText(value)
+        elif key == 'password':
+          if hasattr(widget, 'setEchoMode'):
+            widget.setEchoMode(value)
+        elif key == 'align':
+          if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
+            widget.setAlignment(getattr(Qt, value))
         elif key == 'children':
           inner_render(widget, value if isinstance(value, list) else [value], widgetIdMap)
 

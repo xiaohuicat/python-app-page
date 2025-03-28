@@ -26,7 +26,6 @@ __all__ = [
   "Waiting_time",
   "MainWindow",
   "FileParam",
-  "Setting",
   "render",
   "UI_Remove",
   "UI_Render"
