@@ -2,9 +2,9 @@ import os,sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from app_page_core import Store, Param
-from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow, Setting
+from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
 from .components import StackManager
-from .config import *
+from .config import Config
 from .utils import setAppStyle, assetsPath
 from .example import Skin
 from .apprcc_rc import *
@@ -36,7 +36,8 @@ pages = {
 }
 
 # 页面配置项列表
-pageOptionList = [
+def pageOptionList():
+  return [
   {
     "name": "测试页面1",
     "id": "chat",
@@ -121,26 +122,27 @@ def createApp(SETTING:dict):
           small_page_icon (str): 缩小图标路径
           maximize_page_icon (str): 最大窗口图标路径
   """
+  config = Config()
   # 应用默认配置
   Setting.applySetting({
     'stack_id': 'stackedWidget',
     'pages': pages,
     'pageOptionList': pageOptionList,
-    'button_frame_id': button_frame_id,
-    'button_container_id': button_container_id,
-    'button_close_id': button_close_id,
-    'button_login_id': button_login_id,
-    'button_name_id': button_name_id,
-    'APP_ICON_PATH': APP_ICON_PATH,
-    'APP_TITLE': APP_TITLE,
-    'APP_VERSION': APP_VERSION,
-    'IS_DEBUG': IS_DEBUG,
-    'PING_HOST': PING_HOST,
-    'tips_ui': tips_ui,
-    'tipsBox_ui': tipsBox_ui,
-    'loading_icon': loading_icon,
-    'small_page_icon': small_page_icon,
-    'maximize_page_icon': maximize_page_icon,
+    'button_frame_id': config.button_frame_id,
+    'button_container_id': config.button_container_id,
+    'button_close_id': config.button_close_id,
+    'button_login_id': config.button_login_id,
+    'button_name_id': config.button_name_id,
+    'APP_ICON_PATH': config.APP_ICON_PATH,
+    'APP_TITLE': config.APP_TITLE,
+    'APP_VERSION': config.APP_VERSION,
+    'IS_DEBUG': config.IS_DEBUG,
+    'PING_HOST': config.PING_HOST,
+    'tips_ui': config.tips_ui,
+    'tipsBox_ui': config.tipsBox_ui,
+    'loading_icon': config.loading_icon,
+    'small_page_icon': config.small_page_icon,
+    'maximize_page_icon': config.maximize_page_icon,
   })
   if 'beforeCreate' in SETTING and callable(SETTING['beforeCreate']):
     SETTING['beforeCreate']()
@@ -148,9 +150,9 @@ def createApp(SETTING:dict):
   Setting.applySetting(SETTING)
   # 创建应用，添加图标
   app = QApplication(sys.argv)
-  app.setWindowIcon(QIcon(APP_ICON_PATH))  # 生成exe时改为绝对路径
+  app.setWindowIcon(QIcon(Setting.getSetting('APP_ICON_PATH')))  # 生成exe时改为绝对路径
   # 创建全局参数对象
-  param = Param(filePath=None, default=Device.defaultSystemConfig(version=APP_VERSION))
+  param = Param(filePath=None, default=Device.defaultSystemConfig(version=Setting.getSetting('APP_VERSION')))
   user_param = Param(os.path.join(param.get("userPath", ""), "user.json"), {})
   system_param = Param(os.path.join(param.get("systemPath", ""), "system.json"), {})
   # 创建程序主窗口
@@ -186,7 +188,7 @@ def createApp(SETTING:dict):
   root.setup()
   # 显示主窗口
   main_win.show()
-  print(f"[APP_TITLE:{APP_TITLE} APP_VERSION:{APP_VERSION}]")
+  print(f"[APP_TITLE:{Setting.getSetting('APP_TITLE')} APP_VERSION:{Setting.getSetting('APP_VERSION')}]")
   if 'onMounted' in SETTING and callable(SETTING['onMounted']):
     SETTING['onMounted'](root)
   # 运行APP

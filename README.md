@@ -19,7 +19,6 @@ SETTING (dict): 设置参数
     stack_id (str): 栈组件id
     pages (dict): 页面字典
     pageOptionList (list): 页面配置项列表
-    filter_id (str): 过滤器id，用来筛选当前显示的页面
     button_frame_id (str): 按钮框架id
     button_container_id (str): 按钮容器id
     button_close_id (str): 关闭按钮id

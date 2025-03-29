@@ -114,6 +114,7 @@ class PageManager:
             stack = self.stack.widget(index)
             if hasattr(current, "template") and current.template:
               UI_Render(current, stack, current.template)
+            current.status = 'show'
             current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
             current["show"](*({**param, "stack": stack}, *args)) # 展示页面
           except Exception as error:
@@ -122,6 +123,7 @@ class PageManager:
           stack = self.stack.widget(index)
           if hasattr(current, "template") and current.template:
             UI_Render(current, stack, current.template)
+          current.status = 'show'
           current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
           current["show"](*({**param, "stack": stack}, *args))
 
@@ -130,11 +132,13 @@ class PageManager:
       if not getSetting("IS_DEBUG"):
         try:
           UI_Remove(self.data["current"])
+          current.status = 'hide'
           self.data["current"]["hide"](*args)
         except Exception as error:
           print("隐藏页面出错：", error)
       else:
         UI_Remove(self.data["current"])
+        current.status = 'hide'
         self.data["current"]["hide"](*args)
 
     # 将当前页面赋值

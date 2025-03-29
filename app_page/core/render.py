@@ -82,7 +82,7 @@ def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGr
             widget.setPlaceholderText(value)
         elif key == 'password':
           if hasattr(widget, 'setEchoMode'):
-            widget.setEchoMode(value)
+            widget.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         elif key == 'align':
           if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
             widget.setAlignment(getattr(Qt, value))

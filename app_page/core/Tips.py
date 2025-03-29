@@ -5,8 +5,6 @@ from app_page_core import Callback
 from ..animation import FadeEffect
 from ..core import Setting
 from ..utils import loadUI
-from ..config import tips_ui
-
 
 color_dict = {
     'success': '#28be28',
@@ -20,7 +18,7 @@ class Tips(QWidget):
         super().__init__()
         self.callback = Callback()
 
-        ui = Setting.getSetting("tips_ui", tips_ui)
+        ui = Setting.getSetting("tips_ui")
         # 如果ui是字符串
         if isinstance(ui, str):
             self.ui = loadUI(ui)

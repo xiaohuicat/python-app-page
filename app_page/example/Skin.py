@@ -2,7 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
 from ..core import Page
 from ..animation import RightClick_Menu
-from ..config import default_theme
+from ..config import Config
 from ..utils import loadUI, setAppStyle, select_image, assetsPath
 
 
@@ -52,7 +52,7 @@ class SkinCard(Page):
     output, _ = select_image(self.skin, assetsPath('skin'))
     
     # 保存背景图片路径
-    setting = self.param.child(self.param.pathJoin("userPath","setting.json"), default_theme)
+    setting = self.param.child(self.param.pathJoin("userPath","setting.json"), Config().default_theme)
     skinStyle = setting.get("skinStyle")
     skinStyle[self.option["index"]]["app_bg_image"] = output
     setting.save()
@@ -106,7 +106,7 @@ class Skin(Page):
 
   def update(self):
     self.reset()
-    setting = self.param.child(self.param.pathJoin("userPath","setting.json"), default_theme)
+    setting = self.param.child(self.param.pathJoin("userPath","setting.json"), Config().default_theme)
     skin = setting.get("skin", None)
     self.current_skin_index = skin["current_skin_index"] if skin else 0
     

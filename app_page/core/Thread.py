@@ -62,9 +62,7 @@ class ThreadManager:
     if payload:
       thread.setPayload(payload)
     # 如有有callback，绑定返回信号给callback函数
-    callback = "callback" in dict and dict["callback"]
-    if callable(callback):
-      thread.response.connect(lambda *args:callback(*args))
+    thread.response.connect(lambda *args:"callback" in dict and callable(dict["callback"]) and dict["callback"](*args))
     self.threadList.append(dict)
     isRun and thread.start()
 

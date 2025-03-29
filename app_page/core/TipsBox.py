@@ -5,8 +5,6 @@ from app_page_core import Callback, Param
 from ..animation import FadeEffect, MoveWin, Shadow
 from ..core import Setting
 from ..utils import loadUI
-from ..config import tipsBox_ui
-
 
 class TipsBox(QWidget):
   def __init__(self, system_param:Param, msg_dict:dict={"topic":"更新提醒","title":"提示窗的标题","content":"提示的内容"}):
@@ -14,7 +12,7 @@ class TipsBox(QWidget):
     self.callback = Callback()
     MoveWin(self, system_param, id="tips_box_position")
 
-    ui = Setting.getSetting("tipsBox_ui", tipsBox_ui)
+    ui = Setting.getSetting("tipsBox_ui")
     # 如果ui是字符串
     if isinstance(ui, str):
         self.ui = loadUI(ui)
