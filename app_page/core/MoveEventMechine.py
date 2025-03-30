@@ -26,5 +26,3 @@ class MoveEventMechine:
         self.callback(event)
       elif self.type != "left" and self.type != "right" and self.type != "both":
         raise Exception("button must be left or right or both")
-      else:
-        pass

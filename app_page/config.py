@@ -1,35 +1,5 @@
-import os, shutil
-from .core import Setting
-
-def assetsPath(*args):
-    """获取资源路径
-    Args:
-        args (tuple): 目录，文件名
-
-    Returns:
-        path (str): 资源绝对路径
-    """
-    is_debug = Setting.getSetting("IS_DEBUG", False)
-    packagePath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", *args)
-    appPath = os.path.join(os.getcwd(), "assets", *args)
-    if not is_debug:
-      # 确保目标目录的父目录存在
-      os.makedirs(os.path.dirname(appPath), exist_ok=True)
-      # 检查源路径是否存在
-      if os.path.exists(packagePath):
-        try:
-          # 复制文件或目录
-          if os.path.isfile(packagePath):
-            shutil.copy(packagePath, appPath)
-          else:
-            shutil.copytree(packagePath, appPath, dirs_exist_ok=True)
-        except Exception as e:
-          raise SystemError("复制文件或目录时出错", e)
-      else:
-        print("源路径不存在:", packagePath)
-      return appPath
-    else:
-      return packagePath
+from .utils import assetsPath
+from .core import Page
 
 class Config():
   def __init__(self):
@@ -85,3 +55,37 @@ class Config():
         }
       ]
     }
+    
+    self.pages = {
+      "chat": Page,
+      "setting": Page,
+      "message": Page,
+    }
+    
+    self.pageOptionList = [
+      {
+        "name": "测试页面1",
+        "id": "chat",
+        "filter": "leftBar",
+        "icon": "assets/icon/leftbar/chat.png",
+        "stack_id": "app_page_chat",
+        "right_menu":[
+          {"name": "移除", "icon": assetsPath('menu', 'remove.png')},
+          {"name": "设置", "icon": assetsPath('menu', 'setting.png')}
+        ]
+      },
+      {
+        "name": "测试页面2",
+        "id": "setting",
+        "filter": "leftBar",
+        "icon": "assets/icon/right_top_bar/setting.png",
+        "stack_id": "app_page_setting"
+      },
+      {
+        "name": "信息",
+        "id": "message",
+        "filter": "right_top_bar",
+        "icon": "assets/icon/right_top_bar/message.png",
+        "stack_id": "app_page_message"
+      }
+    ]

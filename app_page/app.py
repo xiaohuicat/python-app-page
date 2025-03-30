@@ -6,7 +6,6 @@ from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
 from .components import StackManager
 from .config import Config
 from .utils import setAppStyle, assetsPath
-from .example import Skin
 from .apprcc_rc import *
 
 # 绑定顶部右侧按钮
@@ -27,50 +26,7 @@ class BindsRightTop(Page):
     self.navigateTo(id)
     self.stackManager.clearActiveStyle()
 
-# 需要加载的页面
-pages = {
-  "chat": Page,
-  "setting": Page,
-  "skin": Skin,
-  "message": Page,
-}
 
-# 页面配置项列表
-def pageOptionList():
-  return [
-  {
-    "name": "测试页面1",
-    "id": "chat",
-    "filter": "leftBar",
-    "icon": "assets/icon/leftbar/chat.png",
-    "stack_id": "app_page_chat",
-    "right_menu":[
-      {"name": "移除", "icon": assetsPath('menu', 'remove.png')},
-      {"name": "设置", "icon": assetsPath('menu', 'setting.png')}
-    ]
-  },
-  {
-    "name": "测试页面2",
-    "id": "setting",
-    "filter": "leftBar",
-    "icon": "assets/icon/right_top_bar/setting.png",
-    "stack_id": "app_page_setting"
-  },
-  {
-    "name": "主题",
-    "id": "skin",
-    "filter": "right_top_bar",
-    "icon": "assets/icon/right_top_bar/skin.png",
-    "stack_id": "app_page_skin"
-  },
-  {
-    "name": "信息",
-    "id": "message",
-    "filter": "right_top_bar",
-    "icon": "assets/icon/right_top_bar/message.png",
-    "stack_id": "app_page_message"
-  }
-]
 
 def loadStackPages(target:Page):
   """加载页面
@@ -101,33 +57,33 @@ def loadStackPages(target:Page):
 def createApp(SETTING:dict):
   """创建应用
   Args:
-      SETTING (dict): 设置字典, 参数如下>>>
-          stack_id (str): 栈组件id
-          pages (dict): 页面字典
-          pageOptionList (list): 页面配置项列表
-          button_frame_id (str): 按钮框架id
-          button_container_id (str): 按钮容器id
-          button_close_id (str): 关闭按钮id
-          button_login_id (str): 登录按钮id
-          button_name_id (str): 按钮名称id
-          Ui_MainWindow (Ui_MainWindow): 主窗口ui对象
-          APP_ICON_PATH (str): 应用图标路径
-          APP_TITLE (str): 应用标题
-          APP_VERSION (str): 应用版本
-          IS_DEBUG (bool): 是否调试模式
-          PING_HOST (str): 网络连接检查地址
-          tips_ui (str|Ui_Form): 提示提示消息ui路径或Ui_Form类
-          tipsBox_ui (str|Ui_Form): 提示提示框ui路径或Ui_Form类
-          loading_icon (str): 加载图标路径
-          small_page_icon (str): 缩小图标路径
-          maximize_page_icon (str): 最大窗口图标路径
+    SETTING (dict): 设置字典, 参数如下
+    stack_id (str): 栈组件id
+    pages (dict): 页面字典
+    pageOptionList (list): 页面配置项列表
+    button_frame_id (str): 按钮框架id
+    button_container_id (str): 按钮容器id
+    button_close_id (str): 关闭按钮id
+    button_login_id (str): 登录按钮id
+    button_name_id (str): 按钮名称id
+    Ui_MainWindow (Ui_MainWindow): 主窗口ui对象
+    APP_ICON_PATH (str): 应用图标路径
+    APP_TITLE (str): 应用标题
+    APP_VERSION (str): 应用版本
+    IS_DEBUG (bool): 是否调试模式
+    PING_HOST (str): 网络连接检查地址
+    tips_ui (str|Ui_Form): 提示提示消息ui路径或Ui_Form类
+    tipsBox_ui (str|Ui_Form): 提示提示框ui路径或Ui_Form类
+    loading_icon (str): 加载图标路径
+    small_page_icon (str): 缩小图标路径
+    maximize_page_icon (str): 最大窗口图标路径
   """
   config = Config()
   # 应用默认配置
   Setting.applySetting({
     'stack_id': 'stackedWidget',
-    'pages': pages,
-    'pageOptionList': pageOptionList,
+    'pages': config.pages,
+    'pageOptionList': config.pageOptionList,
     'button_frame_id': config.button_frame_id,
     'button_container_id': config.button_container_id,
     'button_close_id': config.button_close_id,
@@ -173,7 +129,7 @@ def createApp(SETTING:dict):
   root = Page('root')
   def setUserInfo(userName:str, avatarPath:str):
     if not os.path.exists(avatarPath):
-      avatarPath = assetsPath('image', 'avatar.png')
+      avatarPath = assetsPath('image', 'avatar.png').replace('\\', '/')
     main_win.ui[Setting.getSetting('button_login_id', 'btn_login_icon')].setStyleSheet(f'image: url({avatarPath})')
     main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setText(userName[:3])
     main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setStyleSheet('color: #fff')
@@ -181,7 +137,7 @@ def createApp(SETTING:dict):
   setUserInfo('请登录', '')
   main_win.ui[Setting.getSetting('button_close_id')].clicked.connect(lambda: root.closeApp())
   # 设置样式，必须在创建全局变量之后
-  setAppStyle(root)
+  setAppStyle(root, Config().default_theme)
   # 挂载栈页面
   store.set('stackManager', loadStackPages(root))
   # 根页面初始化，会自动运行子页面的setup()方法

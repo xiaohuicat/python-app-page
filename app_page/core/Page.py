@@ -108,6 +108,9 @@ class Page(CorePage):
   def getWidget(self, id:str|None):
     return self.widgetIdMap.get(id, None) if type(id) is str else self.widgetIdMap
 
+  def setStatus(self, status:str):
+    self.status = status
+
   def getStatus(self):
     return self.status
 

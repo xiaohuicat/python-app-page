@@ -12,11 +12,11 @@ class StackManager(Stack):
     """初始化导航
 
     Args:
-        options (dict): 控制参数
-            stack_id (str): 栈的id
-            pageOptionList (list): 页面选项列表
-            button_frame_id (str): 按钮容器的id
-            button_container_id (str): 按钮容器的id
+      [options] (dict): 控制参数
+      stack_id (str): 栈的id
+      pageOptionList (list): 页面选项列表
+      button_frame_id (str): 按钮容器的id
+      button_container_id (str): 按钮容器的id
     """
     stack_id = options.get("stack_id", None)
     pageOptionList = options.get("pageOptionList", None)

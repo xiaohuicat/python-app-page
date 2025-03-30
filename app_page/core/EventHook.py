@@ -1,8 +1,4 @@
-import time
-
-# 毫秒级时间戳
-def timestamp():
-    return int(time.time() * 1000)
+from ..utils import timestamp
 
 # 事件钩子
 class EventHook:
@@ -10,7 +6,7 @@ class EventHook:
         self.pool = {}
         self.delay_ms = delay_ms  # 防抖触发，默认10ms
     
-    def add(self, id:str, func:callable):
+    def add(self, id:str, func):
         self.pool[id] = {
             "func": func,
             "last_run_time": 0  # 初始化上次运行时间为0
@@ -30,7 +26,7 @@ class EventHook:
         now = timestamp()
         for id, item in self.pool.items():
             last_run_time = item["last_run_time"]
-            if now - last_run_time > self.delay_ms:
+            if now - last_run_time > self.delay_ms and callable(item["func"]):
                 try:
                     item["func"](*args, **kwargs)
                     self.pool[id]["last_run_time"] = now

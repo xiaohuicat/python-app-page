@@ -2,6 +2,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QStackedWidget, QWidget, QVBoxLayout
 from .render import render
 from .Setting import getSetting
+from ..utils import layout_clear
 
 def UI_Render(target, stack:QWidget, template:str):
   layout = stack.layout()
@@ -25,10 +26,7 @@ def UI_Remove(target):
   # 如果存在删除挂载layout对象
   if hasattr(target, "_render_root_layout"):
     layout = target._render_root_layout
-    while layout.count():
-      item = layout.takeAt(0)
-      if item.widget():
-        item.widget().deleteLater()
+    layout_clear(layout)
     delattr(target, "_render_root_layout")
     
   # 如果存在持久化数据
@@ -46,7 +44,6 @@ def UI_Remove(target):
 def UI_Rerender(target, stack: QWidget, template:str):
   UI_Remove(target)
   UI_Render(target, stack, template)
-
 
 class PageManager:
   def __init__(self):

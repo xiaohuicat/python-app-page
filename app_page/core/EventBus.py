@@ -10,7 +10,6 @@ class EventBus(object):
 
   def register(self, id:str, signal:str, callback):
     widget = self.getWidget(id)
-    # 将对象的__dict__属性储存为一个字典
     widget_dict = widget.__dict__
     connect = widget_dict[signal].connect
     self._disconnectList.append(widget_dict[signal].disconnect)
