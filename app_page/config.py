@@ -28,9 +28,7 @@ class Config():
 
     # 默认主题
     self.default_theme = {
-      "skin": {
-        "current_skin_index": 0
-      },
+      "skinId": 'skin001',
       "skinStyle": [
         {
           "id": "skin001",

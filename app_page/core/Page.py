@@ -66,21 +66,21 @@ class Page(CorePage):
 
   # 提示窗
   def tipsBox(self, option, confirm=None, cancle=None, close=None):
-    if hasattr(self, "tips_box") and self.tips_box:
+    if hasattr(self, "_tips_box") and self._tips_box:
       print("请关闭后再打开")
       return
-    self.tips_box = TipsBox(self.system_param, option)
+    self._tips_box = TipsBox(self.system_param, option)
 
     def _close():
-      self.tips_box.callback.remove()
-      self.tips_box.deleteLater()
-      self.tips_box = None
-      close and close()
+      self._tips_box.callback.remove()
+      self._tips_box.deleteLater()
+      self._tips_box = None
+      if callable(close): close()
 
-    confirm and self.tips_box.callback.add("confirm", confirm)
-    cancle and self.tips_box.callback.add("cancle", cancle)
-    self.tips_box.callback.add("close", _close)
-    self.tips_box.show()
+    confirm and self._tips_box.callback.add("confirm", confirm)
+    cancle and self._tips_box.callback.add("cancle", cancle)
+    self._tips_box.callback.add("close", _close)
+    self._tips_box.show()
 
   # 关闭页面
   def close(self):

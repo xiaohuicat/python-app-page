@@ -46,3 +46,12 @@ def layout_clear(layout):
 def timestamp():
   """毫秒级时间戳"""
   return int(time.time() * 1000)
+
+def escape_xml(text):
+  """转义XML字符"""
+  return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;").replace('"', "&quot;")
+
+def unescape_xml(text):
+  """反转义XML字符"""
+  return text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&apos;", "'").replace("&quot;", '"')
+

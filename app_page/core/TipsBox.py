@@ -1,18 +1,19 @@
 from PySide6.QtWidgets import QVBoxLayout, QWidget
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCloseEvent
-from app_page_core import Callback, Param
+from app_page_core import Callback, Param, Store
 from ..animation import FadeEffect, MoveWin, Shadow
-from ..core import Setting
+from ..core.Setting import getSetting
 from ..utils import loadUI
 
 class TipsBox(QWidget):
-  def __init__(self, system_param:Param, msg_dict:dict={"topic":"更新提醒","title":"提示窗的标题","content":"提示的内容"}):
+  def __init__(self, topic:str="更新提醒", title:str="提示窗的标题", content:str="提示的内容"):
     super().__init__()
     self.callback = Callback()
+    system_param:Param = Store().get("system_param")
     MoveWin(self, system_param, id="tips_box_position")
-
-    ui = Setting.getSetting("tipsBox_ui")
+    
+    ui = getSetting("tipsBox_ui")
     # 如果ui是字符串
     if isinstance(ui, str):
         self.ui = loadUI(ui)
@@ -31,9 +32,9 @@ class TipsBox(QWidget):
     self.ui.confirm.clicked.connect(self.click("confirm"))
     self.ui.btn_close.clicked.connect(self.fadeEffect.close)
 
-    self.setTopic(msg_dict["topic"])
-    self.setTitle(msg_dict["title"])
-    self.setContent(msg_dict["content"])
+    self.setTopic(topic)
+    self.setTitle(title)
+    self.setContent(content)
 
     # 设置弹出窗口的位置
     # self.setGeometry(pos[0], pos[1], 200, 100)
@@ -45,7 +46,6 @@ class TipsBox(QWidget):
 
   def click(self, name):
     def func():
-      print("点击了：", name)
       if name != "close":
         self.callback.run(name)
       self.fadeEffect.close()

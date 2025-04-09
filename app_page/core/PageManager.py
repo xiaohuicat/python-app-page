@@ -35,8 +35,11 @@ def UI_Remove(target):
 
   if hasattr(target, "widgetIdMap"):
     for key in target.widgetIdMap.keys():
-      target.widgetIdMap[key].deleteLater()
-      target.widgetIdMap[key] = None
+      try:
+        target.widgetIdMap[key].deleteLater()
+        target.widgetIdMap[key] = None
+      except:
+        pass
     delattr(target, "widgetIdMap")
     
   target.status = 'hide'

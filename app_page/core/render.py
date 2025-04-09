@@ -1,8 +1,9 @@
 import xmltodict
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QBoxLayout, QFormLayout, QGraphicsAnchorLayout,QGraphicsGridLayout,QGraphicsLayout,QGraphicsLinearLayout,QGridLayout,QHBoxLayout,QLayout,QPlainTextDocumentLayout,QStackedLayout,QVBoxLayout
+from PySide6.QtWidgets import QWidget, QScrollArea, QBoxLayout, QFormLayout, QGraphicsAnchorLayout,QGraphicsGridLayout,QGraphicsLayout,QGraphicsLinearLayout,QGridLayout,QHBoxLayout,QLayout,QPlainTextDocumentLayout,QStackedLayout,QVBoxLayout
 from app_page.utils import setWidgetStyle
+from app_page.utils.common import unescape_xml
 
 renameWidgetMap = {
   'widget': 'QWidget',
@@ -16,6 +17,17 @@ renameWidgetMap = {
   'selector': 'QComboBox',
 }
 
+def scrollLayout(layout:QLayout, style:str="background-color: transparent;"):
+  scroll_area = QScrollArea()
+  scroll_area.setWidgetResizable(True)
+  scroll_area.setStyleSheet(style)
+  content_widget = QWidget()
+  scroll_area.setWidget(content_widget)
+  content_layout = QVBoxLayout(content_widget)
+  content_layout.setContentsMargins(0, 0, 0, 0)
+  layout.addWidget(scroll_area)
+  return content_layout
+
 def render(layout, template:str):
   """渲染模板
 
@@ -27,7 +39,9 @@ def render(layout, template:str):
       widgetIdMap(dict): 组件id与组件的映射关系
   """
   widgetIdMap = {}
-  components = template_to_components(template)
+  components, scroll = template_to_components(template)
+  if scroll:
+    layout = scrollLayout(layout)
   inner_render(layout, components, widgetIdMap)
   return widgetIdMap
 
@@ -56,9 +70,12 @@ def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGr
           widgetIdMap[value] = widget
         elif key == 'text':
           if isinstance(widget, QtWidgets.QPlainTextEdit):
-            widget.setPlainText(value)
+            widget.setPlainText(unescape_xml(value))
             return
-          widget.setText(value)
+          widget.setText(unescape_xml(value))
+        elif key == 'title':
+          if hasattr(widget, 'setToolTip'):
+            widget.setToolTip(unescape_xml(value))
         elif key == 'style':
           if isinstance(value, str):
             widget.setStyleSheet(value)
@@ -79,17 +96,25 @@ def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGr
             widget.setReadOnly(value != 'False')
         elif key == 'placeholder':
           if hasattr(widget, 'setPlaceholderText'):
-            widget.setPlaceholderText(value)
+            widget.setPlaceholderText(unescape_xml(value))
         elif key == 'password':
           if hasattr(widget, 'setEchoMode'):
             widget.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
         elif key == 'align':
           if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
             widget.setAlignment(getattr(Qt, value))
+        elif key == 'scroll':
+          if isinstance(widget, QLayout) and value == 'True':
+            widget.__content_layout = scrollLayout(widget, value)
         elif key == 'children':
-          inner_render(widget, value if isinstance(value, list) else [value], widgetIdMap)
+          if hasattr(widget, '__content_layout'):
+            widget_or_layout = widget.__content_layout
+            delattr(widget, '__content_layout')
+          else:
+            widget_or_layout = widget
+          inner_render(widget_or_layout, value if isinstance(value, list) else [value], widgetIdMap)
 
-def template_to_components(template:str):
+def template_to_components(template:str) -> tuple:
   """将xml模板转换为组件列表。
 
   参数:
@@ -169,5 +194,6 @@ def template_to_components(template:str):
         children.append(process_element(element))
     return children
 
-  root = xml_dict['template']
-  return process_element(root)['children']
+  root:dict = xml_dict['template']
+  scroll = root.get('@scroll', None)
+  return process_element(root)['children'], scroll

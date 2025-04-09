@@ -6,7 +6,7 @@ from .common import assetsPath
 # 根据参数设置样式
 def setAppStyle(target, default_theme):
   setting = target.param.child(target.param.pathJoin("userPath", "setting.json"), default_theme)
-  id = setting.get("skin/current_skin_id", "skin001")
+  id = setting.get("skinId", default_theme["skinId"])
   style = list(filter( lambda each: each['id'] == id, setting.get("skinStyle", default_theme['skinStyle'])))[0]
   image_path = style['app_bg_image'].replace('\\', '/') if type(style['app_bg_image']) is str else ''
   if not os.path.exists(image_path):
@@ -68,3 +68,10 @@ def cascading_styles(*args):
     else:
       pass
   return style
+
+def s2t(*args):
+  """
+  将样式字典转换为样式字符串 style to text
+  """
+  style = cascading_styles(*args)
+  return ";".join([key+":"+style[key] for key in style.keys()])

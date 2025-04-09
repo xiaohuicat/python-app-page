@@ -130,7 +130,7 @@ def createApp(SETTING:dict):
   def setUserInfo(userName:str, avatarPath:str):
     if not os.path.exists(avatarPath):
       avatarPath = assetsPath('image', 'avatar.png').replace('\\', '/')
-    main_win.ui[Setting.getSetting('button_login_id', 'btn_login_icon')].setStyleSheet(f'image: url({avatarPath})')
+    main_win.ui[Setting.getSetting('button_login_id', 'btn_login_icon')].setStyleSheet(f'border-image: url({avatarPath}); border-radius: 16px;')
     main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setText(userName[:3])
     main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setStyleSheet('color: #fff')
   root.callback.add('setUserInfo', setUserInfo)
@@ -140,6 +140,7 @@ def createApp(SETTING:dict):
   setAppStyle(root, Config().default_theme)
   # 挂载栈页面
   store.set('stackManager', loadStackPages(root))
+  store.set('root', root)
   # 根页面初始化，会自动运行子页面的setup()方法
   root.setup()
   # 显示主窗口
