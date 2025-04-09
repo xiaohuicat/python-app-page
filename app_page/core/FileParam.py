@@ -35,7 +35,7 @@ class FileParam:
     # size_mb = total_size/1024/1024
     # print(f"fileSize={size_mb:.3f}Mb")
     return self.param.data
-  
+
 
   def walk(self, callback=None):
     for foldername, subfolders, filenames in os.walk(self.filePath):
@@ -52,7 +52,7 @@ class FileParam:
           "ext": os.path.splitext(filename)[1],
           "filename": filename
         })
-    
+
 
   def update(self):
     # self._size = 0

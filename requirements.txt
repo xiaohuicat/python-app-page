@@ -1,4 +1,4 @@
-app-page-core>=0.0.6
+app-page-core>=0.0.7
 nanoid
 PySide6
 pywin32
