@@ -1,8 +1,6 @@
 app-page-core>=0.0.7
 nanoid
 PySide6
-pywin32
 numpy
-openpyxl
-paho-mqtt==1.6.1
 pillow
+xmltodict

@@ -6,3 +6,8 @@ __pycache__
 
 # Editor directories and files
 .vscode/*
+
+# 忽略苹果系统的DS_Store文件
+.DS_Store
+# 忽略Windows系统的Thumbs.db文件
+Thumbs.db

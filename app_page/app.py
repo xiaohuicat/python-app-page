@@ -1,6 +1,7 @@
 import os,sys
+import platform
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon
+from PySide6.QtGui import QIcon, QFont
 from app_page_core import Store, Param
 from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
 from .components import StackManager
@@ -107,6 +108,11 @@ def createApp(SETTING:dict):
   # 创建应用，添加图标
   app = QApplication(sys.argv)
   app.setWindowIcon(QIcon(Setting.getSetting('APP_ICON_PATH')))  # 生成exe时改为绝对路径
+  if platform.system() == 'Darwin':  # macOS
+      font = QFont("-apple-system", 12)  # 或 "PingFang SC"
+  else:  # Windows
+      font = QFont("Microsoft YaHei UI", 12)
+  app.setFont(font)
   # 创建全局参数对象
   param = Param(filePath=None, default=Device.defaultSystemConfig(version=Setting.getSetting('APP_VERSION')))
   user_param = Param(os.path.join(param.get("userPath", ""), "user.json"), {})
