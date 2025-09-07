@@ -4,6 +4,7 @@ from .render import render
 from .Setting import getSetting
 from ..utils import layout_clear
 
+
 def UI_Render(target, stack:QWidget, template:str):
   layout = stack.layout()
   if not layout:
@@ -21,6 +22,7 @@ def UI_Render(target, stack:QWidget, template:str):
   # 渲染页面并挂载组件id列表
   target.widgetIdMap = render(layout, template)
   target.status = 'show'
+
 
 def UI_Remove(target):
   # 如果存在删除挂载layout对象
@@ -43,6 +45,7 @@ def UI_Remove(target):
     delattr(target, "widgetIdMap")
     
   target.status = 'hide'
+
 
 def UI_Rerender(target, stack: QWidget, template:str):
   UI_Remove(target)

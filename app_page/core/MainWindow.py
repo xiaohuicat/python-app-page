@@ -4,7 +4,7 @@ from PySide6 import QtCore, QtGui
 from app_page_core import Param, Callback
 from ..animation import MoveWin
 from ..core import Setting
-from ..core.ui_main import Ui_MainWindow
+from ..assets.UI.ui_main import Ui_MainWindow
 from ..utils import setupUiFromSetting
 
 

@@ -12,7 +12,8 @@ def assetsPath(*args):
   is_debug = Setting.getSetting("IS_DEBUG", False)
   packagePath = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "assets", *args)
   appPath = os.path.join(os.getcwd(), "assets", *args)
-  if not is_debug:
+  if is_debug:
+    print('appPath:', appPath)
     # 确保目标目录的父目录存在
     os.makedirs(os.path.dirname(appPath), exist_ok=True)
     # 检查源路径是否存在
@@ -27,9 +28,8 @@ def assetsPath(*args):
         raise SystemError("复制文件或目录时出错", e)
     else:
       print("源路径不存在:", packagePath)
-    return appPath
-  else:
-    return packagePath
+  
+  return appPath
 
 def layout_clear(layout):
   """删除布局对象内所有子对象

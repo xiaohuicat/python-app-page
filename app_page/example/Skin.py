@@ -10,7 +10,7 @@ class SkinCard(Page):
   def __init__(self, option) -> None:
     super().__init__(True)
     self.option = option
-    self.skin = loadUI(assetsPath('skin_card.ui'))
+    self.skin = loadUI(assetsPath('UI', 'skin_card.ui'))
     layout = QVBoxLayout()
     layout.setAlignment(Qt.AlignTop)
     self.pick = QPushButton("", self.skin)
@@ -68,8 +68,8 @@ class SkinCard(Page):
 
 class Skin(Page):
   def __init__(self):
-    super().__init__()
-    self.name = "Skin"
+    super().__init__('knowledge')
+
 
   def setup(self):
     super().setup()
@@ -97,39 +97,34 @@ class Skin(Page):
       self.skin_layout.setAlignment(Qt.AlignTop)
 
 
-  def show(self, name=None):
+  def show(self, *args):
     self.update()
 
-  def hide(self, name=None):
+  def hide(self, *args):
     self.children.remove()
 
 
   def update(self):
     self.reset()
     setting = self.param.child(self.param.pathJoin("userPath","setting.json"), Config().default_theme)
-    skin = setting.get("skin", None)
-    self.current_skin_index = skin["current_skin_index"] if skin else 0
-    
-    def getSkinList():
-      current = self.current_skin_index
-      skinStyle = setting.get("skinStyle")
-      skinStyle['current'] = skinStyle[current].id
-      return skinStyle
+    self.current_skin_id = setting.get("skinId", Config().default_theme['skinId'])
 
     def pick(option):
-      if self.current_skin_index == option["index"]:
+      print('>>>pick:', option)
+      if self.current_skin_id == option["id"]:
         return
-      self.current_skin_index = option["index"]
-      setting.set("skin/current_skin_index", option["index"])
+      self.current_skin_id = option["id"]
+      setting.set("skinId", option["id"])
       setting.save()
-      setAppStyle(self)
+      setAppStyle(self, Config().default_theme)
       self.reset()
       render()
     
     def render():
       i = 0
-      skinList = getSkinList()
+      skinList = setting.get("skinStyle", [])
       for each in skinList:
+        each['current'] = self.current_skin_id
         skincard = SkinCard(each)
         skincard.setup()
         skincard.callback.add("pick", pick)
