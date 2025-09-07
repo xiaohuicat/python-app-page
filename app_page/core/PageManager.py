@@ -129,7 +129,8 @@ class PageManager:
         if id in self.global_data:
           current.global_data = self.global_data[id]
         else:
-          current.global_data = {}
+          self.global_data[id] = {}
+          current.global_data = self.global_data[id]
         # 初始化页面
         current.setup()
         data["current"] = current
