@@ -138,7 +138,7 @@ def createApp(SETTING:dict):
       avatarPath = assetsPath('image', 'avatar.png').replace('\\', '/')
     main_win.ui[Setting.getSetting('button_login_id', 'btn_login_icon')].setStyleSheet(f'border-image: url({avatarPath}); border-radius: 16px;')
     main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setText(userName[:3])
-    main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setStyleSheet('color: #fff')
+    main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setStyleSheet('color:#fff;font-size:16px')
   root.callback.add('setUserInfo', setUserInfo)
   setUserInfo('请登录', '')
   main_win.ui[Setting.getSetting('button_close_id')].clicked.connect(lambda: root.closeApp())

@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
         self.ui.btn_change.clicked.connect(self.restore_or_maximize_window)
         self.ui.btn_mini.clicked.connect(self.showMinimized)
         self.ui.label_logo.setText(Setting.getSetting("APP_TITLE"))
+        self.ui.label_logo.setStyleSheet('color:#fff;font-size:22px')
         self.isMaximized = False
 
         self.effect_shadow = QGraphicsDropShadowEffect(self)
