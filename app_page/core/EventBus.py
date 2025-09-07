@@ -10,22 +10,24 @@ class EventBus(object):
   def getWidget(self, id:str):
     return self.widgets.get(id, None)
 
+
   def register(self, id:str, signal:str, callback):
     widget:QWidget = self.getWidget(id)
     widget_dict = widget.__dict__
     signalInstance = widget_dict[signal]
     if hasattr(signalInstance, 'connect'):
-      connectCallback = (lambda *args: callback(self, *args)) if self.hasSelf else callback
-      connect = signalInstance.connect
-      connect(connectCallback)
+      new_callback = (lambda *args: callback(self, *args)) if self.hasSelf else callback
+      signalInstance.connect(new_callback)
     if hasattr(signalInstance, 'disconnect'):
       def disconnect():
         try:
           if widget:
-            signalInstance.disconnect(connectCallback)
+            signalInstance.disconnect(new_callback)
         except:
           pass
       self._disconnectList.append(disconnect)
+
+
   def clear(self):
     #  清理组件映射表
     keys = list(self.widgets.keys())

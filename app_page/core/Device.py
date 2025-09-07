@@ -19,7 +19,6 @@ def getScreenInfo():
 
 # 检查网络连接
 def internetConnection():
-    from win32com.shell import shell
     import subprocess
     host = Setting.getSetting('PING_HOST', Config().PING_HOST)
     # Determine the ping command based on the OS

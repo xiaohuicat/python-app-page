@@ -99,12 +99,25 @@ class PageManager:
   def open(self, id, *args):
     data = {}
     
-    def create_page(current, param):
+    def create_page(param):
+      # 创建页面对象
+      Page = self.page_dict[id]
+      # 实例化页面
+      current = Page()
+      # 添加全局数据
+      if id in self.global_data:
+        current.global_data = self.global_data[id]
+      else:
+        self.global_data[id] = {}
+        current.global_data = self.global_data[id]
+      # 初始化页面
+      current.setup()
+      data["current"] = current
       stack = self.stack.widget(index)
+      current.rerender = lambda template: UI_Rerender(current, stack, template)
       if hasattr(current, "template") and current.template:
         UI_Render(current, stack, current.template)
       current.status = 'show'
-      current.callback.add('rerender', lambda template: UI_Rerender(current, stack, template))
       current.show(*({**param, "stack": stack}, *args)) # 展示页面
     
     def remove_page():
@@ -121,26 +134,13 @@ class PageManager:
       index = param.get("stack_index", 0)
       self.stack.setCurrentIndex(index)
       if id in self.page_dict:
-        # 创建页面对象
-        Page = self.page_dict[id]
-        # 实例化页面
-        current = Page()
-        # 添加全局数据
-        if id in self.global_data:
-          current.global_data = self.global_data[id]
-        else:
-          self.global_data[id] = {}
-          current.global_data = self.global_data[id]
-        # 初始化页面
-        current.setup()
-        data["current"] = current
         if not getSetting("IS_DEBUG"):
           try:
-            create_page(current, param)
+            create_page(param)
           except Exception as error:
             print("打开页面出错：", error)
         else:
-          create_page(current, param)
+          create_page(param)
 
     # 刚才打开的页面将其隐藏
     if "current" in self.data and self.data["current"]:
