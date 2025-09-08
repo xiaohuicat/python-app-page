@@ -1,7 +1,10 @@
 import os, sys, hashlib, platform
+import ctypes
+import ctypes.wintypes
 from PySide6.QtGui import QGuiApplication
 from ..core import Setting
 from ..config import Config
+
 
 # 获取屏幕信息
 def getScreenInfo():
@@ -73,12 +76,38 @@ def getSoftwareMD5():
 
 
 # 获取我的文档
-def getDocPath(pathID=5):
-  # 默认返回我的文档路径，出错时返回当前工作路径
-  try:
-    return shell.SHGetFolderPath(0, pathID, None, 0)
-  except:
-    return os.getcwd()
+def getDocPath():
+    """
+    跨平台获取"我的文档"路径，不依赖pyobjc库
+    支持Windows和macOS系统，出错时返回当前工作路径
+    """
+    try:
+        if sys.platform.startswith('win'):
+            # Windows系统实现
+            # SHGFP_TYPE_CURRENT = 0，获取当前路径
+            CSIDL_PERSONAL = 5  # 我的文档
+            buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+            ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, 0, buf)
+            return buf.value
+        elif sys.platform.startswith('darwin'):
+            # macOS系统实现 - 不依赖pyobjc
+            # 从环境变量获取用户主目录
+            home_dir = os.path.expanduser("~")
+            # 文档目录通常位于 ~/Documents
+            doc_path = os.path.join(home_dir, "Documents")
+            
+            # 验证路径是否存在
+            if os.path.exists(doc_path) and os.path.isdir(doc_path):
+                return doc_path
+            else:
+                # 如果标准路径不存在，返回用户主目录
+                return home_dir
+        else:
+            # 其他系统返回当前工作路径
+            return os.getcwd()
+    except Exception as e:
+        print(f"获取文档路径出错: {e}")
+        return os.getcwd()
 
 
 # 获取默认系统配置
