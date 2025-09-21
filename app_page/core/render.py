@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComb
 from ..utils import setWidgetStyle, unescape_xml, und2t
 from .Setting import getSetting
 
+
 # 组件类型别名映射
 aliasWidgetMap = {
   # 基础组件
@@ -177,13 +178,16 @@ def process_element(element):
   vnode = {
     # 匹配组件别名
     'type': aliasWidgetMap[element.tag] if element.tag in aliasWidgetMap else element.tag,
-    'children': [],
   }
 
   # 预处理节点属性
   for key in element.attrib.keys():
     preprocess(vnode, key, element.attrib.get(key))
   
+  # 判断是否有children
+  if len(element) > 0:
+    vnode['children'] = []
+
   # 递归处理子节点
   for child in element:
     child_component = process_element(child)
