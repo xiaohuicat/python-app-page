@@ -1,23 +1,37 @@
-import xmltodict
+import xml.etree.ElementTree as ET
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QScrollArea, QBoxLayout, QFormLayout, QGraphicsAnchorLayout,QGraphicsGridLayout,QGraphicsLayout,QGraphicsLinearLayout,QGridLayout,QHBoxLayout,QLayout,QPlainTextDocumentLayout,QStackedLayout,QVBoxLayout
-from app_page.utils import setWidgetStyle
-from app_page.utils.common import unescape_xml
+from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox)
+from ..utils import setWidgetStyle, unescape_xml, und2t
+from .Setting import getSetting
 
-renameWidgetMap = {
+# 组件类型别名映射
+aliasWidgetMap = {
+  # 基础组件
+  'div': 'QWidget',
   'widget': 'QWidget',
-  'grid': 'QGridLayout',
-  'h-box': 'QHBoxLayout',
-  'v-box': 'QVBoxLayout',
   'label': 'QLabel',
   'button': 'QPushButton',
   'line-edit': 'QLineEdit',
   'text-edit': 'QPlainTextEdit',
   'selector': 'QComboBox',
+  'checkbox': 'QCheckBox',
+  'radio': 'QRadioButton',
+  # 布局相关
+  'grid': 'QGridLayout',
+  'h-box': 'QHBoxLayout',
+  'v-box': 'QVBoxLayout',
+  'form': 'QFormLayout',
+  'stacked': 'QStackedLayout',
+  'graphics-anchor': 'QGraphicsAnchorLayout',
+  'graphics-grid': 'QGraphicsGridLayout',
+  'graphics-layout': 'QGraphicsLayout',
+  'graphics-linear': 'QGraphicsLinearLayout',
 }
 
-def scrollLayout(layout:QLayout, style:str="background-color: transparent;"):
+
+# 创建可滚动布局
+def create_scroll_layout(layout:QLayout, style:str="background-color: transparent;"):
   scroll_area = QScrollArea()
   scroll_area.setWidgetResizable(True)
   scroll_area.setStyleSheet(style)
@@ -28,93 +42,158 @@ def scrollLayout(layout:QLayout, style:str="background-color: transparent;"):
   layout.addWidget(scroll_area)
   return content_layout
 
-def render(layout, template:str):
+
+# 渲染模板
+def render(parent:QWidget|QLayout, template:str):
   """渲染模板
 
   参数:
-      layout (object): 父布局
+      parent (object): 父布局或父组件
       template (str): 模板字符串
 
   返回:
       widgetIdMap(dict): 组件id与组件的映射关系
+      vnode(dict): 虚拟节点
   """
   widgetIdMap = {}
-  components, scroll = template_to_components(template)
-  if scroll:
-    layout = scrollLayout(layout)
-  inner_render(layout, components, widgetIdMap)
+  vnode = template_to_vnode(template)
+  if getSetting("IS_DEBUG"):
+    print("vnode:", vnode)
+  if vnode.get('scroll', False):
+    parent = create_scroll_layout(parent)
+  return inner_render(parent, vnode, widgetIdMap)
+
+
+# 检查是否为布局对象
+def check_layout(value):
+  return isinstance(value, QLayout)
+
+
+# 递归渲染组件
+def inner_render(parent:QWidget|QLayout, vnode:dict, widgetIdMap:dict):
+  vnodes = vnode.get('children', [])
+  if len(vnodes) == 0:
+    return
+  for props in vnodes:
+    if isinstance(props, dict) and 'type' in props:
+      widget:QWidget|QLayout = create_widget(parent, props)
+      set_attributes(widget, props, widgetIdMap)
   return widgetIdMap
 
-def checkLayout(value):
-  return isinstance(value, QGridLayout) or isinstance(value, QHBoxLayout) or isinstance(value, QVBoxLayout)
 
-def inner_render(layout:QWidget|QBoxLayout|QFormLayout|QGraphicsAnchorLayout|QGraphicsGridLayout|QGraphicsLayout|QGraphicsLinearLayout|QGridLayout|QHBoxLayout|QLayout|QPlainTextDocumentLayout|QStackedLayout|QVBoxLayout, components:list, widgetIdMap:dict):
-  for component in components:
-    if isinstance(component, dict) and 'type' in component:
-      WidgetType = getattr(QtWidgets, component['type']) if hasattr(QtWidgets, component['type']) else None
-      if WidgetType and checkLayout(layout):
-        widget:QWidget = WidgetType()
-        if 'grid' in component:
-          grid = component['grid']
-          layout.addWidget(widget, *grid)
-        else:
-          layout.addWidget(widget)
+def create_widget(parent:QWidget|QLayout, props:dict) -> QWidget|QLayout:
+  AutoWidget:QWidget|QLayout = getattr(QtWidgets, props['type']) if hasattr(QtWidgets, props['type']) else None
+  # 如果上一个层级是布局，则直接添加组件，否则以上一个组件为父组件创建组件或布局
+  if AutoWidget and check_layout(parent):
+    widget:QWidget = AutoWidget()
+    if 'grid' in props:
+      grid = props['grid']
+      parent.addWidget(widget, *grid)
+    else:
+      parent.addWidget(widget)
+  else:
+    widget:QWidget|QLayout = AutoWidget(parent)
+  return widget
+
+
+def set_attributes(widget:QWidget|QLayout, props:dict, widgetIdMap:dict):
+  for key in props.keys():
+    value = props[key]
+    if key == 'id':
+      widget.setObjectName(value)
+      widgetIdMap[value] = widget
+    elif key == 'text':
+      if isinstance(widget, QtWidgets.QPlainTextEdit):
+        widget.setPlainText(unescape_xml(value))
+        return
+      widget.setText(unescape_xml(value))
+    elif key == 'title':
+      if hasattr(widget, 'setToolTip'):
+        widget.setToolTip(unescape_xml(value))
+    elif key == 'style':
+      if isinstance(value, str):
+        widget.setStyleSheet(value)
+      elif callable(value):
+        value(widget)
       else:
-        widget:QWidget|QGridLayout|QHBoxLayout|QVBoxLayout = WidgetType(layout)
+        setWidgetStyle(widget, value, cover=True)
+    elif key == 'margins':
+      widget.setContentsMargins(*value)
+    elif key == 'spacing':
+      widget.setSpacing(value)
+    elif key == 'width':
+      widget.setFixedWidth(value)
+    elif key == 'height':
+      widget.setFixedHeight(value)
+    elif key == 'disabled':
+      if hasattr(widget, 'setReadOnly'):
+        widget.setReadOnly(value != 'False')
+    elif key == 'placeholder':
+      if hasattr(widget, 'setPlaceholderText'):
+        widget.setPlaceholderText(unescape_xml(value))
+    elif key == 'password':
+      if hasattr(widget, 'setEchoMode'):
+        widget.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
+    elif key == 'align':
+      if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
+        widget.setAlignment(getattr(Qt, value))
+    elif key == 'scroll':
+      if isinstance(widget, QLayout) and value:
+        widget.__scroll_layout = create_scroll_layout(widget)
+    elif key == 'options':
+      if isinstance(widget, QComboBox):
+        widget.addItems(value)
+    elif key == 'children':
+      if hasattr(widget, '__scroll_layout'):
+        parent = widget.__scroll_layout
+        delattr(widget, '__scroll_layout')
+      else:
+        parent = widget
+      inner_render(parent, props, widgetIdMap)
 
-      keys = component.keys()
-      for key in keys:
-        value = component[key]
-        if key == 'id':
-          widget.setObjectName(value)
-          widgetIdMap[value] = widget
-        elif key == 'text':
-          if isinstance(widget, QtWidgets.QPlainTextEdit):
-            widget.setPlainText(unescape_xml(value))
-            return
-          widget.setText(unescape_xml(value))
-        elif key == 'title':
-          if hasattr(widget, 'setToolTip'):
-            widget.setToolTip(unescape_xml(value))
-        elif key == 'style':
-          if isinstance(value, str):
-            widget.setStyleSheet(value)
-          elif callable(value):
-            value(widget)
-          else:
-            setWidgetStyle(widget, value, cover=True)
-        elif key == 'margins':
-          widget.setContentsMargins(*value)
-        elif key == 'spacing':
-          widget.setSpacing(value)
-        elif key == 'width':
-          widget.setFixedWidth(value)
-        elif key == 'height':
-          widget.setFixedHeight(value)
-        elif key == 'disabled':
-          if hasattr(widget, 'setReadOnly'):
-            widget.setReadOnly(value != 'False')
-        elif key == 'placeholder':
-          if hasattr(widget, 'setPlaceholderText'):
-            widget.setPlaceholderText(unescape_xml(value))
-        elif key == 'password':
-          if hasattr(widget, 'setEchoMode'):
-            widget.setEchoMode(QtWidgets.QLineEdit.EchoMode.Password)
-        elif key == 'align':
-          if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
-            widget.setAlignment(getattr(Qt, value))
-        elif key == 'scroll':
-          if isinstance(widget, QLayout) and value == 'True':
-            widget.__content_layout = scrollLayout(widget, value)
-        elif key == 'children':
-          if hasattr(widget, '__content_layout'):
-            widget_or_layout = widget.__content_layout
-            delattr(widget, '__content_layout')
-          else:
-            widget_or_layout = widget
-          inner_render(widget_or_layout, value if isinstance(value, list) else [value], widgetIdMap)
 
-def template_to_components(template:str) -> tuple:
+# 预处理
+def preprocess(item:dict, key:str, value:str):
+  if key == 'margins' or key == 'grid':
+    item[key] = list(map(int, value.strip("[]").split(',')))
+  elif key == 'options':
+    # 尝试解析json数组
+    try:
+      result = und2t(value)
+    except:
+      result = []
+    item[key] = result
+  elif key in ['spacing', 'width', 'height']:
+    item[key] = int(value)
+  elif key in ['scroll', 'disabled', 'scroll']:
+    item[key] = value == 'True'
+  else:
+    item[key] = value
+
+
+# 处理xml节点
+def process_element(element):
+  # xml节点转换为组件字典
+  vnode = {
+    # 匹配组件别名
+    'type': aliasWidgetMap[element.tag] if element.tag in aliasWidgetMap else element.tag,
+    'children': [],
+  }
+
+  # 预处理节点属性
+  for key in element.attrib.keys():
+    preprocess(vnode, key, element.attrib.get(key))
+  
+  # 递归处理子节点
+  for child in element:
+    child_component = process_element(child)
+    vnode['children'].append(child_component)
+
+  return vnode
+  
+
+# 将xml模板转换为虚拟节点
+def template_to_vnode(template:str) -> tuple:
   """将xml模板转换为组件列表。
 
   参数:
@@ -124,76 +203,4 @@ def template_to_components(template:str) -> tuple:
       components(list): 组件列表
   """
   # 将xml字符串转换为字典
-  xml_dict = xmltodict.parse(template)
-
-  def process_element(element):
-    if not isinstance(element, dict):
-      return {}
-
-    component = {}
-    for key in element.keys():
-      if key.startswith('@'):
-        if key == '@margins' or key == '@grid':
-          component[key[1:]] = list(map(int, element[key].strip("[]").split(',')))
-        elif key in ['@spacing', '@width', '@height']:
-          component[key[1:]] = int(element[key])
-        else:
-          component[key[1:]] = element[key]
-      
-      elif key == 'layout':
-        layout = element['layout']
-        children = []
-        if isinstance(layout, dict):
-          dataList = []
-          item = {}
-          # 获取layout中开头不是@的属性的键值对
-          for _key in layout.keys():
-            if _key.startswith('@'):
-              if _key == '@margins' or _key == '@grid':
-                item[_key[1:]] = list(map(int, layout[_key].strip("[]").split(',')))
-              elif _key in ['@spacing', '@width', '@height']:
-                item[_key[1:]] = int(layout[_key])
-              else:
-                item[_key[1:]] = layout.get(_key, '')
-              continue
-            child = layout.get(_key, None)
-            if isinstance(child, dict):
-              typeValue = renameWidgetMap[_key] if _key in renameWidgetMap else _key
-              dataList.append({**child, '@type': typeValue})
-            elif isinstance(child, list):
-              typeValue = renameWidgetMap[_key] if _key in renameWidgetMap else _key
-              dataList.extend([{**each, '@type': typeValue} for each in child])
-          item['children'] = process_children(dataList)
-          children.append(item)
-          if len(children):
-            component['children'] = children
-      else:
-        children = []
-        widget = element.get(key, None)
-        component[key] = widget
-        if isinstance(widget, list):
-          for w in widget:
-            if '@type' not in w:
-              w['@type'] = key
-            children.append(process_element(w))
-        else:
-          if '@type' not in widget:
-            widget['@type'] = key
-          children.append(process_element(widget))
-        if len(children):
-          component['children'] = children
-    
-    return component
-  
-  def process_children(elements):
-    children = []
-    if isinstance(elements, dict):
-      children.append(process_element(elements))
-    elif isinstance(elements, list):
-      for element in elements:
-        children.append(process_element(element))
-    return children
-
-  root:dict = xml_dict['template']
-  scroll = root.get('@scroll', None)
-  return process_element(root)['children'], scroll
+  return process_element(ET.fromstring(template))

@@ -8,6 +8,7 @@ from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.MainWindow import MainWindow
 
+
 class Page(CorePage):
   def __init__(self, name=None):
     super().__init__(name)
@@ -28,6 +29,7 @@ class Page(CorePage):
       self.localStore = self.param.child(path, {})
     self.widgetIdMap = {}
 
+
   def setup(self, props=None):
     super().setup(props)
     # 绑定函数
@@ -45,6 +47,7 @@ class Page(CorePage):
   # 导航到页面
   def navigateTo(self, id, *args):
     self.pageManager.open(*(id, *args))
+
 
   # 提示信息
   def tips(self, msg, type='default', pos=None, close=None):
@@ -64,6 +67,7 @@ class Page(CorePage):
 
     self.main_win.move_win.mouseMoveEventHook.add(id="tips", func=win_move)
 
+
   # 提示窗
   def tipsBox(self, option, confirm=None, cancle=None, close=None):
     if hasattr(self, "_tips_box") and self._tips_box:
@@ -82,6 +86,7 @@ class Page(CorePage):
     self._tips_box.callback.add("close", _close)
     self._tips_box.show()
 
+
   # 关闭页面
   def close(self):
     # 销毁挂载的回调函数
@@ -90,6 +95,7 @@ class Page(CorePage):
     self.children.remove()
     # 移除组件映射
     self.widgetIdMap.clear()
+
 
   # 关闭app
   def closeApp(self):
@@ -105,14 +111,18 @@ class Page(CorePage):
       print('程序退出了，顺手帮你把垃圾带走')
       sys.exit(n)
 
+
   def getWidget(self, id:str|None):
     return self.widgetIdMap.get(id, None) if type(id) is str else self.widgetIdMap
+
 
   def setStatus(self, status:str):
     self.status = status
 
+
   def getStatus(self):
     return self.status
+
 
   # 查看组件信息
   @property

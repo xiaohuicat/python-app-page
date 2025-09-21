@@ -5,6 +5,7 @@ class Record:
     self.record_num = record_num
     self.record = []
 
+
   # 添加记录
   def addRecord(self, id):
     self.current_index = -1
@@ -12,12 +13,14 @@ class Record:
       self.record.pop(0)
     self.record.append(id)
 
+
   # 根据序号获取记录
   def getRecord(self, index=False):
     if index:
       return self.record[index]
     else:
       return self.record[-1]
+
 
   # 左侧记录
   def leftRecord(self):
@@ -29,6 +32,7 @@ class Record:
     else:
       self.current_index = 0
     return False if self.current_index == -1 or len(self.record)==0 else self.record[self.current_index]
+
 
   # 右侧记录
   def rightRecord(self):

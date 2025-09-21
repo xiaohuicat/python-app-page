@@ -8,7 +8,7 @@ from ..utils import loadUI, setAppStyle, select_image, assetsPath
 
 class SkinCard(Page):
   def __init__(self, option) -> None:
-    super().__init__(True)
+    super().__init__()
     self.option = option
     self.skin = loadUI(assetsPath('UI', 'skin_card.ui'))
     layout = QVBoxLayout()
@@ -68,7 +68,7 @@ class SkinCard(Page):
 
 class Skin(Page):
   def __init__(self):
-    super().__init__('knowledge')
+    super().__init__()
 
 
   def setup(self):
