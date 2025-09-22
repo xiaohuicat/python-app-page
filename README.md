@@ -47,13 +47,13 @@ class Editor(Page):
     super().__init__("editor")
     self.template = """
     <template>
-      <widget type="QWidget" style="color:#333;background-color:#fff;border-radius:10px;" height="250">
+      <div style="color:#333;background-color:#fff;border-radius:10px;" height="250">
         <layout type="QVBoxLayout">
           <label text="写点东西吧(自动保存)" style="font-size:20px;color:#333;" />
           <text-edit id="editor" style="background-color:#e0e0e0;border-radius:10px;padding:10px;font-size:16px;" />
           <button id="help" text="使用说明" height="32" width="100" style="background-color:#000;color:#fff;border-radius:10px;" />
         </layout>
-      </widget>
+      </div>
     </template>"""
 
   def show(self, *args):
@@ -71,11 +71,11 @@ class Setting(Page):
     super().__init__("setting")
     self.template = """
     <template>
-      <widget type="QWidget" style="color:#333;background-color:#fff;border-radius:10px;">
-        <layout type="QVBoxLayout">
+      <div style="color:#333;background-color:#fff;border-radius:10px;">
+        <v-box>
           <label text="系统设置" style="font-size:20px;color:#333;" />
-        </layout>
-      </widget>
+        </v-box>
+      </div>
     </template>"""
 
 # 创建应用
