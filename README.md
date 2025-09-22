@@ -48,11 +48,11 @@ class Editor(Page):
     self.template = """
     <template>
       <div style="color:#333;background-color:#fff;border-radius:10px;" height="250">
-        <layout type="QVBoxLayout">
+        <v-box>
           <label text="写点东西吧(自动保存)" style="font-size:20px;color:#333;" />
           <text-edit id="editor" style="background-color:#e0e0e0;border-radius:10px;padding:10px;font-size:16px;" />
           <button id="help" text="使用说明" height="32" width="100" style="background-color:#000;color:#fff;border-radius:10px;" />
-        </layout>
+        </v-box>
       </div>
     </template>"""
 

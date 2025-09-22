@@ -3,4 +3,3 @@ nanoid
 PySide6
 numpy
 pillow
-xmltodict

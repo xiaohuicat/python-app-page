@@ -3,6 +3,7 @@ from PySide6.QtWidgets import QStackedWidget, QWidget, QVBoxLayout
 from .render import render
 from .Setting import getSetting
 from ..utils import layout_clear
+from .callfunc import call_func
 
 
 def UI_Render(target, stack:QWidget, template:str):
@@ -114,7 +115,8 @@ class PageManager:
         self.global_data[id] = {}
         current.global_data = self.global_data[id]
       # 初始化页面
-      current.setup()
+      vars = call_func(current.setup)
+      print("页面初始化变量:", vars)
       data["current"] = current
       stack = self.stack.widget(index)
       rerender = lambda template: UI_Rerender(current, stack, template)
