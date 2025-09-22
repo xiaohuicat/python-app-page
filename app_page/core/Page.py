@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QWidget
 from app_page_core import Page as CorePage
 from app_page_core import Param
 from ..core.Tips import Tips
@@ -7,10 +7,11 @@ from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.MainWindow import MainWindow
+from ..core.Setting import getSetting
 
 
 class Page(CorePage):
-  def __init__(self, name=None):
+  def __init__(self, name=None) -> None:
     super().__init__(name)
     self.status:str
     self.app:QApplication
@@ -22,15 +23,16 @@ class Page(CorePage):
     self.system_param:Param
     self.user_param:Param
     self.localStore:Param
+    self.widgetIdMap:dict = {}
     # 判断是否挂载参数存储器
     if name and hasattr(self, "param"):
       path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
-      print(f"当前页面name:{name} 配置文件path: {path}")
       self.localStore = self.param.child(path, {})
-    self.widgetIdMap = {}
+      if getSetting("IS_DEBUG"):
+        print(f"页面 {name} 的本地存储路径为: {path}")
 
 
-  def setup(self, props=None):
+  def setup(self, props=None) -> None:
     super().setup(props)
     # 绑定函数
     if hasattr(self, "binds"):
@@ -44,15 +46,16 @@ class Page(CorePage):
           disconnect = lambda args: lambda:args.disconnect()
           self.callback.add('onHide', disconnect(widget_dict[signal]))
 
+
   # 导航到页面
-  def navigateTo(self, id, *args):
+  def navigateTo(self, id, *args) -> None:
     self.pageManager.open(*(id, *args))
 
 
   # 提示信息
-  def tips(self, msg, type='default', pos=None, close=None):
+  def tips(self, msg, type='default', pos=None, close=None) -> None:
     p = self.main_win.move_win.window_position
-    pos=[p[0]+p[2]/2, p[1]+p[3]/2]
+    pos = [p[0]+p[2]/2, p[1]+p[3]/2]
 
     if hasattr(self.app, "tips_widget"):
       self.main_win.move_win.mouseMoveEventHook.remove(id="tips")
@@ -62,20 +65,20 @@ class Page(CorePage):
     self.app.tips_widget.show()
     self.app.tips_widget.callback.add("close", close)
 
-    def win_move(pos):
+    def move_callback(pos) -> None:
       self.app.tips_widget.setPos([pos.x()+p[2]/2, pos.y()+p[3]/2])
 
-    self.main_win.move_win.mouseMoveEventHook.add(id="tips", func=win_move)
+    self.main_win.move_win.mouseMoveEventHook.add(id="tips", func=move_callback)
 
 
   # 提示窗
-  def tipsBox(self, option, confirm=None, cancle=None, close=None):
+  def tipsBox(self, topic='', title='', content='', confirm=None, cancle=None, close=None) -> None:
     if hasattr(self, "_tips_box") and self._tips_box:
       print("请关闭后再打开")
       return
-    self._tips_box = TipsBox(self.system_param, option)
+    self._tips_box = TipsBox(topic=topic, title=title, content=content)
 
-    def _close():
+    def _close() -> None:
       self._tips_box.callback.remove()
       self._tips_box.deleteLater()
       self._tips_box = None
@@ -88,7 +91,7 @@ class Page(CorePage):
 
 
   # 关闭页面
-  def close(self):
+  def close(self) -> None:
     # 销毁挂载的回调函数
     self.callback and self.callback.destroy()
     # 移除子组件
@@ -98,7 +101,7 @@ class Page(CorePage):
 
 
   # 关闭app
-  def closeApp(self):
+  def closeApp(self) -> None:
     self.system_param.save()
     self.user_param.save()
     self.pageManager.destroy()
@@ -112,15 +115,15 @@ class Page(CorePage):
       sys.exit(n)
 
 
-  def getWidget(self, id:str|None):
+  def getWidget(self, id:str|None=None) -> QWidget|dict|None:
     return self.widgetIdMap.get(id, None) if type(id) is str else self.widgetIdMap
 
 
-  def setStatus(self, status:str):
+  def setStatus(self, status:str) -> None:
     self.status = status
 
 
-  def getStatus(self):
+  def getStatus(self) -> str:
     return self.status
 
 

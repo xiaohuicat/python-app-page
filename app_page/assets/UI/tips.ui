@@ -19,18 +19,19 @@
    <string>Form</string>
   </property>
   <property name="styleSheet">
-   <string notr="true">#tips {
-	color: #fff;
-	background-color: #666;
-	padding: 5px;
-	border-radius: 8px;
-}
-
+   <string notr="true">
 * {
   padding:0;
   margin:0;
   border:none;
   outline: none;
+}
+
+#tips {
+	color: #fff;
+	background-color: #666;
+	padding: 5px;
+	border-radius: 8px;
 }
 
 /* 垂直滚动条 handle */

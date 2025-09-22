@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
 from ..core import Page
 from ..animation import RightClick_Menu
 from ..config import Config
-from ..utils import loadUI, setAppStyle, select_image, assetsPath
+from ..utils import loadUI, setAppStyle, select_image, assetsPath, assetsUrl
 
 
 class SkinCard(Page):
@@ -36,7 +36,7 @@ class SkinCard(Page):
     self.pick.setStyleSheet("background-color: transparent;")
     self.skin.setStyleSheet("""#container {
       border-radius: 12px;
-      border-image: url('"""+option['app_bg_image']+"""') stretch;
+      border-image: url('"""+ option['app_bg_image'].replace('\\', '/') +"""') stretch;
     }""")
     color = "red" if option["id"] == option["current"] else "transparent"
     self.skin.status.setStyleSheet("""
@@ -110,7 +110,6 @@ class Skin(Page):
     self.current_skin_id = setting.get("skinId", Config().default_theme['skinId'])
 
     def pick(option):
-      print('>>>pick:', option)
       if self.current_skin_id == option["id"]:
         return
       self.current_skin_id = option["id"]

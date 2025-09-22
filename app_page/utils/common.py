@@ -33,6 +33,17 @@ def assetsPath(*args):
   return appPath
 
 
+def assetsUrl(*args):
+  """获取资源URL路径
+  Args:
+      args (tuple): 目录，文件名
+
+  Returns:
+      path (str): 资源绝对路径
+  """
+  return assetsPath(*args).replace("\\", "/")
+
+
 def layout_clear(layout):
   """删除布局对象内所有子对象
   Args:
@@ -69,7 +80,7 @@ def d2t(data):
     return data
 
 
-def und2t(text):
+def t2d(text):
   """将base64编码的字符串转换为JSON数据"""
   try:
     return json.loads(bytes.fromhex(text).decode('utf-8'))

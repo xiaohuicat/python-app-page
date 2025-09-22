@@ -2,7 +2,7 @@ import xml.etree.ElementTree as ET
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox)
-from ..utils import setWidgetStyle, unescape_xml, und2t
+from ..utils import setWidgetStyle, unescape_xml, t2d
 from .Setting import getSetting
 
 
@@ -160,7 +160,7 @@ def preprocess(item:dict, key:str, value:str):
   elif key == 'options':
     # 尝试解析json数组
     try:
-      result = und2t(value)
+      result = t2d(value)
     except:
       result = []
     item[key] = result

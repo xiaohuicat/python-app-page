@@ -117,9 +117,10 @@ class PageManager:
       current.setup()
       data["current"] = current
       stack = self.stack.widget(index)
-      current.rerender = lambda template: UI_Rerender(current, stack, template)
+      rerender = lambda template: UI_Rerender(current, stack, template)
+      current.rerender = rerender
       if hasattr(current, "template") and current.template:
-        UI_Render(current, stack, current.template)
+        rerender(current.template)
       current.status = 'show'
       current.show(*({**param, "stack": stack}, *args)) # 展示页面
     
