@@ -7,7 +7,7 @@ from .Thread import EasyThread, Waiting_time, ThreadManager
 from .MainWindow import MainWindow
 from .FileParam import FileParam
 from .Record import Record
-from .PageManager import PageManager, UI_Remove, UI_Render
+from .PageManager import PageManager
 from ..core import Setting, Device
 from .render import render
 from .callfunc import call_func, current_func
@@ -27,8 +27,6 @@ __all__ = [
   "Waiting_time",
   "MainWindow",
   "FileParam",
-  "UI_Remove",
-  "UI_Render",
   "render",
   "call_func",
   "current_func",

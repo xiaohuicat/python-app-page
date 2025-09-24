@@ -17,6 +17,7 @@ class Config():
     self.APP_DATA_DIRNAME = 'GreatNoteData'
 
     self.IS_DEBUG = False        #生产环境，使用远程服务器
+    self.SETUP_EASY = False
 
     self.PING_HOST = 'greatnote.cn'
     self.filter_id = "leftBar"

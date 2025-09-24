@@ -3,3 +3,4 @@ nanoid
 PySide6
 numpy
 pillow
+mako

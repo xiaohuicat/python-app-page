@@ -1,56 +1,6 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QStackedWidget, QWidget, QVBoxLayout
-from .render import render
+from PySide6.QtWidgets import QStackedWidget
 from .Setting import getSetting
-from ..utils import layout_clear
 from .callfunc import call_func
-
-
-def UI_Render(target, stack:QWidget, template:str):
-  layout = stack.layout()
-  if not layout:
-    layout = QVBoxLayout(stack)
-  layout.setAlignment(Qt.AlignTop)
-  layout.setContentsMargins(10, 10, 10, 10)
-  layout.setSpacing(15)
-
-  # 判断是否挂载layout容器
-  if hasattr(target, "_render_root_layout"):
-    UI_Remove(target)
-  else:
-    target._render_root_layout = layout
-  
-  # 渲染页面并挂载组件id列表
-  target.widgetIdMap = render(layout, template)
-  target.status = 'show'
-
-
-def UI_Remove(target):
-  # 如果存在删除挂载layout对象
-  if hasattr(target, "_render_root_layout"):
-    layout = target._render_root_layout
-    layout_clear(layout)
-    delattr(target, "_render_root_layout")
-    
-  # 如果存在持久化数据
-  if hasattr(target, "localStore"):
-    target.localStore.save()
-
-  if hasattr(target, "widgetIdMap"):
-    for key in target.widgetIdMap.keys():
-      try:
-        target.widgetIdMap[key].deleteLater()
-        target.widgetIdMap[key] = None
-      except:
-        pass
-    delattr(target, "widgetIdMap")
-    
-  target.status = 'hide'
-
-
-def UI_Rerender(target, stack: QWidget, template:str):
-  UI_Remove(target)
-  UI_Render(target, stack, template)
 
 
 class PageManager:
@@ -103,33 +53,30 @@ class PageManager:
   def open(self, id, *args):
     data = {}
     
-    def create_page(param):
+    def create_page(param, stack):
       # 创建页面对象
       Page = self.page_dict[id]
       # 实例化页面
       current = Page()
       # 添加全局数据
-      if id in self.global_data:
-        current.global_data = self.global_data[id]
-      else:
+      if id not in self.global_data:
         self.global_data[id] = {}
-        current.global_data = self.global_data[id]
-      # 初始化页面
-      vars = call_func(current.setup)
-      print("页面初始化变量:", vars)
+      current.setGlobal(self.global_data[id])
+      # 初始化并获取初始化参数
+      if getSetting('SETUP_EASY'):
+        params = call_func(current.setup)
+        del params['self']
+      else:
+        params = current.setup()
       data["current"] = current
-      stack = self.stack.widget(index)
-      rerender = lambda template: UI_Rerender(current, stack, template)
-      current.rerender = rerender
-      if hasattr(current, "template") and current.template:
-        rerender(current.template)
+      current.setStack(stack)
+      current.rerender(params)
       current.status = 'show'
-      current.show(*({**param, "stack": stack}, *args)) # 展示页面
+      current.show(*{*args, *param})
     
     def remove_page():
       last = self.data["current"]
-      UI_Remove(last)
-      last.global_data = None
+      last.hidePage()
       last.hide(*args)
     
     # 点击的页面立即展示
@@ -139,14 +86,15 @@ class PageManager:
       param = self.button_dict.get(id, None)
       index = param.get("stack_index", 0)
       self.stack.setCurrentIndex(index)
+      stack = self.stack.widget(index)
       if id in self.page_dict:
         if not getSetting("IS_DEBUG"):
           try:
-            create_page(param)
+            create_page(param, stack)
           except Exception as error:
             print("打开页面出错：", error)
         else:
-          create_page(param)
+          create_page(param, stack)
 
     # 刚才打开的页面将其隐藏
     if "current" in self.data and self.data["current"]:
@@ -168,9 +116,7 @@ class PageManager:
     # 隐藏当前页面
     if "current" in self.data and self.data["current"]:
       try:
-        current = self.data["current"]
-        UI_Remove(current)
-        current["hide"]()
+        self.data["current"]["hide"]()
       except Exception as e:
         print('销毁页面管理器报错：', e)
         pass

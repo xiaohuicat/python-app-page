@@ -58,8 +58,6 @@ def render(parent:QWidget|QLayout, template:str):
   """
   widgetIdMap = {}
   vnode = template_to_vnode(template)
-  if getSetting("IS_DEBUG"):
-    print("vnode:", vnode)
   if vnode.get('scroll', False):
     parent = create_scroll_layout(parent)
   return inner_render(parent, vnode, widgetIdMap)

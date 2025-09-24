@@ -27,8 +27,6 @@ def assetsPath(*args):
           shutil.copytree(packagePath, appPath, dirs_exist_ok=True)
       except Exception as e:
         raise SystemError("复制文件或目录时出错", e)
-    else:
-      print("源路径不存在:", packagePath)
   
   return appPath
 
