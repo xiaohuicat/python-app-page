@@ -2,8 +2,7 @@ import sys
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout
 from mako.template import Template
-from app_page_core import Page as CorePage
-from app_page_core import Param
+from app_page_core import Param, Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
@@ -66,7 +65,7 @@ class Page(CorePage):
     self.hidePage()
     layout = self.__stack.layout()
     if not layout:
-      layout = QVBoxLayout(self.__layout)
+      layout = QVBoxLayout(self.__stack)
     layout.setAlignment(Qt.AlignTop)
     layout.setContentsMargins(10, 10, 10, 10)
     layout.setSpacing(15)
@@ -89,7 +88,8 @@ class Page(CorePage):
       widget.deleteLater()
     self.__widgetIdMap.clear()
     # 保存持久化数据
-    self.localStore.save()
+    if hasattr(self, "localStore"):
+      self.localStore.save()
     # 移除挂载的元素
     if self.__layout:
       layout_clear(self.__layout)
@@ -208,7 +208,7 @@ class Page(CorePage):
     return self.__layout
 
 
-  def setLayout(self, layout):
+  def setLayout(self, layout:QLayout):
     self.__layout = layout
 
   
