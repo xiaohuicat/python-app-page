@@ -101,7 +101,7 @@ class Page(CorePage):
 
 
   # 注册事件
-  def register(self, id:str, signal:str, callback:function) -> None:
+  def register(self, id:str, signal:str, callback) -> None:
     widgets = self.getWidget()
     if not widgets:
       raise RuntimeError("注册失败，无法获取组件widgets")
