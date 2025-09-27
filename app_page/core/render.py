@@ -2,8 +2,8 @@ import xml.etree.ElementTree as ET
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox)
+from mako.template import Template
 from ..utils import setWidgetStyle, unescape_xml, t2d
-from .Setting import getSetting
 
 
 # 组件类型别名映射
@@ -45,7 +45,7 @@ def create_scroll_layout(layout:QLayout, style:str="background-color: transparen
 
 
 # 渲染模板
-def render(parent:QWidget|QLayout, template:str):
+def render(parent:QWidget|QLayout, template:str, params:dict={}) -> dict:
   """渲染模板
 
   参数:
@@ -57,7 +57,8 @@ def render(parent:QWidget|QLayout, template:str):
       vnode(dict): 虚拟节点
   """
   widgetIdMap = {}
-  vnode = template_to_vnode(template)
+  xml_template = Template(template).render(**params)
+  vnode = template_to_vnode(xml_template)
   if vnode.get('scroll', False):
     parent = create_scroll_layout(parent)
   return inner_render(parent, vnode, widgetIdMap)
@@ -69,7 +70,7 @@ def check_layout(value):
 
 
 # 递归渲染组件
-def inner_render(parent:QWidget|QLayout, vnode:dict, widgetIdMap:dict):
+def inner_render(parent:QWidget|QLayout, vnode:dict, widgetIdMap:dict) -> dict:
   vnodes = vnode.get('children', [])
   if len(vnodes) == 0:
     return

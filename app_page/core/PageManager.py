@@ -5,6 +5,9 @@ from .callfunc import call_func
 
 class PageManager:
   def __init__(self):
+    self.current_id = None
+    self.current_page = None
+    self.stack = None
     self.button_dict = {}
     self.page_dict = {}
     self.data = {}
@@ -51,7 +54,7 @@ class PageManager:
 
   # 打开页面
   def open(self, id, *args):
-    data = {}
+    temp_dict = {}
     
     def create_page(param, stack):
       # 创建页面对象
@@ -68,20 +71,20 @@ class PageManager:
         del params['self']
       else:
         params = current.setup()
-      data["current"] = current
+      temp_dict["current"] = current
       current.setStack(stack)
       current.rerender(params)
       current.status = 'show'
       current.show(*{*args, *param})
     
     def remove_page():
-      last = self.data["current"]
+      last = self.current_page
       last.hidePage()
       last.hide(*args)
     
     # 点击的页面立即展示
     if id in self.button_dict:
-      data["id"] = id
+      temp_dict["id"] = id
       # 跳转到页面
       param = self.button_dict.get(id, None)
       index = param.get("stack_index", 0)
@@ -93,11 +96,12 @@ class PageManager:
             create_page(param, stack)
           except Exception as error:
             print("打开页面出错：", error)
+            return
         else:
           create_page(param, stack)
 
     # 刚才打开的页面将其隐藏
-    if "current" in self.data and self.data["current"]:
+    if self.current_page:
       if not getSetting("IS_DEBUG"):
         try:
           remove_page()
@@ -108,18 +112,22 @@ class PageManager:
 
     # 将当前页面赋值
     if id in self.button_dict:
-      self.data["id"] = data["id"]
-      self.data["current"] = data["current"]
+      self.current_id = temp_dict["id"]
+      self.current_page = temp_dict["current"]
 
   # 销毁页面
   def destroy(self):
     # 隐藏当前页面
-    if "current" in self.data and self.data["current"]:
+    if self.current_page:
       try:
-        self.data["current"]["hide"]()
+        self.current_page.hidePage()
+        self.current_page.hide()
       except Exception as e:
         print('销毁页面管理器报错：', e)
         pass
     self.page_dict = {}
     self.button_dict = {}
-    self.data = {}
+    self.global_data = {}
+    self.current_id = None
+    self.current_page = None
+    self.stack = None

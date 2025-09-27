@@ -1,13 +1,13 @@
 import sys
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout
-from mako.template import Template
 from app_page_core import Param, Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.MainWindow import MainWindow
+from ..core.EventBus import EventBus
 from ..core.Setting import getSetting
 from ..core.render import render
 from ..utils import layout_clear
@@ -31,6 +31,7 @@ class Page(CorePage):
     self.__global_data:dict = {}
     self.__stack:QWidget|None = None
     self.__layout:QLayout|None = None
+    self.__eventBus:EventBus|None = None
     # 判断是否挂载参数存储器
     if name and hasattr(self, "param"):
       path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
@@ -78,7 +79,7 @@ class Page(CorePage):
 
     # 渲染页面并挂载组件id列表
     templateParams = params if type(params) == dict else {}
-    self.setWidget(render(layout, Template(self.template).render(**templateParams)))
+    self.setWidget(render(layout, self.template, templateParams))
 
 
   def hidePage(self):
@@ -87,12 +88,26 @@ class Page(CorePage):
       widget:QWidget = self.__widgetIdMap[key]
       widget.deleteLater()
     self.__widgetIdMap.clear()
+    # 解除事件绑定
+    if self.__eventBus:
+      self.__eventBus.clear()
+      self.__eventBus = None
     # 保存持久化数据
     if hasattr(self, "localStore"):
       self.localStore.save()
     # 移除挂载的元素
     if self.__layout:
       layout_clear(self.__layout)
+
+
+  # 注册事件
+  def register(self, id:str, signal:str, callback:function) -> None:
+    widgets = self.getWidget()
+    if not widgets:
+      raise RuntimeError("注册失败，无法获取组件widgets")
+    if not self.__eventBus:
+      self.__eventBus = EventBus(widgets)
+    self.__eventBus.register(id, signal, callback)
 
 
   # 导航到页面
@@ -182,7 +197,7 @@ class Page(CorePage):
 
 
   def hasGlobal(self, key:str) -> bool:
-    return key in self.__global_data
+    return self.__global_data and key in self.__global_data
   
 
   def getGlobal(self, key:str|None=None):
@@ -192,9 +207,11 @@ class Page(CorePage):
   def setGlobal(self, key:str|dict, value:dict|None=None):
     if type(key) == str and value != None:
       self.__global_data[key] = value
+    elif type(key) == dict and value == None:
+      self.__global_data = key
     else:
-      self.__global_data = value
-  
+      raise TypeError("参数错误，key必须为字符串且value不能为空，或key必须为字典且value必须为空")
+
 
   def getStack(self) -> QWidget | None:
     return self.__stack
