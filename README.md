@@ -13,74 +13,64 @@ pip install app-page
 # 使用案例
 ```python
 from app_page import Page, createApp
-
+# 模版支持moka语法，接受setup返回词典中的变量
+template = """
+<template>
+  <div style="color:#333;background-color:#fff;border-radius:10px;" height="250">
+    <v-box>
+      <label text="${title}" style="font-size:20px;color:#333;" />
+      <text-edit id="editor" style="background-color:#e0e0e0;border-radius:10px;padding:10px;font-size:16px;" />
+      <button id="help" text="${button_text}" height="32" width="100" style="background-color:#000;color:#fff;border-radius:10px;" />
+    </v-box>
+  </div>
+</template>
 """
-SETTING (dict): 设置参数
-    stack_id (str): 栈组件id
-    pages (dict): 页面字典
-    pageOptionList (list): 页面配置项列表
-    button_frame_id (str): 按钮框架id
-    button_container_id (str): 按钮容器id
-    button_close_id (str): 关闭按钮id
-    button_login_id (str): 登录按钮id
-    button_name_id (str): 按钮名称id
-    APP_ICON_PATH (str): 应用图标路径
-    APP_TITLE (str): 应用标题
-    APP_VERSION (str): 应用版本
-    IS_DEBUG (bool): 是否调试模式
-    PING_HOST (str): 网络连接检查地址
-    tips_ui (str|Ui_Form): 提示提示消息ui路径或Ui_Form类
-    tipsBox_ui (str|Ui_Form): 提示提示框ui路径或Ui_Form类
-    loading_icon (str): 加载图标路径
-    small_page_icon (str): 缩小图标路径
-    maximize_page_icon (str): 最大窗口图标路径
-"""
-createApp(SETTING={})
-```
-# 自定义页面
-```python
-from app_page import Page, EventBus, createApp
 
 # 编辑页面
 class Editor(Page):
   def __init__(self):
+    # 初始化添加名称自动生成持久化对象，可通过self.localStore访问
     super().__init__("editor")
-    self.template = """
-    <template>
-      <div style="color:#333;background-color:#fff;border-radius:10px;" height="250">
-        <v-box>
-          <label text="写点东西吧(自动保存)" style="font-size:20px;color:#333;" />
-          <text-edit id="editor" style="background-color:#e0e0e0;border-radius:10px;padding:10px;font-size:16px;" />
-          <button id="help" text="使用说明" height="32" width="100" style="background-color:#000;color:#fff;border-radius:10px;" />
-        </v-box>
-      </div>
-    </template>"""
+    self.template = template
+
+  def setup() -> dict:
+    # 此处返回的变量可在moka模版中使用
+    return {
+      'title': '写点东西吧(自动保存)',
+      'button_text': '使用说明',
+    }
 
   def show(self, *args):
-    self.widgetIdMap["editor"].setPlainText(self.localStore.get("editor-value", ''))
-    eventBus = EventBus(self.widgetIdMap)
-    eventBus.register("editor", 'textChanged', lambda *args: self.textChange())
-    eventBus.register("help", 'clicked', lambda *args: self.tips('没别的说明了，自己摸索一下', 'success'))
+    # 获取持久化编辑内容
+    content = self.localStore.get("editor-value", '')
+    # 根据id获取标签渲染组件并设置内容
+    self.getWidget("editor").setPlainText(content)
+    # 注册事件，(id，事件类型，回调函数)
+    self.register("editor", 'textChanged', lambda *args: self.textChange())
+    self.register("help", 'clicked', lambda *args: self.tips('没别的说明了，自己摸索一下', 'success'))
 
+  # 值改变更新到持久化内容
   def textChange(self):
-    self.localStore.set("editor-value", self.widgetIdMap["editor"].toPlainText())
+    self.localStore.set("editor-value", self.getWidget("editor").toPlainText())
 
 # 设置页面
 class Setting(Page):
   def __init__(self):
-    super().__init__("setting")
+    super().__init__()
     self.template = """
-    <template>
-      <div style="color:#333;background-color:#fff;border-radius:10px;">
-        <v-box>
-          <label text="系统设置" style="font-size:20px;color:#333;" />
-        </v-box>
-      </div>
-    </template>"""
+<template>
+  <div style="color:#333;background-color:#fff;border-radius:10px;">
+    <v-box>
+      <label text="系统设置" style="font-size:20px;color:#333;" />
+    </v-box>
+  </div>
+</template>
+"""
 
 # 创建应用
 createApp(SETTING={
   "APP_TITLE": "桌面软件",
+  "IS_DEBUG": True, # 调试模式，面板打印更多调试数据
   "pages": {"editor": Editor, "setting": Setting},
   "pageOptionList": [
     {
