@@ -13,6 +13,7 @@ pip install app-page
 # 使用案例
 ```python
 from app_page import Page, createApp
+
 # 模版支持moka语法，接受setup返回词典中的变量
 template = """
 <template>
@@ -71,7 +72,10 @@ class Setting(Page):
 createApp(SETTING={
   "APP_TITLE": "桌面软件",
   "IS_DEBUG": True, # 调试模式，面板打印更多调试数据
-  "pages": {"editor": Editor, "setting": Setting},
+  "pages": {
+    "editor": Editor, 
+    "setting": Setting,
+  },
   "pageOptionList": [
     {
       "name": "随心笔记",
