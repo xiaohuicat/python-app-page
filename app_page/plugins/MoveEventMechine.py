@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QPushButton
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QMouseEvent
 
+
 class MoveEventMechine:
   def __init__(self, target, callback, type="both"):
     self.target = target

@@ -1,5 +1,6 @@
 from .utils import assetsPath
 from .core import Page
+from .assets.UI.apprcc_rc import *
 
 
 class Config():

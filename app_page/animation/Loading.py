@@ -9,7 +9,7 @@ WHITE_STYLE = {
   "background-color": "#fff"
 }
   
-  
+
 class Loading:
   def __init__(self, layout:QVBoxLayout|QHBoxLayout|QGridLayout):
     self.layout = layout

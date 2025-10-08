@@ -7,7 +7,7 @@ from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
 from .components import StackManager
 from .config import Config
 from .utils import setAppStyle, assetsPath
-from .apprcc_rc import *
+
 
 # 绑定顶部右侧按钮
 class BindsRightTop(Page):

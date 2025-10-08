@@ -1,8 +1,9 @@
 from ..utils import timestamp
 
+
 # 事件钩子
 class EventHook:
-    def __init__(self, delay_ms=10):
+    def __init__(self, delay_ms:int=10):
         self.pool = {}
         self.delay_ms = delay_ms  # 防抖触发，默认10ms
     
@@ -12,7 +13,7 @@ class EventHook:
             "last_run_time": 0  # 初始化上次运行时间为0
         }
 
-    def get(self, id):
+    def get(self, id:str):
         return self.pool.get(id)
 
     def remove(self, id=None):

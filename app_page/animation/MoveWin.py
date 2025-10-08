@@ -5,6 +5,7 @@ from PySide6 import QtGui
 from app_page import Param
 from ..core.EventHook import EventHook
 
+
 class MoveWin(QMainWindow):
   def __init__(self, target:QMainWindow | QWidget, system_param:Param | None, id:str | None):
     super().__init__(target)

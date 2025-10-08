@@ -1,7 +1,96 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QMenu
 from PySide6.QtGui import QIcon
-from ..core.MoveEventMechine import MoveEventMechine
+from ..plugins import MoveEventMechine
+
+
+MENU_STYLE = """
+QMenu {
+  border: 1px solid #f0f0f0; /* 边框宽度为1px，颜色为#CCCCCC */
+  border-radius: 10px; /* 边框圆角 */
+  background-color: #FAFAFC; /* 背景颜色 */
+  font-size: 14px;
+  color: #666;
+  padding: 10px 0px 10px 0px; /* 菜单项距菜单顶部边界和底部边界分别有5px */
+
+}
+
+QMenu::item { /* 菜单子控件item，为菜单项在default的状态 */
+  border: 0px solid transparent;
+  background-color: transparent;
+  min-width: 100px;
+  min-height: 30px;
+  padding: 0px 10px;
+}
+
+QMenu::icon { padding: 0px 10px; }
+
+QMenu::item:selected { /* 为菜单项在selected的状态 */
+  background-color: #EDEDEF;
+}
+
+QMenu::item:disabled{ /* 为菜单项在disabled的状态 */
+  color: #CCCCCC;
+  background: none;
+}
+
+QMenu::separator { /* 菜单子控件separator，定义菜单项之间的分隔线 */
+  height: 1px;
+  background: #CCCCCC;
+  margin-left: 2px; /* 距离菜单左边界2px */
+  margin-right: 2px; /* 距离菜单右边界2px */
+}
+
+QMenu::right-arrow { /* 菜单子控件right-arrow，定义子菜单指示器 */
+  width: 24px;
+  height: 24px;
+  image: url(:/Resource/right_arrow);
+}
+
+QMenu::left-arrow { /* 菜单子控件left-arrow，定义子菜单指示器 */
+  width: 24px;
+  height: 24px;
+  image: url(:/Resource/left_arrow);
+}
+
+/*
+QMenu::icon:checked {
+  border: none;
+  background-color: transparent;
+  position: absolute;
+  width: 24px;
+  height: 24px;
+}*/
+
+QMenu::item::indicator { /* 菜单项子控件indicator，定义菜单项在选中状态下的指示器 */
+  width: 24px;
+  height: 24px;
+}
+
+QMenu::item::indicator:unchecked { /* 定义菜单项未选中的状态 */
+  image: none;
+}
+
+QMenu::item::indicator:checked { /* 定义菜单项选中的状态 */
+  image: url(:/Resource/checkebox);
+}
+
+QPushButton#PlayerButton { /* 自定义菜单项中的按钮 */
+  border: none;
+  background-color: transparent;
+}
+
+QPushButton#PlayerButton:hover {
+  padding-top: 2px;
+  padding-left: 2px;
+}
+
+QPushButton#PlayerButton:pressed {
+  padding: 0px;
+}
+
+"""
+
 
 class CallMenu:
   def __init__(self, target:QWidget, itemList:list, type:str='left'or'right'or'both') -> None:
@@ -46,94 +135,7 @@ class CallMenu:
     menu.setWindowFlag(Qt.FramelessWindowHint)  # 去除原来的边框
     menu.setAttribute(Qt.WA_TranslucentBackground)  # 透明背景
 
-    menu.setStyleSheet(
-      """
-      QMenu {
-        border: 1px solid #f0f0f0; /* 边框宽度为1px，颜色为#CCCCCC */
-        border-radius: 10px; /* 边框圆角 */
-        background-color: #FAFAFC; /* 背景颜色 */
-        font-size: 14px;
-        color: #666;
-        padding: 10px 0px 10px 0px; /* 菜单项距菜单顶部边界和底部边界分别有5px */
-
-      }
-
-      QMenu::item { /* 菜单子控件item，为菜单项在default的状态 */
-        border: 0px solid transparent;
-        background-color: transparent;
-        min-width: 100px;
-        min-height: 30px;
-        padding: 0px 10px;
-      }
-
-      QMenu::icon { padding: 0px 10px; }
-
-      QMenu::item:selected { /* 为菜单项在selected的状态 */
-        background-color: #EDEDEF;
-      }
-
-      QMenu::item:disabled{ /* 为菜单项在disabled的状态 */
-        color: #CCCCCC;
-        background: none;
-      }
-
-      QMenu::separator { /* 菜单子控件separator，定义菜单项之间的分隔线 */
-        height: 1px;
-        background: #CCCCCC;
-        margin-left: 2px; /* 距离菜单左边界2px */
-        margin-right: 2px; /* 距离菜单右边界2px */
-      }
-
-      QMenu::right-arrow { /* 菜单子控件right-arrow，定义子菜单指示器 */
-        width: 24px;
-        height: 24px;
-        image: url(:/Resource/right_arrow);
-      }
-
-      QMenu::left-arrow { /* 菜单子控件left-arrow，定义子菜单指示器 */
-        width: 24px;
-        height: 24px;
-        image: url(:/Resource/left_arrow);
-      }
-
-      /*
-      QMenu::icon:checked {
-        border: none;
-        background-color: transparent;
-        position: absolute;
-        width: 24px;
-        height: 24px;
-      }*/
-
-      QMenu::item::indicator { /* 菜单项子控件indicator，定义菜单项在选中状态下的指示器 */
-        width: 24px;
-        height: 24px;
-      }
-
-      QMenu::item::indicator:unchecked { /* 定义菜单项未选中的状态 */
-        image: none;
-      }
-
-      QMenu::item::indicator:checked { /* 定义菜单项选中的状态 */
-        image: url(:/Resource/checkebox);
-      }
-
-      QPushButton#PlayerButton { /* 自定义菜单项中的按钮 */
-        border: none;
-        background-color: transparent;
-      }
-
-      QPushButton#PlayerButton:hover {
-        padding-top: 2px;
-        padding-left: 2px;
-      }
-
-      QPushButton#PlayerButton:pressed {
-        padding: 0px;
-      }
-
-      """
-      )
+    menu.setStyleSheet(MENU_STYLE)
     
 
 

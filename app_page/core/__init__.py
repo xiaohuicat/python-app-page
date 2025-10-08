@@ -1,7 +1,6 @@
 # app_page/core/__init__.py
 from .EventBus import EventBus
 from .EventHook import EventHook
-from .MoveEventMechine import MoveEventMechine
 from .Page import Page
 from .Thread import EasyThread, Waiting_time, ThreadManager
 from .MainWindow import MainWindow
@@ -20,7 +19,6 @@ __all__ = [
   "Record",
   "EventHook",
   "PageManager",
-  "MoveEventMechine",
   "Page",
   "EasyThread",
   "ThreadManager",

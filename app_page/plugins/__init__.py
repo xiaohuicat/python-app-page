@@ -2,9 +2,11 @@
 from .Excel import Excel
 from .MQTT import MQTT
 from .Player import Player
+from .MoveEventMechine import MoveEventMechine
 
 __all__ = [
   "Excel",
   "MQTT",
-  "Player"
+  "Player",
+  "MoveEventMechine",
 ]

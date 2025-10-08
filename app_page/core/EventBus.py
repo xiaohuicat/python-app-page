@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget
 
+
 # 事件总线
 class EventBus(object):
   def __init__(self, widgets:dict={}, hasSelf=False):
