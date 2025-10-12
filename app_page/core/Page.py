@@ -86,7 +86,10 @@ class Page(CorePage):
     # 移除组件映射
     for key in self.__widgetIdMap.keys():
       widget:QWidget = self.__widgetIdMap[key]
-      widget.deleteLater()
+      try:
+        widget.deleteLater()
+      except Exception as e:
+        pass
     self.__widgetIdMap.clear()
     # 解除事件绑定
     if self.__eventBus:

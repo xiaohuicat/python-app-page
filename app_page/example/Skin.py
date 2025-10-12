@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
 from ..core import Page
 from ..animation import RightClick_Menu
 from ..config import Config
-from ..utils import loadUI, setAppStyle, select_image, assetsPath, assetsUrl
+from ..utils import loadUI, setAppStyle, select_image, assetsPath
 
 
 class SkinCard(Page):

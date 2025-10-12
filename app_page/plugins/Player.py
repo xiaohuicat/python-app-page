@@ -13,19 +13,19 @@ class Music:
         if self.index > 0:
             self.index -= 1
         else:
-            self.index = len(self.playlist) - 1
+            self.index = len(self.playList) - 1
         self.position = 0
 
     # 下一首
     def next(self):
-        if self.index < len(self.playlist) - 1:
+        if self.index < len(self.playList) - 1:
             self.index += 1
         else:
             self.index = 0
         self.position = 0
     
     def reset(self):
-        self.playlist = []
+        self.playList = []
         self.index = -1
         self.position = 0
         self.url = None
@@ -35,7 +35,7 @@ class Music:
     def getUrl(self):
         if self.index == -1:
             self.index = 0
-        self.url = self.playlist[self.index]['url']
+        self.url = self.playList[self.index]['url']
         return self.url
 
 
@@ -44,13 +44,13 @@ class Music:
     
 
     def loadPlaylist(self, folder_path:str):
-        self.playlist.clear()
+        self.playList.clear()
         if not os.path.exists(folder_path):
             return
         for file_name in os.listdir(folder_path):
             if file_name.endswith(('.mp3', '.wav', '.ogg')):
                 file_path = os.path.join(folder_path, file_name)
-                self.playlist.append({'url': file_path, 'name': file_name})
+                self.playList.append({'url': file_path, 'name': file_name})
 
 
 class Player:
@@ -108,19 +108,19 @@ class Player:
             volume = 0
         elif volume > 100:
             volume = 100
-        self.audioOutput.setVolume(volume / 100)
+        self.__audioOutput.setVolume(volume / 100)
     
     def getVolume(self) -> int:
-        return int(self.audioOutput.volume() * 100)
+        return int(self.__audioOutput.volume() * 100)
     
     def isPlaying(self) -> bool:
-        return self.player.playbackState() == QMediaPlayer.PlayingState
+        return self.__player.playbackState() == QMediaPlayer.PlayingState
     
     def isPaused(self) -> bool:
-        return self.player.playbackState() == QMediaPlayer.PausedState
+        return self.__player.playbackState() == QMediaPlayer.PausedState
     
     def isStopped(self) -> bool:
-        return self.player.playbackState() == QMediaPlayer.StoppedState
+        return self.__player.playbackState() == QMediaPlayer.StoppedState
     
     def __setSource(self):
         url = self.music.getUrl()
