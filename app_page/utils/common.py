@@ -84,3 +84,21 @@ def t2d(text):
     return json.loads(bytes.fromhex(text).decode('utf-8'))
   except Exception as e:
     return text
+
+
+def encode(text):
+  """字符串编码为base64"""
+  try:
+    return '[#encode]:' + text.encode('utf-8').hex()
+  except Exception as e:
+    return text
+  
+
+def decode(text):
+  """将base64字符串解码"""
+  try:
+    if text.startswith('[#encode]:'):
+      return bytes.fromhex(text.replace('[#encode]:', '')).decode('utf-8')
+    return text
+  except Exception as e:
+    return text 

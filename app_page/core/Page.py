@@ -23,6 +23,7 @@ class Page(CorePage):
     self.ui:MainWindow.ui
     self.pageManager:PageManager
     self.threadManager:ThreadManager
+    self.param:Param
     self.system_param:Param
     self.user_param:Param
     self.localStore:Param
@@ -35,7 +36,7 @@ class Page(CorePage):
     # 判断是否挂载参数存储器
     if name and hasattr(self, "param"):
       path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
-      self.localStore = self.param.child(path, {})
+      self.localStore = Param(path, {})
       if getSetting("IS_DEBUG"):
         print(f"页面 {name} 的本地存储路径为: {path}")
 

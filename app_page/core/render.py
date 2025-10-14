@@ -3,7 +3,7 @@ from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox)
 from mako.template import Template
-from ..utils import setWidgetStyle, unescape_xml, t2d
+from ..utils import setWidgetStyle, unescape_xml, t2d, decode
 
 
 # 组件类型别名映射
@@ -112,7 +112,7 @@ def set_attributes(widget:QWidget|QLayout, props:dict, widgetIdMap:dict):
       widget.setFixedHeight(value)
     elif key == 'disabled':
       if hasattr(widget, 'setReadOnly'):
-        widget.setReadOnly(value != 'False')
+        widget.setReadOnly(value)
     elif key == 'placeholder':
       if hasattr(widget, 'setPlaceholderText'):
         widget.setPlaceholderText(unescape_xml(value))
@@ -153,7 +153,7 @@ def preprocess(item:dict, key:str, value:str):
   elif key in ['scroll', 'disabled', 'scroll']:
     item[key] = value == 'True'
   else:
-    item[key] = value
+    item[key] = decode(value)
 
 
 # 处理xml节点

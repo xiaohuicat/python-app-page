@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QMenu
 from PySide6.QtGui import QIcon
-from ..plugins import MoveEventMechine
+from .MoveEventMechine import MoveEventMechine
 
 
 MENU_STYLE = """

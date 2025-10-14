@@ -1,5 +1,6 @@
 from ..core import Page
 
+
 class Stack(Page):
   def __init__(self, id:str='stackedWidget'):
     super().__init__()

@@ -2,7 +2,7 @@ import setuptools
 from pathlib import Path
 
 package_name = "app-page"
-version = '0.0.39'
+version = '0.0.40'
 # 读取 README.md 作为长描述
 long_description = open("README.md", encoding="utf-8").read()
 # 读取 requirements.txt 文件
