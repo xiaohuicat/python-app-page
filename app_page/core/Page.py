@@ -1,6 +1,7 @@
 import sys
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QUrl
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from app_page_core import Param, Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
@@ -10,7 +11,7 @@ from ..core.MainWindow import MainWindow
 from ..core.EventBus import EventBus
 from ..core.Setting import getSetting
 from ..core.render import render
-from ..utils import layout_clear
+from ..utils import layout_clear, assetsPath
 
 
 class Page(CorePage):
@@ -59,7 +60,6 @@ class Page(CorePage):
   
 
   def rerender(self, params:dict):
-    self.status = 'show'
     if getSetting('IS_DEBUG'):
       print('[传递给模板的变量]', params)
     if not hasattr(self, 'template'):
@@ -102,6 +102,19 @@ class Page(CorePage):
     # 移除挂载的元素
     if self.__layout:
       layout_clear(self.__layout)
+
+  
+  def playMedia(self, *args) -> None:
+    # 初始化播放器和音频输出
+    player = QMediaPlayer()
+    audio_output = QAudioOutput()
+    player.setAudioOutput(audio_output)
+    
+    # 设置媒体源并播放
+    player.setSource(QUrl.fromLocalFile(assetsPath(*args)))
+    player.play()
+    self.__playing_media = player
+    self.__audio_output = audio_output
 
 
   # 注册事件
