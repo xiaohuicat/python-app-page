@@ -120,7 +120,7 @@ class Page(CorePage):
   # 注册事件
   def register(self, id:str, signal:str, callback) -> None:
     if not self.getWidget(id):
-      pass
+      return
     if not self.__eventBus:
       self.__eventBus = EventBus(self.getWidget())
     self.__eventBus.register(id, signal, callback)
