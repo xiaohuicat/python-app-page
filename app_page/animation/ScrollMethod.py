@@ -2,7 +2,7 @@ from PySide6.QtCore import QTimer, QPropertyAnimation, QEasingCurve
 from PySide6.QtWidgets import QWidget, QScrollArea
 
 
-def scroll_to_bottom(parent:QWidget|None, scroll_area:QScrollArea|str):
+def scrollToBottom(parent:QWidget|None, scroll_area:QScrollArea|str):
   def scroll():
     # 如果是字符串，寻找滚动区域
     if isinstance(scroll_area, str):

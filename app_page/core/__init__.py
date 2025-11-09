@@ -10,7 +10,7 @@ from .PageManager import PageManager
 from ..core import Setting, Device
 from .render import render
 from .callfunc import call_func, current_func
-
+from .WidgetsController import WidgetsController
 
 __all__ = [
   "Device",
@@ -28,4 +28,5 @@ __all__ = [
   "render",
   "call_func",
   "current_func",
+  "WidgetsController",
 ]

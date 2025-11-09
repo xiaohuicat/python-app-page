@@ -1,17 +1,17 @@
 import sys
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout
+from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QMainWindow
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from app_page_core import Param, Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
-from ..core.MainWindow import MainWindow
-from ..core.EventBus import EventBus
 from ..core.Setting import getSetting
 from ..core.render import render
+from ..core.WidgetsController import WidgetsController
 from ..utils import layout_clear, assetsPath
+from ..core.MainWindow import MainWindow
 
 
 class Page(CorePage):
@@ -20,8 +20,7 @@ class Page(CorePage):
     self.status:str
     self.app:QApplication
     self.root:Page
-    self.main_win:MainWindow
-    self.ui:MainWindow.ui
+    self.mainWin:MainWindow
     self.pageManager:PageManager
     self.threadManager:ThreadManager
     self.param:Param
@@ -29,11 +28,10 @@ class Page(CorePage):
     self.user_param:Param
     self.localStore:Param
     self.template:str
-    self.__widgetIdMap:dict = {}
+    self.__widgetsController:WidgetsController = WidgetsController()
     self.__global_data:dict = {}
-    self.__stack:QWidget|None = None
+    self.__parent:QWidget|None = None
     self.__layout:QLayout|None = None
-    self.__eventBus:EventBus|None = None
     # 判断是否挂载参数存储器
     if name and hasattr(self, "param"):
       path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
@@ -57,7 +55,7 @@ class Page(CorePage):
           self.callback.add('onHide', disconnect(widget_dict[signal]))
     
     return {}
-  
+
 
   def rerender(self, params:dict):
     if getSetting('IS_DEBUG'):
@@ -65,9 +63,13 @@ class Page(CorePage):
     if not hasattr(self, 'template'):
       return
     self.hidePage()
-    layout = self.__stack.layout()
+    layout = self.getLayout()
     if not layout:
-      layout = QVBoxLayout(self.__stack)
+      self.setLayout('v-box')
+      layout = self.getLayout()
+    else:
+      self.hidePage()
+    
     layout.setAlignment(Qt.AlignTop)
     layout.setContentsMargins(10, 10, 10, 10)
     layout.setSpacing(15)
@@ -80,30 +82,22 @@ class Page(CorePage):
 
     # 渲染页面并挂载组件id列表
     templateParams = params if type(params) == dict else {}
-    self.setWidget(render(layout, self.template, templateParams))
+    self.__widgetsController.setWidgets(render(layout, self.template, templateParams))
 
 
-  def hidePage(self):
-    # 移除组件映射
-    for key in self.__widgetIdMap.keys():
-      widget:QWidget = self.__widgetIdMap[key]
-      try:
-        widget.deleteLater()
-      except Exception as e:
-        pass
-    self.__widgetIdMap.clear()
-    # 解除事件绑定
-    if self.__eventBus:
-      self.__eventBus.clear()
-      self.__eventBus = None
+  def hidePage(self) -> None:
     # 保存持久化数据
     if hasattr(self, "localStore"):
       self.localStore.save()
     # 移除挂载的元素
     if self.__layout:
       layout_clear(self.__layout)
+      self.__layout = None
+    # 销毁组件管理器
+    if self.__widgetsController:
+      self.__widgetsController.destroy()
 
-  
+
   def playMedia(self, *args) -> None:
     # 初始化播放器和音频输出
     player = QMediaPlayer()
@@ -119,11 +113,7 @@ class Page(CorePage):
 
   # 注册事件
   def register(self, id:str, signal:str, callback) -> None:
-    if not self.getWidget(id):
-      return
-    if not self.__eventBus:
-      self.__eventBus = EventBus(self.getWidget())
-    self.__eventBus.register(id, signal, callback)
+    self.__widgetsController.register(id, signal, callback)
 
 
   # 导航到页面
@@ -133,11 +123,11 @@ class Page(CorePage):
 
   # 提示信息
   def tips(self, msg, type='default', pos=None, close=None) -> None:
-    p = self.main_win.move_win.window_position
+    p = self.mainWin.win.window_position
     pos = [p[0]+p[2]/2, p[1]+p[3]/2]
 
     if hasattr(self.app, "tips_widget"):
-      self.main_win.move_win.mouseMoveEventHook.remove(id="tips")
+      self.mainWin.win.mouseMoveEventHook.remove(id="tips")
       self.app.tips_widget.deleteLater()
 
     self.app.tips_widget = Tips(msg, type, pos)
@@ -147,7 +137,7 @@ class Page(CorePage):
     def move_callback(pos) -> None:
       self.app.tips_widget.setPos([pos.x()+p[2]/2, pos.y()+p[3]/2])
 
-    self.main_win.move_win.mouseMoveEventHook.add(id="tips", func=move_callback)
+    self.mainWin.win.mouseMoveEventHook.add(id="tips", func=move_callback)
 
 
   # 提示窗
@@ -178,7 +168,6 @@ class Page(CorePage):
     # 移除子组件
     self.children.remove()
     # 移除组件映射
-    self.__widgetIdMap.clear()
 
 
   # 关闭app
@@ -196,12 +185,12 @@ class Page(CorePage):
       sys.exit(n)
   
 
-  def setWidget(self, widgets:dict):
-    self.__widgetIdMap = widgets
+  def setWidgets(self, widgets:dict):
+    self.__widgetsController.setWidgets(widgets)
 
 
   def getWidget(self, id:str|None=None) -> QWidget|dict|None:
-    return self.__widgetIdMap.get(id, None) if type(id) is str else self.__widgetIdMap
+    return self.__widgetsController.getWidget(id)
 
 
   def setStatus(self, status:str) -> None:
@@ -229,22 +218,36 @@ class Page(CorePage):
       raise TypeError("参数错误，key必须为字符串且value不能为空，或key必须为字典且value必须为空")
 
 
-  def getStack(self) -> QWidget | None:
-    return self.__stack
+  def getParent(self) -> QWidget | None:
+    return self.__parent
 
 
-  def setStack(self, stack:QWidget):
-    self.__stack = stack
+  def setParent(self, parent:QWidget=None) -> None:
+    if not parent:
+      self.__parent = QWidget()
+      return
+    self.__parent = parent
 
 
   def getLayout(self) -> QLayout | None:
+    if not self.__layout:
+      self.__layout = self.__parent.layout() if self.__parent else None
     return self.__layout
 
 
-  def setLayout(self, layout:QLayout):
-    self.__layout = layout
+  def setLayout(self, layoutType:str):
+    if not isinstance(self.__parent, object):
+      raise ValueError("请先设置父组件")
+    if layoutType == 'v-box':
+      self.__layout = QVBoxLayout(self.__parent)
+    elif layoutType == 'h-box':
+      self.__layout = QHBoxLayout(self.__parent)
+    elif layoutType == 'grid':
+      self.__layout = QGridLayout(self.__parent)
+    else:
+      raise ValueError("不支持的布局类型, 请使用 'v-box', 'h-box', 'grid' 之一")
 
-  
+
   # 查看组件信息
   @property
   def info(self):

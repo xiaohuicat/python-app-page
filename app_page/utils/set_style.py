@@ -1,11 +1,38 @@
 import os
 from typing import Dict, List, Union, Any, Optional
 from PySide6.QtWidgets import QWidget
-from app_page_core import Store
+from app_page_core import Store, Param
 from .common import assetsPath
 
 
-def setAppStyle(target: Any, default_theme: Dict[str, Any]) -> None:
+create_default_theme = lambda: {
+    "skinId": 'skin001',
+    "skinStyle": [
+        {
+            "id": "skin001",
+            "name": "\u9ed8\u8ba4",
+            "header_bg_color": "#6a5acd",
+            "main_bg_color": "#f0f0f0",
+            "app_bg_image": assetsPath("skin", "app_bg_image_1.png"),
+        },
+        {
+            "id": "skin002",
+            "name": "\u73ca\u745a\u7ea2",
+            "header_bg_color": "#cd5a5a",
+            "main_bg_color": "#fffbcb",
+            "app_bg_image": assetsPath("skin", "app_bg_image_2.png"),
+        },
+        {
+            "id": "skin003",
+            "name": "\u70ab\u9177\u9ed1",
+            "header_bg_color": "#000",
+            "main_bg_color": "#e4d5ff",
+            "app_bg_image": assetsPath("skin", "app_bg_image_3.png"),
+        }
+    ]
+}
+
+def setAppStyle(target: Any) -> None:
     """
     根据参数设置应用程序的整体样式
     
@@ -13,7 +40,8 @@ def setAppStyle(target: Any, default_theme: Dict[str, Any]) -> None:
         target: 目标对象，包含param属性
         default_theme: 默认主题配置
     """
-    setting = target.param.child(target.param.pathJoin("userPath", "setting.json"), default_theme)
+    default_theme = create_default_theme()
+    setting = Param(target.param.pathJoin("userPath", "setting.json"), default_theme)
     skin_id = setting.get("skinId", default_theme["skinId"])
     
     # 获取当前皮肤样式
@@ -28,8 +56,8 @@ def setAppStyle(target: Any, default_theme: Dict[str, Any]) -> None:
         image_path = assetsPath('skin', 'app_bg_image_1.png').replace('\\', '/')
     
     # 设置头部和主体样式
-    setWidgetStyleById(widget_id='frame_header', style={"background-color": style['header_bg_color']}, cover=True)
-    setWidgetStyleById(widget_id='frame_main', style={
+    setWidgetStyleById(widget_id='app_header', style={"background-color": style['header_bg_color']}, cover=True)
+    setWidgetStyleById(widget_id='app_main', style={
         "background-color": style['main_bg_color'],
         "border-image": f"url('{image_path}') stretch",
     }, cover=True)
@@ -48,11 +76,13 @@ def setWidgetStyleById(widget_id: str, style: Dict[str, str], cover: bool = Fals
         Exception: 当UI对象未找到时
     """
     store = Store()
-    ui = store.get('ui')
-    if not ui:
-        raise Exception("UI object not found in store")
+    mainWin = store.get('mainWin')
+    if not mainWin:
+        raise Exception("mainWin object not found in store")
     
-    widget = ui[widget_id]
+    widget = mainWin.getWidget(widget_id)
+    if not widget:
+        raise Exception(f"widget_id = [{widget_id}] not found in mainWin")
     _apply_style_to_widget(widget, style, widget_id, cover)
 
 

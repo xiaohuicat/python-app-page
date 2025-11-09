@@ -1,35 +1,32 @@
-import os,sys
-import platform
+import sys
 from PySide6.QtWidgets import QApplication
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtGui import QIcon
 from app_page_core import Store, Param
 from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
 from .components import StackManager
 from .config import Config
-from .utils import setAppStyle, assetsPath
+from .utils import setAppStyle
 
 
-# 绑定顶部右侧按钮
-class BindsRightTop(Page):
-  def binds(self):
-    rightTopBinds:dict = Setting.getSetting('rightTopBinds', {})
-    return {
-      "clicked": [
-        ("btn_skin", rightTopBinds.get('btn_skin', lambda :self.jumpToOtherPage('skin'))),
-        ("btn_login_icon", rightTopBinds.get('btn_login_icon', lambda :self.tips('点击了登录图标，可通过rightTopBinds更改绑定事件', 'success'))),
-        ("btn_login_text", rightTopBinds.get('btn_login_text', lambda :self.tips('点击了登录名称，可通过rightTopBinds更改绑定事件', 'success'))),
-        ("btn_setting", rightTopBinds.get('btn_setting', lambda :self.jumpToOtherPage('setting'))),
-        ("btn_message", rightTopBinds.get('btn_message', lambda :self.jumpToOtherPage('message'))),
-      ]
-    }
+def initRegister(root:Page, mainWin:MainWindow, stackManager:StackManager):
+  rightTopBinds:dict = Setting.getSetting('rightTopBinds', {})
+
+  def jumpToOtherPage(id:str):
+    root.navigateTo(id)
+    stackManager.clearActiveStyle()
   
-  def jumpToOtherPage(self, id:str):
-    self.navigateTo(id)
-    self.stackManager.clearActiveStyle()
+  loginEvent = rightTopBinds.get('btn_login_icon', lambda :root.tips('点击了登录图标，可通过rightTopBinds更改绑定事件', 'success'))
+  jumpToSkin = rightTopBinds.get('btn_skin', lambda : jumpToOtherPage('skin'))
+  jumpToSetting = rightTopBinds.get('btn_setting', lambda : jumpToOtherPage('setting'))
+  jumpToMessage = rightTopBinds.get('btn_message', lambda : jumpToOtherPage('message'))
+  mainWin.register('btn_login_icon', 'clicked', loginEvent)
+  mainWin.register('btn_login_text', 'clicked', loginEvent)
+  mainWin.register('btn_setting', 'clicked', jumpToSetting)
+  mainWin.register('btn_message', 'clicked', jumpToMessage)
+  mainWin.register('btn_skin', 'clicked', jumpToSkin)
 
 
-
-def loadStackPages(target:Page):
+def initStackManager(root:Page, mainWin:MainWindow):
   """加载页面
 
   Args:
@@ -42,7 +39,7 @@ def loadStackPages(target:Page):
   pageOptionList:list = Setting.getSetting('pageOptionList')
   
   # 挂载到页面管理器
-  target.pageManager.mount(target.ui[stack_id], pages=pages, pageOptionList=pageOptionList)
+  root.pageManager.mount(mainWin.getWidget(stack_id), pages=pages, pageOptionList=pageOptionList)
   # 创建导航
   stackManager = StackManager({
     "stack_id": stack_id,
@@ -50,10 +47,9 @@ def loadStackPages(target:Page):
     "button_frame_id": button_frame_id,
     "button_container_id": button_container_id,
   })
-  bindsRightTop = BindsRightTop()
-  target.children.add("bindsRightTop", bindsRightTop)
-  target.children.add("stackManager", stackManager)
+  stackManager.setup()
   return stackManager
+
 
 def createApp(SETTING:dict):
   """创建应用
@@ -108,24 +104,18 @@ def createApp(SETTING:dict):
   # 创建应用，添加图标
   app = QApplication(sys.argv)
   app.setWindowIcon(QIcon(Setting.getSetting('APP_ICON_PATH')))  # 生成exe时改为绝对路径
-  if platform.system() == 'Darwin':  # macOS
-      font = QFont("-apple-system", 12)  # 或 "PingFang SC"
-  else:  # Windows
-      font = QFont("Microsoft YaHei UI", 12)
-  app.setFont(font)
   # 创建全局参数对象
   param = Param(filePath=None, default=Device.defaultSystemConfig(version=Setting.getSetting('APP_VERSION')))
-  user_param = Param(os.path.join(param.get("userPath", ""), "user.json"), {})
-  system_param = Param(os.path.join(param.get("systemPath", ""), "system.json"), {})
+  user_param = Param(filePath=param.pathJoin("userPath", "user.json"), default={})
+  system_param = Param(filePath=param.pathJoin("systemPath", "system.json"), default={})
   # 创建程序主窗口
-  main_win = MainWindow(system_param)
+  mainWin = MainWindow(system_param)
   threadManager = ThreadManager()
   pageManager = PageManager()
   # 创建全局变量
   store = Store({
     'app': app,
-    'main_win': main_win,
-    'ui': main_win.ui,
+    'mainWin': mainWin,
     'threadManager': threadManager,
     'pageManager': pageManager,
     'param': param,
@@ -133,25 +123,21 @@ def createApp(SETTING:dict):
     'system_param': system_param,
   })
   root = Page('root')
-  def setUserInfo(userName:str, avatarPath:str):
-    if not os.path.exists(avatarPath):
-      avatarPath = assetsPath('image', 'avatar.png').replace('\\', '/')
-    main_win.ui[Setting.getSetting('button_login_id', 'btn_login_icon')].setStyleSheet(f'border-image: url({avatarPath}); border-radius: 16px;')
-    main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setText(userName[:3])
-    main_win.ui[Setting.getSetting('button_name_id', 'btn_login_text')].setStyleSheet('color:#fff;font-size:16px')
-  root.callback.add('setUserInfo', setUserInfo)
-  setUserInfo('请登录', '')
-  main_win.ui[Setting.getSetting('button_close_id')].clicked.connect(lambda: root.closeApp())
-  # 设置样式，必须在创建全局变量之后
-  setAppStyle(root, Config().default_theme)
+  stackManager = initStackManager(root, mainWin)
+  root.callback.add('setUserInfo', mainWin.setUserInfo)
+  mainWin.callback.add('close', lambda: root.closeApp())
+  mainWin.setUserInfo('请登录', '')
   # 挂载栈页面
-  store.set('stackManager', loadStackPages(root))
+  store.set('stackManager', stackManager)
   store.set('root', root)
+  # 注册事件
+  initRegister(root, mainWin, stackManager)
+  # 设置全局样式
+  setAppStyle(root)
   # 根页面初始化，会自动运行子页面的setup()方法
   root.setup()
   # 显示主窗口
-  main_win.show()
-  print(f"[APP_TITLE:{Setting.getSetting('APP_TITLE')} APP_VERSION:{Setting.getSetting('APP_VERSION')}]")
+  mainWin.show()
   if 'onMounted' in SETTING and callable(SETTING['onMounted']):
     SETTING['onMounted'](root)
   # 运行APP

@@ -1,6 +1,7 @@
 from PySide6 import QtCore
 from PySide6.QtWidgets import QWidget, QGraphicsDropShadowEffect
 
+
 class Shadow:
   def __init__(self, target:QWidget):
     self.effect_shadow = QGraphicsDropShadowEffect(target)

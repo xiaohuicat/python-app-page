@@ -1,6 +1,6 @@
 import time
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QFrame
+from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from ..core import Record
 from ..animation import RightClick_Menu
 from .Stack import Stack
@@ -15,14 +15,12 @@ class StackManager(Stack):
       [options] (dict): 控制参数
       stack_id (str): 栈的id
       pageOptionList (list): 页面选项列表
-      button_frame_id (str): 按钮容器的id
       button_container_id (str): 按钮容器的id
     """
     stack_id = options.get("stack_id", None)
     pageOptionList = options.get("pageOptionList", None)
-    button_frame_id = options.get("button_frame_id", None)
     button_container_id = options.get("button_container_id", None)
-    if not (stack_id and pageOptionList and button_frame_id and button_container_id):
+    if not (stack_id and pageOptionList and button_container_id):
       raise Exception("StackManager初始化失败，options参数错误")
 
     super().__init__(id= stack_id)
@@ -33,25 +31,17 @@ class StackManager(Stack):
     self.timestamp = 0
     self.current_btn = ""
     self.pageOptionList = pageOptionList if pageOptionList else []
-    self.button_frame_id = button_frame_id
     self.button_container_id = button_container_id
     self._layout = None
 
+
   def setup(self):
     super().setup()
-    self.button_frame:QFrame = self.ui[self.button_frame_id]
-    self.button_container:QWidget = self.ui[self.button_container_id]
+    self.button_container:QWidget = self.mainWin.getWidget(self.button_container_id)
     self.createButton(self.pageOptionList)
     self.activeCurrentButton()
-
-
-  def binds(self):
-    return {
-      "clicked": [
-        ("btn_leftRecord", self.left_record),
-        ("btn_rightRecord", self.right_record),
-      ]
-    }
+    self.mainWin.register('btn_leftRecord', 'clicked', self.left_record)
+    self.mainWin.register('btn_rightRecord', 'clicked', self.right_record)
 
 
   # 激活当前按钮
@@ -67,7 +57,6 @@ class StackManager(Stack):
   # 创建左侧导航栏按钮
   def createButton(self, pageOptionList:list):
     self.pageOptionList = pageOptionList
-    self.button_frame.setFixedHeight(360)
     layout = self.button_container.layout()
     if layout:
       self.deleteLeftbarButton(layout)
@@ -82,7 +71,7 @@ class StackManager(Stack):
       stack_index = self.getIndexById(stack_id)
       each['stack_index'] = stack_index
       if stack_index == -1:
-        stack = QWidget(self.button_frame)
+        stack = QWidget(self.button_container)
         if "stack_id" in each:
           stack.setObjectName(stack_id)
         new_index = self.count()
@@ -90,10 +79,10 @@ class StackManager(Stack):
         self.insertWidget(new_index, stack)
 
       if each.get('filter', None) == 'leftBar':
-        button = QPushButton(each["name"], self.button_frame)
+        button = QPushButton(each["name"], self.button_container)
         button.setObjectName(each["id"])
         button.clicked.connect(self.click(each["id"]))
-        button.setFixedHeight(40)
+        button.setFixedHeight(36)
 
         # 添加右键菜单
         right_menu = []
@@ -109,11 +98,11 @@ class StackManager(Stack):
         })
         if "right_menu" in each:
           _right_menu = each["right_menu"]
-          for e in _right_menu:
+          for item in _right_menu:
             right_menu.append({
-              "name":e["name"],
-              "icon":e["icon"],
-              "callback":self.right_click(e["name"], each["id"])
+              "name": item["name"],
+              "icon": item["icon"],
+              "callback": self.right_click(item["name"], each["id"])
             })
         RightClick_Menu(button, right_menu)
         # 添加到布局中
@@ -155,20 +144,20 @@ class StackManager(Stack):
   def setActiveStyle(self, id:str):
     old_id = self.current_btn
     active_style = '#%s {background-color:rgba(0,0,0,0.04);font-weight:bold;font-size:18px}' % id
-    styleSheetList = self.button_frame.styleSheet().split('\n')
+    styleSheetList = self.button_container.styleSheet().split('\n')
     # 删除旧的值
     if old_id and styleSheetList[-1].find(f'#{old_id}') > -1:
       styleSheetList.pop()
     styleSheetList.append(active_style)
     # 将新的样式表设置到程序中
-    self.button_frame.setStyleSheet('\n'.join(styleSheetList))
+    self.button_container.setStyleSheet('\n'.join(styleSheetList))
 
 
   # 清除当前激活按钮的样式
   def clearActiveStyle(self):
-    styleSheetList = self.button_frame.styleSheet().split('\n')
+    styleSheetList = self.button_container.styleSheet().split('\n')
     new_styleSheetList = [line for line in styleSheetList if not line.startswith(f'#{self.current_btn}')]
-    self.button_frame.setStyleSheet('\n'.join(new_styleSheetList))
+    self.button_container.setStyleSheet('\n'.join(new_styleSheetList))
     self.current_btn = None
 
 

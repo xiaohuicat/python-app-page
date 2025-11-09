@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QPropertyAnimation, QPoint
 
+
 class ShakeEffect:
   def __init__(self, target:QWidget) -> None:
     if hasattr(target, "_shake_animation"):

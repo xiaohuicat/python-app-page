@@ -8,6 +8,11 @@ class EventBus(object):
     self.hasSelf = hasSelf
     self._disconnectList = []
 
+
+  def setWidgets(self, widgets:dict):
+    self.widgets = widgets
+
+
   def getWidget(self, id:str):
     return self.widgets.get(id, None)
 

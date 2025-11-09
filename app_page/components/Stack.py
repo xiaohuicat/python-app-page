@@ -1,4 +1,5 @@
 from ..core import Page
+from PySide6.QtWidgets import QStackedWidget
 
 
 class Stack(Page):
@@ -6,14 +7,17 @@ class Stack(Page):
     super().__init__()
     self.id = id
 
+  def getStack(self) -> QStackedWidget:
+    return self.mainWin.getWidget(self.id)
+
   def setCurrentPage(self, index):
-    return self.ui[self.id].setCurrentIndex(index)
+    return self.getStack().setCurrentIndex(index)
 
   def count(self):
-    return self.ui[self.id].count()
+    return self.getStack().count()
 
   def getPageByIndex(self, index):
-    return self.ui[self.id].widget(index)
+    return self.getStack().widget(index)
 
   def getIndexById(self, id):
     count = self.count()
@@ -26,7 +30,7 @@ class Stack(Page):
     return self.getPageByIndex(self.getIndexById(id))
 
   def addWidget(self, widget):
-    return self.ui[self.id].addWidget(widget)
+    return self.getStack().addWidget(widget)
 
   def insertWidget(self, index, widget):
-    return self.ui[self.id].insertWidget(index, widget)
+    return self.getStack().insertWidget(index, widget)

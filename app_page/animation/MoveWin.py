@@ -30,10 +30,12 @@ class MoveWin(QMainWindow):
             print("设置窗口位置失败！！！ e=",e)
       else:
           print('自动设置窗口位置')
+          self.target.setFixedWidth(1080)
+          self.target.setFixedHeight(753)
           self.center()
           rect = self.target.geometry()
           self.window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
-          print('window_position:', self.window_position)
+          self.target.setGeometry(*self.window_position)
 
 
   # 将窗口移动屏幕中央
@@ -62,16 +64,14 @@ class MoveWin(QMainWindow):
   def mouseReleaseEvent(self, mouse_event):
     self.m_flag = False
     self.target.setCursor(QtGui.QCursor(QtCore.Qt.ArrowCursor))
-    self.saveCurrentPosition()
+    self.setPosition()
 
 
   # 保存位置参数
-  def saveCurrentPosition(self):
+  def setPosition(self, add=0):
       if not self.system_param:
         return
       rect = self.target.geometry()
-      new_window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
-      isMove = not (np.array(self.window_position) == np.array(new_window_position)).all()
-      if isMove:
-          self.window_position = new_window_position
-          self.system_param.set(key=self.id, value=self.window_position)
+      new_window_position = [rect.left(),rect.top(),rect.width() + add,rect.height() + add]
+      self.window_position = new_window_position
+      self.system_param.set(key=self.id, value=self.window_position)

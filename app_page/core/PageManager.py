@@ -37,6 +37,7 @@ class PageManager:
   # 添加栈
   def addStack(self, stack):
     self.stack = stack
+    print('--->stack:', stack)
 
   # 添加页面
   def addPage(self, id:str|dict, Page=None):
@@ -72,7 +73,7 @@ class PageManager:
       else:
         params = current.setup()
       temp_dict["current"] = current
-      current.setStack(stack)
+      current.setParent(stack)
       current.rerender(params)
       current.status = 'show'
       current.show(*{*args, *param})

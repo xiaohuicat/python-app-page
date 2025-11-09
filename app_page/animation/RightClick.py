@@ -12,7 +12,6 @@ QMenu {
   font-size: 14px;
   color: #666;
   padding: 10px 0px 10px 0px; /* 菜单项距菜单顶部边界和底部边界分别有5px */
-
 }
 
 QMenu::item { /* 菜单子控件item，为菜单项在default的状态 */
@@ -88,7 +87,6 @@ QPushButton#PlayerButton:hover {
 QPushButton#PlayerButton:pressed {
   padding: 0px;
 }
-
 """
 
 

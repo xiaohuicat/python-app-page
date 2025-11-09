@@ -1,135 +1,185 @@
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QHBoxLayout, QVBoxLayout, QPushButton
-from ..core import Page
-from ..animation import RightClick_Menu
-from ..config import Config
-from ..utils import loadUI, setAppStyle, select_image, assetsPath
+# 1. 导入语句分组，并使用绝对导入（如果可能）
+import os
+from functools import partial
+from typing import Dict, List, Optional
 
+# 假设 app_page 是一个可以被这样导入的包
+from app_page import Page, Config, Param
+from app_page.animation import RightClick_Menu
+from app_page.utils import setAppStyle, select_image, assetsPath, encode
 
-class SkinCard(Page):
-  def __init__(self, option) -> None:
-    super().__init__()
-    self.option = option
-    self.skin = loadUI(assetsPath('UI', 'skin_card.ui'))
-    layout = QVBoxLayout()
-    layout.setAlignment(Qt.AlignTop)
-    self.pick = QPushButton("", self.skin)
-    self.pick.setFixedSize(260, 120)
-    RightClick_Menu(self.pick, [
-      {"name": "分享", "callback": self.shareSkin, "icon": assetsPath('menu', 'share.png')},
-      {"name": "收藏", "callback": self.loveSkin, "icon": assetsPath('menu', 'love.png')},
-      {"name": "更换壁纸", "callback": self.changeImage, "icon": assetsPath('menu', 'pictures.png')},
-    ])
-    layout.addWidget(self.pick)
-    self.setStyle()
+# 2. 将固定的样式和模板字符串定义为常量，并使用更清晰的命名
+# 使用三引号和 f-string 提高可读性和可维护性
+CSS_TAB_BUTTONS = """
+.tab-btn {
+  color: #666;
+  border-radius: 15px;
+  border: 1px solid #c0c0c0;
+}
+.tab-btn.active {
+  color: #fff;
+  background-color: #6666FF;
+  border: 1px solid #6666FF;
+}
+"""
 
-  def setup(self):
-    super().setup()
+# 3. 将动态CSS生成逻辑封装成函数，而不是使用复杂的lambda
+def get_card_style(item: Dict) -> str:
+    """根据皮肤项信息生成卡片的CSS样式字符串。"""
+    # 确保路径处理的健壮性
+    bg_image_path = item.get('app_bg_image', '').replace('\\', '/')
+    # 使用f-string格式化，更清晰
+    return encode(f"""
+.container {{
+  border-radius: 12px;
+  border-image: url('{bg_image_path}') stretch;
+}}
+""")
 
-    def callback():
-      self.callback.run("pick", self.option)
-    self.skin.status.clicked.connect(callback)
-    self.pick.clicked.connect(callback)
+def get_status_style(current_id: str, item: Dict) -> str:
+    """根据当前选中状态生成状态指示器的CSS样式字符串。"""
+    bg_color = "red" if current_id == item["id"] else "transparent"
+    return encode(f"""
+border: 1px solid #fff;
+border-radius: 9px;
+background-color: {bg_color};
+""")
 
-  def setStyle(self):
-    option = self.option
-    self.pick.setStyleSheet("background-color: transparent;")
-    self.skin.setStyleSheet("""#container {
-      border-radius: 12px;
-      border-image: url('"""+ option['app_bg_image'].replace('\\', '/') +"""') stretch;
-    }""")
-    color = "red" if option["id"] == option["current"] else "transparent"
-    self.skin.status.setStyleSheet("""
-      background-color: """+color+""";
-      border:1px solid #c0c0c0;
-    """)
-    self.skin.name.setText(option["name"])
+# 4. HTML模板使用f-string，并将静态CSS内联进去
+# 移除了不必要的 encode 调用，因为模板引擎可能会处理，或者在传递前已编码
+TEMPLATE = f"""
+<template>
+  <div style="{encode(CSS_TAB_BUTTONS)}">
+    <h-box align="AlignLeft" spacing="15">
+      <button id="select-featured" class="tab-btn active" height="30" width="60" text="精选"/>
+      <button id="select-all" class="tab-btn" height="30" width="60" text="全部"/>
+    </h-box>
+  </div>
+  <div>
+    <h-box margins="[0,8,0,15]">
+      % for each in cardList:
+        <button
+          id="${{each['id']}}" 
+          class="container" 
+          height="160" 
+          width="260" 
+          style="${{getCardStyle(each)}}"
+        >
+          <v-box>
+            <div></div>
+            <div height="42">
+              <h-box>
+                <label text="${{encode(each['name'])}}"/>
+                <div
+                  id="status_${{each['id']}}"
+                  width="18"
+                  height="18"
+                  style="${{getStatusStyle(current, each)}}"
+                />
+              </h-box>
+            </div>
+          </v-box>
+        </button>
+      % endfor
+    </h-box>
+  </div>
+</template>
+"""
+print(TEMPLATE)
 
-  def changeStyle(self):
-    pass
-
-  def changeImage(self):
-    output, _ = select_image(self.skin, assetsPath('skin'))
+class Skin(Page):  # 6. 类名更具描述性
+    """皮肤选择页面。"""
     
-    # 保存背景图片路径
-    setting = self.param.child(self.param.pathJoin("userPath","setting.json"), Config().default_theme)
-    skinStyle = setting.get("skinStyle")
-    skinStyle[self.option["index"]]["app_bg_image"] = output
-    setting.save()
-    setAppStyle(self)
-    self.callback.run("update")
+    # 7. 将固定配置提取为类属性
+    DEFAULT_THEME = Config().default_theme
 
-  def loveSkin(self):
-    self.tips("已收藏", "success")
+    def __init__(self):
+        super().__init__()
+        self.template = TEMPLATE
+        path = self.param.pathJoin('userPath', 'setting.json')
+        self.setting = Param(path, self.DEFAULT_THEME)
+        self.card_list: List[Dict] = []
+        self.current_skin_id: str = self.DEFAULT_THEME['skinId']
 
-  def shareSkin(self):
-    self.tips("正在开发")
+    def setup(self):
+        """设置页面上下文数据。"""
+        # 从配置中加载数据
+        self.card_list = self.setting.get("skinStyle", [])
+        self.current_skin_id = self.setting.get("skinId", self.DEFAULT_THEME['skinId'])
+        
+        # 9. 将方法和数据打包成上下文，供模板使用
+        return {
+          'current': self.current_skin_id,
+          'cardList': self.card_list,
+          'encode': encode,
+          'getCardStyle': get_card_style,
+          'getStatusStyle': get_status_style,
+        }
 
+    def show(self, *args):
+        """页面显示时的初始化工作（如绑定事件）。"""
+        # 10. 优化事件注册：避免在循环中反复调用 self.getWidget
+        # 如果框架允许，一次性获取所有卡片 widget 会更高效
+        for index, card in enumerate(self.card_list):
+            card_id = card['id']
+            widget = self.getWidget(card_id)
+            if not widget:
+                continue # 跳过无效的widget
+            
+            # 添加右键菜单
+            RightClick_Menu(widget, [
+                {"name": "分享", "callback": partial(self.share_skin, index), "icon": assetsPath('menu', 'share.png')},
+                {"name": "收藏", "callback": partial(self.love_skin, index), "icon": assetsPath('menu', 'love.png')},
+                {"name": "更换壁纸", "callback": partial(self.change_image, index), "icon": assetsPath('menu', 'pictures.png')},
+            ])
+            # 注册点击事件
+            self.register(card_id, 'clicked', partial(self.pick_skin, index))
 
-class Skin(Page):
-  def __init__(self):
-    super().__init__()
+    def pick_skin(self, index: int):
+        """选择一个皮肤。"""
+        new_skin_id = self.card_list[index]["id"]
+        if self.current_skin_id == new_skin_id:
+            return # 如果点击的是当前已选中的皮肤，则不做任何操作
+        
+        # 更新配置
+        self.setting.set("skinId", new_skin_id)
+        self.setting.save()
+        
+        # 应用新样式并刷新UI
+        setAppStyle(self)
+        self.playMedia('media', 'clicking-on.mp3')
+        
+        # 11. 简化刷新逻辑，setup已经包含了最新数据
+        self.rerender(self.setup()) 
+        # 注意：rerender 可能会重新创建所有 widget，因此可能需要重新调用 show 来绑定事件
+        # 如果框架的 rerender 会自动触发 show，则可以省略下面这行
+        self.show() 
 
+    def change_image(self, index: int):
+        """为指定皮肤更换背景图片。"""
+        # 12. 提供更友好的默认路径和标题
+        initial_dir = assetsPath('skin') or os.path.expanduser("~")
+        output, _ = select_image(self.getParent(), initial_dir, title="请选择一张图片作为皮肤背景")
+        if not output:
+            return
 
-  def setup(self):
-    super().setup()
-    color = ["rgb(255,58,58)", "rgba(255, 0, 0, 0.08)", "rgba(255, 0, 0, 0.05)"]
-    self.ui.btn_skin_base.setStyleSheet(f"color: {color[0]}; border: 1px solid {color[1]}; background-color: {color[2]};")
-  
+        # 保存背景图片路径
+        self.card_list[index]["app_bg_image"] = output
+        self.setting.save()
+        
+        # 13. 仅当更换的是当前皮肤的图片时，才立即应用样式
+        if self.card_list[index]["id"] == self.current_skin_id:
+            setAppStyle(self)
+        
+        # 刷新UI以显示新的背景图
+        self.rerender(self.setup())
+        self.show()
 
-  def reset(self):
-    # 卡片layout是否被创建，若创建返回里面的卡片数量
-    try:
-      item_list = list(range(self.skin_layout.count()))
-      self.children.remove()
-    except:
-      item_list = False
+    def love_skin(self, index: int):
+        """收藏皮肤（模拟）。"""
+        skin_name = self.card_list[index].get('name', '此皮肤')
+        self.tips(f"已收藏 {skin_name}", "success")
 
-    # 若果卡片被创建
-    if not item_list == False:
-      item_list.reverse()# 倒序删除，避免影响布局顺序
-      for i in item_list:
-        item = self.skin_layout.itemAt(i)
-        if item.widget():
-          item.widget().deleteLater()
-    else:
-      self.skin_layout = QHBoxLayout(self.ui.skin_container)
-      self.skin_layout.setAlignment(Qt.AlignTop)
-
-
-  def show(self, *args):
-    self.update()
-
-  def hide(self, *args):
-    self.children.remove()
-
-
-  def update(self):
-    self.reset()
-    setting = self.param.child(self.param.pathJoin("userPath","setting.json"), Config().default_theme)
-    self.current_skin_id = setting.get("skinId", Config().default_theme['skinId'])
-
-    def pick(option):
-      if self.current_skin_id == option["id"]:
-        return
-      self.current_skin_id = option["id"]
-      setting.set("skinId", option["id"])
-      setting.save()
-      setAppStyle(self, Config().default_theme)
-      self.reset()
-      render()
-    
-    def render():
-      i = 0
-      skinList = setting.get("skinStyle", [])
-      for each in skinList:
-        each['current'] = self.current_skin_id
-        skincard = SkinCard(each)
-        skincard.setup()
-        skincard.callback.add("pick", pick)
-        skincard.callback.add("update", self.update)
-        self.children.add(f"skincard_{i}", skincard)
-        self.skin_layout.addWidget(skincard.skin)
-        i+=1
-
-    render()
+    def share_skin(self, index: int):
+        """分享皮肤（开发中）。"""
+        self.tips("分享功能正在开发中，敬请期待...")

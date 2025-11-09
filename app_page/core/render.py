@@ -1,10 +1,10 @@
 import xml.etree.ElementTree as ET
+from mako.template import Template
 from PySide6 import QtWidgets
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox)
-from mako.template import Template
 from ..utils import setWidgetStyle, unescape_xml, t2d, decode
-
+from ..core.common import setShadowEffect
 
 # 组件类型别名映射
 aliasWidgetMap = {
@@ -43,13 +43,13 @@ def render(parent:QWidget|QLayout, template:str, params:dict={}) -> dict:
       widgetIdMap(dict): 组件id与组件的映射关系
       vnode(dict): 虚拟节点
   """
-  widgetIdMap:dict = {}
   xml_template:str = Template(template).render(**params)
   vnode:dict = template_to_vnode(xml_template)
   # 如果父组件是布局，并且需要滚动，则创建一个滚动布局
   if vnode.get('scroll', False):
     parent = create_scroll_layout(parent)
-  return vnode_render(parent, vnode, widgetIdMap)
+  # 递归渲染组件，并返回组件id映射表
+  return vnode_render(parent, vnode, {})
 
 
 # 递归渲染组件
@@ -128,6 +128,8 @@ def set_attributes(widget:QWidget|QLayout, props:dict, widgetIdMap:dict):
     elif key == 'options':
       if isinstance(widget, QComboBox):
         widget.addItems(value)
+    elif key == 'shadow':
+      setShadowEffect(widget, value)
     elif key == 'children':
       if hasattr(widget, '__scroll_layout'):
         parent = widget.__scroll_layout
@@ -135,6 +137,8 @@ def set_attributes(widget:QWidget|QLayout, props:dict, widgetIdMap:dict):
       else:
         parent = widget
       vnode_render(parent, props, widgetIdMap)
+    else:
+      widget.setProperty(key, value)
 
 
 # 预处理
@@ -147,6 +151,13 @@ def preprocess(item:dict, key:str, value:str):
       result = t2d(value)
     except:
       result = []
+    item[key] = result
+  elif key == 'shadow':
+    # 尝试解析json字典
+    try:
+      result = t2d(value)
+    except:
+      result = {}
     item[key] = result
   elif key in ['spacing', 'width', 'height']:
     item[key] = int(value)

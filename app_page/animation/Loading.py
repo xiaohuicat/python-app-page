@@ -8,11 +8,12 @@ WHITE_STYLE = {
   "padding": "20px",
   "background-color": "#fff"
 }
-  
+
 
 class Loading:
   def __init__(self, layout:QVBoxLayout|QHBoxLayout|QGridLayout):
     self.layout = layout
+
   def create(self):
     # 加载GIF文件
     movie = QMovie(getSetting('loading_icon'))

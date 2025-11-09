@@ -1,6 +1,7 @@
 from PySide6.QtWidgets import QWidget
 from PySide6.QtCore import QPropertyAnimation
 
+
 class FadeEffect:
   def __init__(self, target:QWidget, duration=200, finish=lambda: print("FadeEffect>finish")) -> None:
     if hasattr(target, "_fade_animation"):

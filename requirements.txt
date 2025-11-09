@@ -1,6 +1,8 @@
-app-page-core>=0.0.7
+app-page-core>=0.0.8
 nanoid
 PySide6
 numpy
 pillow
 mako
+comtypes
+pycaw

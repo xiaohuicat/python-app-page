@@ -17,12 +17,12 @@ class Config():
     self.APP_ICON_PATH = assetsPath('icon', 'favicon.png')
     self.APP_DATA_DIRNAME = 'GreatNoteData'
 
-    self.IS_DEBUG = False        #生产环境，使用远程服务器
+    self.IS_DEBUG = True        #生产环境，使用远程服务器
     self.SETUP_EASY = False
 
     self.PING_HOST = 'greatnote.cn'
     self.filter_id = "leftBar"
-    self.button_frame_id = "frame_13"
+    self.button_frame_id = "leftbar_frame"
     self.button_container_id = "leftbar_container"
     self.button_close_id = "btn_close"
     self.button_login_id = "btn_login_icon"
