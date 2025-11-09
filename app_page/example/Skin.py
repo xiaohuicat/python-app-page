@@ -85,7 +85,7 @@ TEMPLATE = f"""
   </div>
 </template>
 """
-print(TEMPLATE)
+
 
 class Skin(Page):  # 6. 类名更具描述性
     """皮肤选择页面。"""
