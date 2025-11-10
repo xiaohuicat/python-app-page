@@ -58,7 +58,6 @@ def createApp(SETTING:dict):
     stack_id (str): 栈组件id
     pages (dict): 页面字典
     pageOptionList (list): 页面配置项列表
-    button_frame_id (str): 按钮框架id
     button_container_id (str): 按钮容器id
     button_close_id (str): 关闭按钮id
     button_login_id (str): 登录按钮id
@@ -75,13 +74,14 @@ def createApp(SETTING:dict):
     small_page_icon (str): 缩小图标路径
     maximize_page_icon (str): 最大窗口图标路径
   """
+  if 'IS_DEBUG' in SETTING:
+    Setting.applySetting('IS_DEBUG', SETTING['IS_DEBUG'])
   config = Config()
   # 应用默认配置
   Setting.applySetting({
     'stack_id': 'stackedWidget',
     'pages': config.pages,
     'pageOptionList': config.pageOptionList,
-    'button_frame_id': config.button_frame_id,
     'button_container_id': config.button_container_id,
     'button_close_id': config.button_close_id,
     'button_login_id': config.button_login_id,
@@ -123,13 +123,12 @@ def createApp(SETTING:dict):
     'system_param': system_param,
   })
   root = Page('root')
+  store.set('root', root)
   stackManager = initStackManager(root, mainWin)
+  store.set('stackManager', stackManager)
   root.callback.add('setUserInfo', mainWin.setUserInfo)
   mainWin.callback.add('close', lambda: root.closeApp())
   mainWin.setUserInfo('请登录', '')
-  # 挂载栈页面
-  store.set('stackManager', stackManager)
-  store.set('root', root)
   # 注册事件
   initRegister(root, mainWin, stackManager)
   # 设置全局样式

@@ -1,184 +1,140 @@
 * {
-  padding:0;
-  margin:0;
-  border:none;
+  padding: 0;
+  margin: 0;
+  border: none;
   outline: none;
 }
 
-QLabel {
-  color: #333;
+QPushButton {
+  font-weight: normal;
+  border-radius: 6px;
+}
+QPushButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
-.QPushButton {
-    color: #333;
-    border: none;
-    border-radius: 5px;
-    background-color: transparent;
-}
-.QPushButton:hover {
-    background-color: #f0f0f0;
-}
-
-QFrame {
-  margin: 0;
-  border: 0;
-}
-
-/*下拉选择框样式*/
-QComboBox{
-  font-size:14px;
-  padding: 3px 5px;
-  border:1px solid rgba(228,228,228,1);
-  border-radius:5px;
+/* 下拉选择框样式 */
+QComboBox {
+  font-size: 14px;
+  padding: 1px 15px 1px 3px;
+  border: 1px solid rgba(228, 228, 228, 1);
+  border-radius: 5px 5px 0 0;
 }
 QComboBox:hover {
   background-color: #E8F5E9;
 }
 
-/*下拉列表*/
+/* 下拉列表 */
 QComboBox::drop-down {
   subcontrol-origin: padding;
   subcontrol-position: top right;
-  width: 20px;
-  border:none;
+  width: 15px;
 }
 
-/*添加箭头*/
+/* 下拉箭头 */
 QComboBox::down-arrow {
   image: url(./assets/icons/cil-arrow-bottom.png);
 }
-QComboBox QAbstractItemView{
-	background:rgba(255,255,255,1);
-  border:1px solid rgba(228,228,228,1);
-  border-radius:0px 0px 5px 5px;
-  font-size:14px;
-  outline: 0px;
+
+QComboBox QAbstractItemView {
+  background: #ffffff;
+  border: 1px solid rgba(228, 228, 228, 1);
+  border-radius: 0 0 5px 5px;
+  font-size: 14px;
 }
 
-QComboBox QAbstractItemView::item{
-	height:28px;
-	color:#666666;
-	padding-left:9px;
-	background-color:#FFFFFF;
+QComboBox QAbstractItemView::item {
+  height: 28px;
+  color: #666666;
+  padding-left: 9px;
+  background-color: #FFFFFF;
 }
-QComboBox QAbstractItemView::item:hover{ 
-  background-color:#409CE1;
-  color:#ffffff;
-}
-QComboBox QAbstractItemView::item:selected{
-  background-color:#409CE1;
-  color:#ffffff;
+QComboBox QAbstractItemView::item:hover,
+QComboBox QAbstractItemView::item:selected {
+  background-color: #409CE1;
+  color: #ffffff;
 }
 
-/*QTabWidget*/
-QTabWidget::pane{
-  border:none;
+/* 标签页 */
+QTabWidget::pane {
+  border: none;
 }
 
-/* 设置tabBar右移距离 */
 QTabWidget::tab-bar {
-  /* left: 5px; */
+  left: 10px;
+  top: 9px;
 }
-/* 设置tabBar样式 */
+
 QTabBar::tab {
   background: #fff;
-  border: none;
   min-width: 60px;
   height: 24px;
-  font-size: 16px;
+  font-size: 14px;
   font-family: '微软雅黑';
   border-bottom: 3px solid #ddd;
- }
+}
 
-/*选中tabBar选中时候背景色*/
-QTabBar::tab:selected{
-  background-color: #fff;
+QTabBar::tab:selected {
   color: #333;
   border-bottom: 3px solid skyblue;
 }
-/*选中tabBar选中时候背景色*/
-QTabBar::tab:!selected{
+QTabBar::tab:!selected {
   background-color: #ddd;
   color: #999;
 }
 
+/* 表格 */
 QTableWidget {
-  border: none;
-  outline: none;
-  font-size:16px;
   background: #fff;
 }
 
-/* 表格样式设置 */
-/* QTableWidget 标题头整个区域 */
-QHeaderView{
-  /* 整个标题头区域背景色 */
-  background-color:transparent;
-}
-/* 标题头 每个单独的标题区域 */
-QHeaderView::section{
-  font-size:16px; 
-  padding: 0 5px;               
-  font-family:&quot;Microsoft YaHei&quot;; 
-  color:#FFFFFF;
-  background:#43A047;/*中绿*/
-  background:#0D47A1;/*深蓝*/
-  background:#1B5E20;/*深绿*/
-  background: #B0C4DE;
-  /*background:#4527A0;蓝色*/
-  border:none;
-  /* 每个标题的对齐方式（貌似不能用）。
-  建议使用tableWidget-&gt;horizontalHeader()-&gt;setDefaultAlignment(Qt::AlignLeft | Qt::AlignVCenter)*/
-  text-align:center;               
-  min-height:30px;               
-  max-height:30px;              
-  margin-left:0px;               
-  padding-left:0px;     
+QHeaderView::section {
+  font-size: 14px;
+  font-family: "Microsoft YaHei";
+  color: #FFFFFF;
+  background: #1B5E20; /* 保留最后一个背景色设置 */
+  min-height: 30px;
+  max-height: 30px;
+  text-align: center;
 }
 
-/* 垂直滚动条 handle */
-QScrollBar::handle::vertical{
-  background: #ddd;
-  width:8px;
-  border-radius:3px;  
-}
-QScrollBar::handle::vertical:hover{
-  background: #ccc; 
-}
-/* 垂直滚动条 区域 */
-QScrollBar::vertical{
-  border-color: rgba(255, 255, 255, 10%);
+/* 滚动条 */
+/* 垂直滚动条 */
+QScrollBar::vertical {
   width: 8px;
-  border-radius:3px;
-  /* margin: 5px; */
+  border-radius: 3px;
 }
-/* 垂直滚动条  handle上、下区域（未被handle占用的区域） */
-QScrollBar::add-page::vertical, QScrollBar::sub-page::vertical,QScrollBar::add-line::vertical,QScrollBar::sub-line::vertical{
-  border:none;
-  outline:none;
+QScrollBar::handle:vertical {
+  background: #ddd;
+  width: 8px;
+  border-radius: 3px;
 }
-
-/* 垂直滚动条 handle */
-QScrollBar::handle:horizontal{
-  background: #eee;
-  height:8px;
-  border-radius:3px;  
+QScrollBar::handle:vertical:hover {
+  background: #ccc;
 }
-/* 垂直滚动条 handle */
-QScrollBar::handle:horizontal::hover{
-  background: #ddd; 
+QScrollBar::add-page:vertical, 
+QScrollBar::sub-page:vertical,
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+  border: none;
 }
 
-/* 垂直滚动条 区域 */
-QScrollBar:horizontal{
-  /* border-color: rgba(255, 255, 255, 10%); */
+/* 水平滚动条 */
+QScrollBar:horizontal {
   height: 8px;
-  border-radius:3px;
-  /* margin: 5px; */
+  border-radius: 3px;
 }
-
-/* 垂直滚动条  handle上、下区域（未被handle占用的区域） */
-QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal,QScrollBar::add-line:horizontal,QScrollBar::sub-line:horizontal{
-  border:none;
-  outline:none;
+QScrollBar::handle:horizontal {
+  background: #ddd;
+  height: 8px;
+  border-radius: 3px;
+}
+QScrollBar::handle:horizontal:hover {
+  background: #ccc;
+}
+QScrollBar::add-page:horizontal, 
+QScrollBar::sub-page:horizontal,
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+  border: none;
 }

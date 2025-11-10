@@ -3,6 +3,7 @@ from .core import Page, EventBus, EventHook, EasyThread, ThreadManager, PageMana
 from .core.Setting import getSetting, applySetting
 from .app import createApp
 from .config import Config
+from .core.common import setShadowEffect, updateStyle
 
 __all__ = [
   "createApp",
@@ -18,6 +19,8 @@ __all__ = [
   "EasyThread",
   "ThreadManager",
   "Waiting_time",
+  "setShadowEffect",
+  "updateStyle",
   "Setting",
   "Device",
   "FileParam",

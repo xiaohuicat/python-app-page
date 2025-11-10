@@ -22,7 +22,6 @@ class Config():
 
     self.PING_HOST = 'greatnote.cn'
     self.filter_id = "leftBar"
-    self.button_frame_id = "leftbar_frame"
     self.button_container_id = "leftbar_container"
     self.button_close_id = "btn_close"
     self.button_login_id = "btn_login_icon"

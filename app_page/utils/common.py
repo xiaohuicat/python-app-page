@@ -15,18 +15,17 @@ def assetsPath(*args):
   appPath = os.path.join(os.getcwd(), "assets", *args)
   if is_debug:
     print('appPath:', appPath)
-    # 确保目标目录的父目录存在
     os.makedirs(os.path.dirname(appPath), exist_ok=True)
-    # 检查源路径是否存在
-    if os.path.exists(packagePath):
+    # 源路径存在且目标路径不存在时才复制
+    if os.path.exists(packagePath) and not os.path.exists(appPath):
       try:
-        # 复制文件或目录
         if os.path.isfile(packagePath):
           shutil.copy(packagePath, appPath)
         else:
+          # 兼容Python 3.8以下版本（可添加版本判断）
           shutil.copytree(packagePath, appPath, dirs_exist_ok=True)
       except Exception as e:
-        raise SystemError("复制文件或目录时出错", e)
+        raise SystemError(f"复制资源失败（源：{packagePath}，目标：{appPath}）：{e}") from e
   
   return appPath
 
