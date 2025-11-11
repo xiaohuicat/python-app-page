@@ -1,5 +1,7 @@
 from app_page_core import Store, Param, Callback, LocalStore
-from .core import Page, EventBus, EventHook, EasyThread, ThreadManager, PageManager, Waiting_time, Setting, Device, FileParam, render
+from .core import (Page, EventBus, EventHook, EasyThread, ThreadManager,
+                   PageManager, Waiting_time, Setting, Device, FileParam,
+                   WidgetsController, render, render_vnode, render_widget)
 from .core.Setting import getSetting, applySetting
 from .app import createApp
 from .config import Config
@@ -25,7 +27,10 @@ __all__ = [
   "Device",
   "FileParam",
   "render",
+  "render_vnode",
+  "render_widget",
   "getSetting",
   "applySetting",
-  "Config"
+  "Config",
+  "WidgetsController"
 ]

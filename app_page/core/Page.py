@@ -1,6 +1,6 @@
 import sys
 from PySide6.QtCore import Qt, QUrl
-from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout, QMainWindow
+from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from app_page_core import Param, Page as CorePage
 from ..core.Tips import Tips
@@ -8,10 +8,10 @@ from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
-from ..core.render import render
+from .render import render
 from ..core.WidgetsController import WidgetsController
 from ..utils import layout_clear, assetsPath
-from ..core.MainWindow import MainWindow
+from ..MainWindow import MainWindow
 
 
 class Page(CorePage):
@@ -82,7 +82,7 @@ class Page(CorePage):
 
     # 渲染页面并挂载组件id列表
     templateParams = params if type(params) == dict else {}
-    self.__widgetsController.setWidgets(render(layout, self.template, templateParams))
+    self.__widgetsController.setWidgets(render(layout, self.template, templateParams)['widgets'])
 
 
   def hidePage(self) -> None:

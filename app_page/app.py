@@ -2,8 +2,9 @@ import sys
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from app_page_core import Store, Param
-from .core import ThreadManager, PageManager, Page, Device, Setting, MainWindow
+from .core import ThreadManager, PageManager, Page, Device, Setting
 from .components import StackManager
+from .MainWindow import MainWindow
 from .config import Config
 from .utils import setAppStyle
 

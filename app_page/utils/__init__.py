@@ -5,6 +5,7 @@ from .set_style import setAppStyle, setWidgetStyle, setWidgetStyleById, mergeSty
 from .cut_image import cut_image, cut_image_in, cut_image_out
 from .select_image import select_image
 from .control_volume import get_system_volume, set_system_volume
+from ..core.common import setShadowEffect, updateStyle
 
 __all__ = [
   'assetsPath',
@@ -25,6 +26,8 @@ __all__ = [
   'unescape_xml',
   'get_system_volume',
   'set_system_volume',
+  'setShadowEffect',
+  'updateStyle',
   's2t',
   'd2t',
   't2d',

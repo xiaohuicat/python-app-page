@@ -3,12 +3,11 @@ from .EventBus import EventBus
 from .EventHook import EventHook
 from .Page import Page
 from .Thread import EasyThread, Waiting_time, ThreadManager
-from .MainWindow import MainWindow
 from .FileParam import FileParam
 from .Record import Record
 from .PageManager import PageManager
 from ..core import Setting, Device
-from .render import render
+from .render import render, render_widget, render_vnode
 from .callfunc import call_func, current_func
 from .WidgetsController import WidgetsController
 
@@ -23,9 +22,10 @@ __all__ = [
   "EasyThread",
   "ThreadManager",
   "Waiting_time",
-  "MainWindow",
   "FileParam",
   "render",
+  "render_widget",
+  "render_vnode",
   "call_func",
   "current_func",
   "WidgetsController",

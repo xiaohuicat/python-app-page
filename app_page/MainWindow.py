@@ -2,12 +2,11 @@ import os
 from PySide6.QtWidgets import QMainWindow, QWidget, QLayout
 from PySide6 import QtCore
 from app_page_core import Param, Callback
-from ..animation import MoveWin
-from ..core import Setting
-from ..utils import assetsUrl
-from .render import render
-from .WidgetsController import WidgetsController
-from .common import setShadowEffect
+from .core.render.render_main import render
+from .core.WidgetsController import WidgetsController
+from .core.Setting import getSetting
+from .animation import MoveWin
+from .utils import assetsUrl, setShadowEffect
 
 
 template = '''
@@ -138,7 +137,7 @@ class MainWindow(QMainWindow):
     with open(assetsUrl('UI', 'style.qss'), "r", encoding="utf-8") as f:
       self.setStyleSheet(f.read())
     setShadowEffect(self)
-    self.setWindowTitle(Setting.getSetting("APP_TITLE"))
+    self.setWindowTitle(getSetting("APP_TITLE"))
     self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 去除原来的边框
     self.setAttribute(QtCore.Qt.WA_TranslucentBackground)  # 透明背景
     # 添加窗口移动功能
@@ -149,8 +148,8 @@ class MainWindow(QMainWindow):
     self.setCentralWidget(self.ui)
     # 渲染UI
     self.widgetsController:WidgetsController = WidgetsController(render(self.ui, template, {
-      "title": "小灰妙记",
-    }))
+      "title": getSetting('APP_TITLE'),
+    })['widgets'])
     # 绑定按钮事件
     self.register('btn_close', 'clicked', self.closePage)
     self.register('btn_small', 'clicked', self.showMinimized)

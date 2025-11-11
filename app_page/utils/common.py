@@ -2,7 +2,7 @@ import os, shutil, time, json
 from ..core import Setting
 
 
-def assetsPath(*args):
+def assetsPath(*args) -> str:
   """获取资源路径
   Args:
       args (tuple): 目录，文件名
@@ -54,22 +54,26 @@ def layout_clear(layout):
       layout_clear(item.layout())
 
 
-def timestamp():
+def timestamp() -> int:
   """毫秒级时间戳"""
   return int(time.time() * 1000)
 
 
-def escape_xml(text):
+def escape_xml(text:str) -> str:
   """转义XML字符"""
+  if not isinstance(text, str):
+    return ''
   return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&apos;").replace('"', "&quot;")
 
 
-def unescape_xml(text):
+def unescape_xml(text:str) -> str:
   """反转义XML字符"""
+  if not isinstance(text, str):
+    return ''
   return text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">").replace("&apos;", "'").replace("&quot;", '"')
 
 
-def d2t(data):
+def d2t(data:dict|list) -> str:
   """格式化JSON数据为字符串并转换为base64编码"""
   try:
     return json.dumps(data).encode('utf-8').hex()
@@ -77,7 +81,7 @@ def d2t(data):
     return data
 
 
-def t2d(text):
+def t2d(text:str):
   """将base64编码的字符串转换为JSON数据"""
   try:
     return json.loads(bytes.fromhex(text).decode('utf-8'))
@@ -85,7 +89,7 @@ def t2d(text):
     return text
 
 
-def encode(text):
+def encode(text:str) -> str:
   """字符串编码为base64"""
   try:
     return '[#encode]:' + text.encode('utf-8').hex()
@@ -93,7 +97,7 @@ def encode(text):
     return text
   
 
-def decode(text):
+def decode(text:str) -> str:
   """将base64字符串解码"""
   try:
     if text.startswith('[#encode]:'):

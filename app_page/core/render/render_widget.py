@@ -1,0 +1,206 @@
+from typing import Union, Dict, Any
+from PySide6.QtCore import Qt
+from ...utils import unescape_xml
+from ..common import setShadowEffect
+from PySide6 import QtWidgets
+from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox, QPlainTextEdit, QLineEdit)
+
+
+def render_widget(parent:QWidget|QLayout, vnode:dict):
+    # 如果父组件是布局，并且需要滚动，则创建一个滚动布局
+    if vnode.get('scroll', False):
+        parent = create_scroll_layout(parent)
+    # 递归渲染组件，并返回组件id映射表
+    return vnode_render(parent, vnode, {})
+
+
+# 创建可滚动布局
+def create_scroll_layout(layout:QLayout, style:str="background-color: transparent;"):
+  scroll_area = QScrollArea()
+  scroll_area.setWidgetResizable(True)
+  scroll_area.setStyleSheet(style)
+  content_widget = QWidget()
+  scroll_area.setWidget(content_widget)
+  content_layout = QVBoxLayout(content_widget)
+  content_layout.setContentsMargins(0, 0, 0, 0)
+  layout.addWidget(scroll_area)
+  return content_layout
+
+
+# 递归渲染组件
+def vnode_render(parent:QWidget|QLayout, vnode:dict, widgetIdMap:dict) -> dict:
+  vnodes = vnode.get('children', [])
+  if len(vnodes) == 0:
+    return
+  for props in vnodes:
+    if isinstance(props, dict) and 'type' in props:
+      widget:QWidget|QLayout = create_widget(parent, props)
+      set_attributes(widget, props, widgetIdMap)
+  return widgetIdMap
+
+
+# 创建组件
+def create_widget(parent:QWidget|QLayout, props:dict) -> QWidget|QLayout:
+  AutoWidget:QWidget|QLayout = getattr(QtWidgets, props['type']) if hasattr(QtWidgets, props['type']) else None
+  # 如果上一个层级是布局，则直接添加组件，否则以上一个组件为父组件创建组件或布局
+  if AutoWidget and isinstance(parent, QLayout):
+    widget:QWidget = AutoWidget()
+    if 'grid' in props:
+      grid = props['grid']
+      parent.addWidget(widget, *grid)
+    else:
+      parent.addWidget(widget)
+  else:
+    widget:QWidget|QLayout = AutoWidget(parent)
+  return widget
+
+
+def set_attributes(
+    widget: Union[QWidget, QLayout],
+    props: Dict[str, Any],
+    widget_id_map: Dict[str, Union[QWidget, QLayout]]
+) -> None:
+    """设置组件属性
+    
+    Args:
+        widget: 要设置属性的组件或布局
+        props: 属性字典
+        widget_id_map: 组件ID映射表
+    """
+    # 处理特殊属性的映射表：属性名 -> 处理函数
+    prop_handlers = {
+        'id': lambda v: _handle_id(widget, v, widget_id_map),
+        'text': lambda v: _handle_text(widget, v),
+        'title': lambda v: _handle_title(widget, v),
+        'style': lambda v: _handle_style(widget, v),
+        'margins': lambda v: _handle_margins(widget, v),
+        'spacing': lambda v: _handle_spacing(widget, v),
+        'width': lambda v: _handle_fixed_width(widget, v),
+        'height': lambda v: _handle_fixed_height(widget, v),
+        'disabled': lambda v: _handle_disabled(widget, v),
+        'placeholder': lambda v: _handle_placeholder(widget, v),
+        'password': lambda v: _handle_password(widget),
+        'align': lambda v: _handle_alignment(widget, v),
+        'scroll': lambda v: _handle_scroll(widget, v),
+        'options': lambda v: _handle_options(widget, v),
+        'shadow': lambda v: _handle_shadow(widget, v),
+        'children': lambda v: _handle_children(widget, props, widget_id_map)
+    }
+
+    for key, value in props.items():
+        # 优先使用专用处理器
+        if key in prop_handlers:
+            prop_handlers[key](value)
+        # 处理通用属性
+        else:
+            widget.setProperty(key, value)
+
+
+# 以下为属性处理的辅助函数
+def _handle_id(widget: Union[QWidget, QLayout], value: str, widget_id_map: dict) -> None:
+    """处理ID属性"""
+    widget.setObjectName(value)
+    widget_id_map[value] = widget
+
+
+def _handle_text(widget: Union[QWidget, QLayout], value: str) -> None:
+    """处理文本属性"""
+    unescaped_value = unescape_xml(value)
+    if isinstance(widget, QPlainTextEdit):
+        widget.setPlainText(unescaped_value)
+    elif hasattr(widget, 'setText'):
+        widget.setText(unescaped_value)
+
+
+def _handle_title(widget: Union[QWidget, QLayout], value: str) -> None:
+    """处理标题/提示属性"""
+    if hasattr(widget, 'setToolTip'):
+        widget.setToolTip(unescape_xml(value))
+
+
+def _handle_style(widget: Union[QWidget, QLayout], value: str) -> None:
+    """处理样式属性"""
+    if hasattr(widget, 'setStyleSheet'):
+        widget.setStyleSheet(value)
+
+
+def _handle_margins(widget: Union[QWidget, QLayout], value: list) -> None:
+    """处理边距属性"""
+    if hasattr(widget, 'setContentsMargins'):
+        widget.setContentsMargins(*value)
+
+
+def _handle_spacing(widget: Union[QWidget, QLayout], value: int) -> None:
+    """处理间距属性"""
+    if hasattr(widget, 'setSpacing'):
+        widget.setSpacing(value)
+
+
+def _handle_fixed_width(widget: Union[QWidget, QLayout], value: int) -> None:
+    """处理宽度属性"""
+    if hasattr(widget, 'setFixedWidth'):
+        widget.setFixedWidth(value)
+
+
+def _handle_fixed_height(widget: Union[QWidget, QLayout], value: int) -> None:
+    """处理高度属性"""
+    if hasattr(widget, 'setFixedHeight'):
+        widget.setFixedHeight(value)
+
+
+def _handle_disabled(widget: Union[QWidget, QLayout], value: bool) -> None:
+    """处理禁用属性"""
+    if hasattr(widget, 'setReadOnly'):
+        widget.setReadOnly(value)
+    # 补充：通常禁用组件使用setEnabled
+    if hasattr(widget, 'setEnabled'):
+        widget.setEnabled(not value)
+
+
+def _handle_placeholder(widget: Union[QWidget, QLayout], value: str) -> None:
+    """处理占位符属性"""
+    if hasattr(widget, 'setPlaceholderText'):
+        widget.setPlaceholderText(unescape_xml(value))
+
+
+def _handle_password(widget: Union[QWidget, QLayout]) -> None:
+    """处理密码框属性"""
+    if hasattr(widget, 'setEchoMode'):
+        widget.setEchoMode(QLineEdit.Password)
+
+
+def _handle_alignment(widget: Union[QWidget, QLayout], value: str) -> None:
+    """处理对齐属性"""
+    if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
+        widget.setAlignment(getattr(Qt, value))
+
+
+def _handle_scroll(widget: Union[QWidget, QLayout], value: bool) -> None:
+    """处理滚动属性"""
+    if isinstance(widget, QLayout) and value:
+        widget.__scroll_layout = create_scroll_layout(widget)
+
+
+def _handle_options(widget: Union[QWidget, QLayout], value: list) -> None:
+    """处理选项属性（下拉框）"""
+    if isinstance(widget, QComboBox):
+        widget.addItems(value)
+
+
+def _handle_shadow(widget: Union[QWidget, QLayout], value: Any) -> None:
+    """处理阴影效果属性"""
+    setShadowEffect(widget, value)
+
+
+def _handle_children(
+    widget: Union[QWidget, QLayout],
+    props: dict,
+    widget_id_map: dict
+) -> None:
+    """处理子组件属性"""
+    if hasattr(widget, '__scroll_layout'):
+        parent = widget.__scroll_layout
+        delattr(widget, '__scroll_layout')
+    else:
+        parent = widget
+    vnode_render(parent, props, widget_id_map)
