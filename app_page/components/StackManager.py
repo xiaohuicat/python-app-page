@@ -46,7 +46,7 @@ class StackManager(Stack):
 
   # 激活当前按钮
   def activeCurrentButton(self):
-    current_id = self.system_param.get('leftBar_current_btn')
+    current_id = self.param.get('leftBar_current_btn')
     if current_id:
       self.click(current_id, True)()
       return
@@ -190,7 +190,7 @@ class StackManager(Stack):
 
       self.current_btn = id
       self.timestamp = current
-      self.system_param.set('leftBar_current_btn', id)
+      self.param.set('leftBar_current_btn', id)
       self.navigateTo(id)
 
     return fun

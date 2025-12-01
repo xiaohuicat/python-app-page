@@ -1,7 +1,5 @@
-import sys
-from PySide6.QtCore import Qt, QUrl
+from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout
-from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from app_page_core import Param, Page as CorePage
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
@@ -10,7 +8,7 @@ from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
 from .render import render
 from ..core.WidgetsController import WidgetsController
-from ..utils import layout_clear, assetsPath
+from ..utils import layout_clear
 from ..MainWindow import MainWindow
 
 
@@ -24,10 +22,10 @@ class Page(CorePage):
     self.pageManager:PageManager
     self.threadManager:ThreadManager
     self.param:Param
-    self.system_param:Param
-    self.user_param:Param
     self.localStore:Param
+    self.pageParam:Param = Param()
     self.template:str
+    self.playMedia:callable
     self.__widgetsController:WidgetsController = WidgetsController()
     self.__global_data:dict = {}
     self.__parent:QWidget|None = None
@@ -38,23 +36,6 @@ class Page(CorePage):
       self.localStore = Param(path, {})
       if getSetting("IS_DEBUG"):
         print(f"页面 {name} 的本地存储路径为: {path}")
-
-
-  def setup(self, props=None) -> dict:
-    super().setup(props)
-    # 绑定函数
-    if hasattr(self, "binds"):
-      bind_dict = self.binds()
-      for signal in bind_dict.keys():
-        for [id, callback] in bind_dict[signal]:
-          widget = self.ui[id]
-          # 将对象的__dict__属性储存为一个字典
-          widget_dict = widget.__dict__
-          widget_dict[signal].connect(callback)
-          disconnect = lambda args: lambda:args.disconnect()
-          self.callback.add('onHide', disconnect(widget_dict[signal]))
-    
-    return {}
 
 
   def rerender(self, params:dict):
@@ -86,29 +67,36 @@ class Page(CorePage):
 
 
   def hidePage(self) -> None:
-    # 保存持久化数据
-    if hasattr(self, "localStore"):
-      self.localStore.save()
-    # 移除挂载的元素
     if self.__layout:
       layout_clear(self.__layout)
       self.__layout = None
     # 销毁组件管理器
     if self.__widgetsController:
       self.__widgetsController.destroy()
+    self.children.remove()
+    self.callback.clear()
+    # 保存持久化数据
+    if hasattr(self, "localStore"):
+      self.localStore.save()
+    self.pageParam and self.pageParam.clear()
 
 
-  def playMedia(self, *args) -> None:
-    # 初始化播放器和音频输出
-    player = QMediaPlayer()
-    audio_output = QAudioOutput()
-    player.setAudioOutput(audio_output)
-    
-    # 设置媒体源并播放
-    player.setSource(QUrl.fromLocalFile(assetsPath(*args)))
-    player.play()
-    self.__playing_media = player
-    self.__audio_output = audio_output
+  def destroy(self) -> None:
+    def exec_destroy():
+      self.hidePage()
+      self.status = 'hide'
+      self.hide()
+      self.__widgetsController = None
+      if hasattr(self, "localStore"):
+        self.localStore.clear()
+        self.localStore = None
+      self.pageParam = None
+      self.children = None
+      self.callback = None
+      self.template = None
+      self.__global_data = None
+      self.__parent = None
+    self.setTimeout(lambda *args:exec_destroy(), 10)
 
 
   # 注册事件
@@ -157,32 +145,6 @@ class Page(CorePage):
     cancle and self._tips_box.callback.add("cancle", cancle)
     self._tips_box.callback.add("close", _close)
     self._tips_box.show()
-
-
-  # 关闭页面
-  def close(self) -> None:
-    # 隐藏页面
-    self.hidePage()
-    # 销毁挂载的回调函数
-    self.callback and self.callback.destroy()
-    # 移除子组件
-    self.children.remove()
-    # 移除组件映射
-
-
-  # 关闭app
-  def closeApp(self) -> None:
-    self.system_param.save()
-    self.user_param.save()
-    self.pageManager.destroy()
-    self.threadManager.remove()
-    self.children.remove()
-    n = self.app.exec()
-    try:
-      sys.exit(n)
-    except SystemExit:
-      print('程序退出了，顺手帮你把垃圾带走')
-      sys.exit(n)
   
 
   def setWidgets(self, widgets:dict):

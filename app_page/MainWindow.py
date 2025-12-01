@@ -6,7 +6,7 @@ from .core.render.render_main import render
 from .core.WidgetsController import WidgetsController
 from .core.Setting import getSetting
 from .animation import MoveWin
-from .utils import assetsUrl, setShadowEffect
+from .utils import assetsUrl, setShadowEffect, assetsRead
 
 
 template = '''
@@ -116,6 +116,7 @@ main_window_style = lambda:'''
   background-color: rgba(255, 0, 0, 0.7);
 }
 #btn_change, #btn_small, #btn_close {
+  border-radius: 6px;
   background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -129,19 +130,19 @@ main_window_style = lambda:'''
 
 # 程序主窗口的类
 class MainWindow(QMainWindow):
-  def __init__(self, system_param:Param):
+  def __init__(self, param:Param):
     super().__init__()
-    self.system_param = system_param
+    self.param = param
     self.callback = Callback()
-    # 加载全局样式
-    with open(assetsUrl('UI', 'style.qss'), "r", encoding="utf-8") as f:
-      self.setStyleSheet(f.read())
+    # 设置全局样式
+    self.setStyleSheet(assetsRead('UI', 'style.qss'))
+    # 设置阴影效果
     setShadowEffect(self)
     self.setWindowTitle(getSetting("APP_TITLE"))
     self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 去除原来的边框
     self.setAttribute(QtCore.Qt.WA_TranslucentBackground)  # 透明背景
     # 添加窗口移动功能
-    self.win = MoveWin(self, system_param, "main_window_position")
+    self.win = MoveWin(self, param, "main_window_position")
     # 创建UI挂载节点
     self.ui = QWidget()
     self.ui.setStyleSheet(main_window_style())
@@ -155,7 +156,7 @@ class MainWindow(QMainWindow):
     self.register('btn_small', 'clicked', self.showMinimized)
     self.register('btn_change', 'clicked', self.toggleMaximize)
     # 设置初始状态
-    self.setClass('btn_change', 'btn_restore' if self.system_param.get("is_maximized", False) else 'btn_big')
+    self.setClass('btn_change', 'btn_restore' if self.param.get("is_maximized", False) else 'btn_big')
 
 
   def register(self, id:str, signal:str, callback):
@@ -178,10 +179,10 @@ class MainWindow(QMainWindow):
 
   def toggleMaximize(self):
     """切换窗口最大化/还原状态"""
-    if not self.system_param.get("is_maximized", False):
+    if not self.param.get("is_maximized", False):
       # 1. 记录当前窗口状态（原始位置和尺寸）
       original_position = self.getPosition()
-      self.system_param.set('original_position', original_position)
+      self.param.set('original_position', original_position)
       print("记录窗口位置和尺寸:", original_position)
       # 2. 切换到最大化状态
       self.showMaximized()
@@ -189,16 +190,16 @@ class MainWindow(QMainWindow):
       self.updateMainUI(current_position)
       print("切换到最大化状态，当前窗口位置和尺寸:", current_position)
       self.win.setPosition(20)  # 增加20像素以适应最大化边框
-      self.system_param.set("is_maximized", True)
+      self.param.set("is_maximized", True)
       self.widgetsController.setClass('btn_change', 'btn_restore')
     else:
       # 1. 还原到原始位置和尺寸
-      position = self.system_param.get('original_position')
+      position = self.param.get('original_position')
       print("还原窗口位置和尺寸:", position)
       self.setGeometry(*position)
       self.updateMainUI(position)
       self.win.setPosition()
-      self.system_param.set("is_maximized", False)
+      self.param.set("is_maximized", False)
       self.widgetsController.setClass('btn_change', 'btn_big')
 
 

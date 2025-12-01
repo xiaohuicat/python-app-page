@@ -41,6 +41,21 @@ def assetsUrl(*args):
   return assetsPath(*args).replace("\\", "/")
 
 
+def assetsRead(*args):
+  """读取资源文件内容
+  Args:
+      args (tuple): 目录，文件名
+
+  Returns:
+      content (str|bytes): 文件内容
+  """
+  path = assetsPath(*args)
+  if not os.path.exists(path):
+    return None
+  with open(path, 'r', encoding='utf-8') as f:
+    return f.read()
+
+
 def layout_clear(layout):
   """删除布局对象内所有子对象
   Args:

@@ -80,9 +80,7 @@ class PageManager:
     
     def remove_page():
       last = self.current_page
-      last.hidePage()
-      last.status = 'hide'
-      last.hide(*args)
+      last.destroy()
     
     # 点击的页面立即展示
     if id in self.button_dict:

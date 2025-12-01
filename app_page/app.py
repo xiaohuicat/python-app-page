@@ -1,4 +1,6 @@
 import sys
+from PySide6.QtCore import QUrl
+from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 from app_page_core import Store, Param
@@ -6,50 +8,7 @@ from .core import ThreadManager, PageManager, Page, Device, Setting
 from .components import StackManager
 from .MainWindow import MainWindow
 from .config import Config
-from .utils import setAppStyle
-
-
-def initRegister(root:Page, mainWin:MainWindow, stackManager:StackManager):
-  rightTopBinds:dict = Setting.getSetting('rightTopBinds', {})
-
-  def jumpToOtherPage(id:str):
-    root.navigateTo(id)
-    stackManager.clearActiveStyle()
-  
-  loginEvent = rightTopBinds.get('btn_login_icon', lambda :root.tips('点击了登录图标，可通过rightTopBinds更改绑定事件', 'success'))
-  jumpToSkin = rightTopBinds.get('btn_skin', lambda : jumpToOtherPage('skin'))
-  jumpToSetting = rightTopBinds.get('btn_setting', lambda : jumpToOtherPage('setting'))
-  jumpToMessage = rightTopBinds.get('btn_message', lambda : jumpToOtherPage('message'))
-  mainWin.register('btn_login_icon', 'clicked', loginEvent)
-  mainWin.register('btn_login_text', 'clicked', loginEvent)
-  mainWin.register('btn_setting', 'clicked', jumpToSetting)
-  mainWin.register('btn_message', 'clicked', jumpToMessage)
-  mainWin.register('btn_skin', 'clicked', jumpToSkin)
-
-
-def initStackManager(root:Page, mainWin:MainWindow):
-  """加载页面
-
-  Args:
-      target (Page): 页面对象
-  """
-  stack_id:str = Setting.getSetting('stack_id')
-  button_frame_id:str = Setting.getSetting('button_frame_id')
-  button_container_id:str = Setting.getSetting('button_container_id')
-  pages:dict = Setting.getSetting('pages')
-  pageOptionList:list = Setting.getSetting('pageOptionList')
-  
-  # 挂载到页面管理器
-  root.pageManager.mount(mainWin.getWidget(stack_id), pages=pages, pageOptionList=pageOptionList)
-  # 创建导航
-  stackManager = StackManager({
-    "stack_id": stack_id,
-    "pageOptionList": pageOptionList,
-    "button_frame_id": button_frame_id,
-    "button_container_id": button_container_id,
-  })
-  stackManager.setup()
-  return stackManager
+from .utils import setAppStyle, assetsPath
 
 
 def createApp(SETTING:dict):
@@ -106,32 +65,58 @@ def createApp(SETTING:dict):
   app = QApplication(sys.argv)
   app.setWindowIcon(QIcon(Setting.getSetting('APP_ICON_PATH')))  # 生成exe时改为绝对路径
   # 创建全局参数对象
-  param = Param(filePath=None, default=Device.defaultSystemConfig(version=Setting.getSetting('APP_VERSION')))
-  user_param = Param(filePath=param.pathJoin("userPath", "user.json"), default={})
-  system_param = Param(filePath=param.pathJoin("systemPath", "system.json"), default={})
-  # 创建程序主窗口
-  mainWin = MainWindow(system_param)
-  threadManager = ThreadManager()
-  pageManager = PageManager()
-  # 创建全局变量
+  defaultValue = Device.defaultSystemConfig(version=Setting.getSetting('APP_VERSION'))
+  filePath = Param(filePath=None, default=defaultValue).pathJoin("systemPath", "param.json")
+  param = Param(filePath=filePath, default=defaultValue)
+  param.set('systemPath', defaultValue.get('systemPath', ''))
+  param.set('tempPath', defaultValue.get('tempPath', ''))
+  param.set('userPath', defaultValue.get('userPath', ''))
+  playMedia = initPlayer(app)
   store = Store({
     'app': app,
-    'mainWin': mainWin,
-    'threadManager': threadManager,
-    'pageManager': pageManager,
     'param': param,
-    'user_param': user_param,
-    'system_param': system_param,
+    'playMedia': playMedia,
   })
+  # 创建程序主窗口
+  mainWin = MainWindow(param)
+  threadManager = ThreadManager()
+  pageManager = PageManager()
   root = Page('root')
+
+  # 运行app
+  def runApp():
+    # 运行APP
+    n = app.exec()
+    try:
+      sys.exit(n)
+    except SystemExit:
+      sys.exit(n)
+
+  # 关闭app
+  def closeApp(beforeClose:callable=None):
+    if beforeClose and callable(beforeClose):
+      beforeClose()
+    param.save()
+    pageManager.destroy()
+    threadManager.remove()
+    root.children.remove()
+    # 退出应用
+    runApp()
+
+  # 挂载全局对象
+  store.set('root', root)
+  store.set('closeApp', closeApp)
+  store.set('mainWin', mainWin)
+  store.set('threadManager', threadManager)
+  store.set('pageManager', pageManager)
+  # 创建页面
   store.set('root', root)
   stackManager = initStackManager(root, mainWin)
   store.set('stackManager', stackManager)
-  root.callback.add('setUserInfo', mainWin.setUserInfo)
   mainWin.callback.add('close', lambda: root.closeApp())
   mainWin.setUserInfo('请登录', '')
   # 注册事件
-  initRegister(root, mainWin, stackManager)
+  initMainWinRegister(root, mainWin, stackManager)
   # 设置全局样式
   setAppStyle(root)
   # 根页面初始化，会自动运行子页面的setup()方法
@@ -140,9 +125,67 @@ def createApp(SETTING:dict):
   mainWin.show()
   if 'onMounted' in SETTING and callable(SETTING['onMounted']):
     SETTING['onMounted'](root)
-  # 运行APP
-  n = app.exec()
-  try:
-    sys.exit(n)
-  except SystemExit:
-    sys.exit(n)
+  runApp()
+
+
+def initPlayer(target):
+  audioOutput = QAudioOutput()
+  audioOutput.setVolume(50)  # 设置初始音量为50%
+  player = QMediaPlayer()
+  player.setAudioOutput(audioOutput)
+
+  def playMedia(*args):
+    """播放多媒体文件
+
+    Args:
+        args (tuple): 目录，文件名
+    """
+    player.setSource(QUrl.fromLocalFile(assetsPath(*args)))
+    player.play()
+  
+  target.__player = player
+  target.__audioOutput = audioOutput
+  return playMedia
+
+
+def initMainWinRegister(root:Page, mainWin:MainWindow, stackManager:StackManager):
+  rightTopBinds:dict = Setting.getSetting('rightTopBinds', {})
+
+  def jumpToOtherPage(id:str):
+    root.navigateTo(id)
+    stackManager.clearActiveStyle()
+  
+  loginEvent = rightTopBinds.get('btn_login_icon', lambda :root.tips('点击了登录图标，可通过rightTopBinds更改绑定事件', 'success'))
+  jumpToSkin = rightTopBinds.get('btn_skin', lambda : jumpToOtherPage('skin'))
+  jumpToSetting = rightTopBinds.get('btn_setting', lambda : jumpToOtherPage('setting'))
+  jumpToMessage = rightTopBinds.get('btn_message', lambda : jumpToOtherPage('message'))
+  mainWin.register('btn_login_icon', 'clicked', loginEvent)
+  mainWin.register('btn_login_text', 'clicked', loginEvent)
+  mainWin.register('btn_setting', 'clicked', jumpToSetting)
+  mainWin.register('btn_message', 'clicked', jumpToMessage)
+  mainWin.register('btn_skin', 'clicked', jumpToSkin)
+
+
+def initStackManager(root:Page, mainWin:MainWindow):
+  """加载页面
+
+  Args:
+      target (Page): 页面对象
+  """
+  stack_id:str = Setting.getSetting('stack_id')
+  button_frame_id:str = Setting.getSetting('button_frame_id')
+  button_container_id:str = Setting.getSetting('button_container_id')
+  pages:dict = Setting.getSetting('pages')
+  pageOptionList:list = Setting.getSetting('pageOptionList')
+  
+  # 挂载到页面管理器
+  root.pageManager.mount(mainWin.getWidget(stack_id), pages=pages, pageOptionList=pageOptionList)
+  # 创建导航
+  stackManager = StackManager({
+    "stack_id": stack_id,
+    "pageOptionList": pageOptionList,
+    "button_frame_id": button_frame_id,
+    "button_container_id": button_container_id,
+  })
+  stackManager.setup()
+  return stackManager

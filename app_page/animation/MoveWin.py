@@ -7,7 +7,7 @@ from ..core.EventHook import EventHook
 
 
 class MoveWin(QMainWindow):
-  def __init__(self, target:QMainWindow | QWidget, system_param:Param | None, id:str | None):
+  def __init__(self, target:QMainWindow | QWidget, param:Param | None, id:str | None):
     super().__init__(target)
     target.mousePressEvent = self.mousePressEvent
     target.mouseMoveEvent = self.mouseMoveEvent
@@ -17,11 +17,11 @@ class MoveWin(QMainWindow):
 
     self.id = id
     self.m_flag = False
-    self.system_param = system_param
+    self.param = param
     self.mouseMoveEventHook = EventHook(10)
 
-    if self.system_param:
-      self.window_position = system_param.get(id, None)
+    if self.param:
+      self.window_position = param.get(id, None)
       if self.window_position and len(self.window_position) == 4:
           print('根据已有参数设置窗口位置', self.window_position)
           try:
@@ -69,9 +69,9 @@ class MoveWin(QMainWindow):
 
   # 保存位置参数
   def setPosition(self, add=0):
-      if not self.system_param:
+      if not self.param:
         return
       rect = self.target.geometry()
       new_window_position = [rect.left(),rect.top(),rect.width() + add,rect.height() + add]
       self.window_position = new_window_position
-      self.system_param.set(key=self.id, value=self.window_position)
+      self.param.set(key=self.id, value=self.window_position)

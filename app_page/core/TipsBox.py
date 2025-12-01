@@ -10,8 +10,8 @@ class TipsBox(QWidget):
   def __init__(self, topic:str="更新提醒", title:str="提示窗的标题", content:str="提示的内容"):
     super().__init__()
     self.callback = Callback()
-    system_param:Param = Store().get("system_param")
-    MoveWin(self, system_param, id="tips_box_position")
+    param:Param = Store().get("param")
+    MoveWin(self, param, id="tips_box_position")
     
     ui = getSetting("tipsBox_ui")
     # 如果ui是字符串

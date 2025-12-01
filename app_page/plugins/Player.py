@@ -33,8 +33,17 @@ class Music:
         self.state = None
 
     def getUrl(self):
+        # 先判断播放列表是否为空，避免空列表导致的异常
+        if not self.playList:
+            return None
+        
+        # 初始化index
         if self.index == -1:
             self.index = 0
+        
+        # 防止索引溢出：使用取模运算实现循环播放
+        self.index = self.index % len(self.playList)
+
         self.url = self.playList[self.index]['url']
         return self.url
 
@@ -97,8 +106,8 @@ class Player:
 
     def next(self):
         self.music.next()
-        self.__setSource()
-        self.play()
+        if self.__setSource():
+            self.play()
 
     def setPosition(self, position:int):
         self.__player.setPosition(position)
@@ -124,7 +133,10 @@ class Player:
     
     def __setSource(self):
         url = self.music.getUrl()
+        if not url:
+            return False
         self.__player.setSource(QUrl.fromLocalFile(url))
+        return True
 
     def __positionChanged(self, position:int):
         self.music.position = position
