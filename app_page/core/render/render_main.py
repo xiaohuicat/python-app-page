@@ -16,5 +16,5 @@ def render(parent:QWidget|QLayout, template:str, params:dict={}) -> dict:
       vnode(dict): 虚拟节点
   """
   vnode:dict = render_vnode(template, params)
-  widgets:dict = render_widget(parent, vnode)
-  return {'vnode': vnode, 'widgets': widgets}
+  allWidgets,widgetIdMap = render_widget(parent, vnode)
+  return {'vnode': vnode, 'widgets': widgetIdMap, 'allWidgets': allWidgets}

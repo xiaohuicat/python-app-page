@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt
 from ...utils import unescape_xml
 from ..common import setShadowEffect
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QComboBox, QPlainTextEdit, QLineEdit)
+from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QGridLayout, QComboBox, QPlainTextEdit, QLineEdit)
 
 
 def render_widget(parent:QWidget|QLayout, vnode:dict):
@@ -11,53 +11,62 @@ def render_widget(parent:QWidget|QLayout, vnode:dict):
     if vnode.get('scroll', False):
         parent = create_scroll_layout(parent)
     # 递归渲染组件，并返回组件id映射表
-    return vnode_render(parent, vnode, {})
+    return vnode_render(parent, vnode, [], {})
 
 
 # 创建可滚动布局
 def create_scroll_layout(layout:QLayout, style:str="background-color: transparent;"):
-  scroll_area = QScrollArea()
-  scroll_area.setWidgetResizable(True)
-  scroll_area.setStyleSheet(style)
-  content_widget = QWidget()
-  scroll_area.setWidget(content_widget)
-  content_layout = QVBoxLayout(content_widget)
-  content_layout.setContentsMargins(0, 0, 0, 0)
-  layout.addWidget(scroll_area)
-  return content_layout
+    scroll_area = QScrollArea()
+    scroll_area.setWidgetResizable(True)
+    scroll_area.setStyleSheet(style)
+    content_widget = QWidget()
+    scroll_area.setWidget(content_widget)
+    content_layout = QVBoxLayout(content_widget)
+    content_layout.setContentsMargins(0, 0, 0, 0)
+    layout.addWidget(scroll_area)
+    return content_layout
 
 
 # 递归渲染组件
-def vnode_render(parent:QWidget|QLayout, vnode:dict, widgetIdMap:dict) -> dict:
-  vnodes = vnode.get('children', [])
-  if len(vnodes) == 0:
-    return
-  for props in vnodes:
-    if isinstance(props, dict) and 'type' in props:
-      widget:QWidget|QLayout = create_widget(parent, props)
-      set_attributes(widget, props, widgetIdMap)
-  return widgetIdMap
+def vnode_render(parent:QWidget|QLayout, vnode:dict, widgetList:list, widgetIdMap:dict) -> tuple:
+    vnodes = vnode.get('children', [])
+    if len(vnodes) == 0:
+        return
+    for props in vnodes:
+        if isinstance(props, dict) and 'type' in props:
+            widget:QWidget|QLayout = create_widget(parent, props)
+            widgetList.append(widget)
+            set_attributes(widget, props, widgetList, widgetIdMap)
+    return widgetList, widgetIdMap
 
 
 # 创建组件
 def create_widget(parent:QWidget|QLayout, props:dict) -> QWidget|QLayout:
-  AutoWidget:QWidget|QLayout = getattr(QtWidgets, props['type']) if hasattr(QtWidgets, props['type']) else None
-  # 如果上一个层级是布局，则直接添加组件，否则以上一个组件为父组件创建组件或布局
-  if AutoWidget and isinstance(parent, QLayout):
-    widget:QWidget = AutoWidget()
-    if 'grid' in props:
-      grid = props['grid']
-      parent.addWidget(widget, *grid)
+    type_name = props.get('type')
+    if not type_name:
+        raise ValueError("Props must contain a 'type' key.")
+    AutoClass:QWidget|QLayout = getattr(QtWidgets, type_name, None)
+    if AutoClass is None:
+        raise TypeError(f"Unknown Qt type: {type_name}")
+    
+    if AutoClass and isinstance(parent, QLayout):
+        # 如果上一个层级是布局，则直接添加组件
+        widget:QWidget = AutoClass()
+        if 'grid' in props and isinstance(parent, QGridLayout):
+            grid = props['grid']
+            parent.addWidget(widget, *grid)
+        else:
+            parent.addWidget(widget)
     else:
-      parent.addWidget(widget)
-  else:
-    widget:QWidget|QLayout = AutoWidget(parent)
-  return widget
+        # 否则以上一个组件为父组件创建组件或布局
+        widget:QWidget|QLayout = AutoClass(parent)
+    return widget
 
 
 def set_attributes(
     widget: Union[QWidget, QLayout],
     props: Dict[str, Any],
+    widget_list: list,
     widget_id_map: Dict[str, Union[QWidget, QLayout]]
 ) -> None:
     """设置组件属性
@@ -84,7 +93,7 @@ def set_attributes(
         'scroll': lambda v: _handle_scroll(widget, v),
         'options': lambda v: _handle_options(widget, v),
         'shadow': lambda v: _handle_shadow(widget, v),
-        'children': lambda v: _handle_children(widget, props, widget_id_map)
+        'children': lambda v: _handle_children(widget, props, widget_list, widget_id_map)
     }
 
     for key, value in props.items():
@@ -195,6 +204,7 @@ def _handle_shadow(widget: Union[QWidget, QLayout], value: Any) -> None:
 def _handle_children(
     widget: Union[QWidget, QLayout],
     props: dict,
+    widget_list: list,
     widget_id_map: dict
 ) -> None:
     """处理子组件属性"""
@@ -203,4 +213,4 @@ def _handle_children(
         delattr(widget, '__scroll_layout')
     else:
         parent = widget
-    vnode_render(parent, props, widget_id_map)
+    vnode_render(parent, props, widget_list, widget_id_map)

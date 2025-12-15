@@ -6,6 +6,7 @@ from ..animation import FadeEffect, MoveWin, Shadow
 from ..core.Setting import getSetting
 from ..utils import loadUI
 
+
 class TipsBox(QWidget):
   def __init__(self, topic:str="更新提醒", title:str="提示窗的标题", content:str="提示的内容"):
     super().__init__()

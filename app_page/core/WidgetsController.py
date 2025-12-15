@@ -7,6 +7,7 @@ from .common import updateStyle
 
 class WidgetsController:
   def __init__(self, widgetIdMap:dict|None=None) -> None:
+    self.__widgetList = []
     self.__widgetIdMap = widgetIdMap if widgetIdMap else {}
     self.__eventBus = EventBus(self.__widgetIdMap)
 
@@ -22,6 +23,10 @@ class WidgetsController:
   def setWidgets(self, widgetIdMap:dict) -> None:
     self.__widgetIdMap = widgetIdMap
     self.__eventBus.setWidgets(widgetIdMap)
+
+
+  def setWidgetList(self, widgetList:list) -> None:
+    self.__widgetList = widgetList
 
 
   def setIcon(self, id:str, *args) -> None:
@@ -48,10 +53,10 @@ class WidgetsController:
 
   def destroy(self) -> None:
     # 移除组件映射
-    for key in self.__widgetIdMap.keys():
+    for each in self.__widgetList:
       try:
-        widget:QWidget = self.__widgetIdMap[key]
-        widget.deleteLater()
+        if hasattr(each, 'deleteLater'):
+          each.deleteLater()
       except Exception as e:
         print(f"Widget delete error: {e}")
     self.__eventBus.clear()

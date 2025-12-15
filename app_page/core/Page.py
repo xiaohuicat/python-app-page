@@ -6,7 +6,7 @@ from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
-from .render import render
+from ..core.render import render
 from ..core.WidgetsController import WidgetsController
 from ..utils import layout_clear
 from ..MainWindow import MainWindow
@@ -63,7 +63,9 @@ class Page(CorePage):
 
     # 渲染页面并挂载组件id列表
     templateParams = params if type(params) == dict else {}
-    self.__widgetsController.setWidgets(render(layout, self.template, templateParams)['widgets'])
+    renderResult = render(layout, self.template, templateParams)
+    self.__widgetsController.setWidgets(renderResult['widgets'])
+    self.__widgetsController.setWidgetList(renderResult['allWidgets'])
 
 
   def hidePage(self) -> None:
@@ -82,21 +84,19 @@ class Page(CorePage):
 
 
   def destroy(self) -> None:
-    def exec_destroy():
-      self.hidePage()
-      self.status = 'hide'
-      self.hide()
-      self.__widgetsController = None
-      if hasattr(self, "localStore"):
-        self.localStore.clear()
-        self.localStore = None
-      self.pageParam = None
-      self.children = None
-      self.callback = None
-      self.template = None
-      self.__global_data = None
-      self.__parent = None
-    self.setTimeout(lambda *args:exec_destroy(), 10)
+    self.hidePage()
+    self.status = 'hide'
+    self.hide()
+    self.__widgetsController = None
+    if hasattr(self, "localStore"):
+      self.localStore.clear()
+      self.localStore = None
+    self.pageParam = None
+    self.children = None
+    self.callback = None
+    self.template = None
+    self.__global_data = None
+    self.__parent = None
 
 
   # 注册事件
