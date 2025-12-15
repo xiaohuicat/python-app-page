@@ -75,8 +75,10 @@ class Page(CorePage):
     # 销毁组件管理器
     if self.__widgetsController:
       self.__widgetsController.destroy()
-    self.children.remove()
-    self.callback.clear()
+    if self.children:
+      self.children.remove()
+    if self.callback:
+      self.callback.clear()
     # 保存持久化数据
     if hasattr(self, "localStore"):
       self.localStore.save()
