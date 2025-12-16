@@ -2,16 +2,18 @@ from PySide6.QtWidgets import QStackedWidget
 from .Setting import getSetting
 from .callfunc import call_func
 
+GLOBAL_DESTROY_KEY = '__destroy'
 
 class PageManager:
   def __init__(self):
     self.current_id = None
     self.current_page = None
     self.stack = None
-    self.button_dict = {}
-    self.page_dict = {}
     self.data = {}
+    self.page_dict = {}
+    self.button_dict = {}
     self.global_data = {}
+
 
   def mount(self, stackedWidget:QStackedWidget, pages:dict, pageOptionList:list):
     """
@@ -34,10 +36,11 @@ class PageManager:
       if key:
         self.addButton(key, each)
 
+
   # 添加栈
   def addStack(self, stack):
     self.stack = stack
-    print('--->stack:', stack)
+
 
   # 添加页面
   def addPage(self, id:str|dict, Page=None):
@@ -48,10 +51,12 @@ class PageManager:
       for each in id.keys():
         self.page_dict[each] = id[each]
 
+
   # 添加按钮参数
   def addButton(self, id:str, data:dict):
     if isinstance(id, str) and isinstance(data, dict):
       self.button_dict[id] = data
+
 
   # 打开页面
   def open(self, id, *args):
@@ -115,6 +120,7 @@ class PageManager:
       self.current_id = temp_dict["id"]
       self.current_page = temp_dict["current"]
 
+
   # 销毁页面
   def destroy(self):
     # 隐藏当前页面
@@ -125,6 +131,12 @@ class PageManager:
       except Exception as e:
         print('销毁页面管理器报错：', e)
         pass
+    # 检查global_data是否存在需要保存的东西
+    for key in self.global_data.keys():
+      each = self.global_data[key]
+      if GLOBAL_DESTROY_KEY in each and callable(each[GLOBAL_DESTROY_KEY]):
+        each[GLOBAL_DESTROY_KEY]()
+    # 清除数据
     self.page_dict = {}
     self.button_dict = {}
     self.global_data = {}

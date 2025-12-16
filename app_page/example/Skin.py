@@ -146,7 +146,7 @@ class Skin(Page):  # 6. 类名更具描述性
         self.setting.save()
         
         # 应用新样式并刷新UI
-        setAppStyle(self)
+        setAppStyle()
         self.playMedia('media', 'clicking-on.mp3')
         
         # 11. 简化刷新逻辑，setup已经包含了最新数据
@@ -169,7 +169,7 @@ class Skin(Page):  # 6. 类名更具描述性
         
         # 13. 仅当更换的是当前皮肤的图片时，才立即应用样式
         if self.card_list[index]["id"] == self.current_skin_id:
-            setAppStyle(self)
+            setAppStyle()
         
         # 刷新UI以显示新的背景图
         self.rerender(self.setup())

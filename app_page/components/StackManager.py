@@ -1,7 +1,7 @@
 import time
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton
-from ..core import Record
+from ..plugins import Record
 from ..animation import RightClick_Menu
 from .Stack import Stack
 from ..utils import layout_clear

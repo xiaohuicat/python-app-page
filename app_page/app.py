@@ -8,7 +8,7 @@ from .core import ThreadManager, PageManager, Page, Device, Setting
 from .components import StackManager
 from .MainWindow import MainWindow
 from .config import Config
-from .utils import setAppStyle, assetsPath
+from .utils import assetsPath
 
 
 def createApp(SETTING: dict):
@@ -107,9 +107,9 @@ def createApp(SETTING: dict):
   root.closeApp = closeApp
   
   mainWin.setUserInfo('请登录', '')
+  mainWin.setAppStyle()
   
   initMainWinRegister(root, mainWin, stackManager)
-  setAppStyle(root)
   root.setup()
   mainWin.show()
   

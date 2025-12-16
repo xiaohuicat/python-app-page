@@ -4,7 +4,6 @@ from .EventHook import EventHook
 from .Page import Page
 from .Thread import EasyThread, Waiting_time, ThreadManager
 from .FileParam import FileParam
-from .Record import Record
 from .PageManager import PageManager
 from ..core import Setting, Device
 from .render import render, render_widget, render_vnode
@@ -15,7 +14,6 @@ __all__ = [
   "Device",
   "Setting",
   "EventBus",
-  "Record",
   "EventHook",
   "PageManager",
   "Page",

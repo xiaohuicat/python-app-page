@@ -6,7 +6,8 @@ from .core.render.render_main import render
 from .core.WidgetsController import WidgetsController
 from .core.Setting import getSetting
 from .animation import MoveWin
-from .utils import assetsUrl, setShadowEffect, assetsRead
+from .config import Config
+from .utils import assetsUrl, setShadowEffect, assetsRead, s2t
 
 
 template = '''
@@ -220,3 +221,29 @@ class MainWindow(QMainWindow):
       avatarPath = assetsUrl('image', 'avatar.png')
     self.widgetsController.getWidget('btn_login_icon').setStyleSheet(f'border-image:url({avatarPath});')
     self.widgetsController.getWidget('btn_login_text').setText(userName[:3])
+
+
+  def setAppStyle(self):
+    default_theme = Config().default_theme
+    setting = Param(self.param.pathJoin("userPath", "setting.json"), default_theme)
+    skin_id = setting.get("skinId", default_theme["skinId"])
+    
+    # 获取当前皮肤样式
+    skin_styles = setting.get("skinStyle", default_theme['skinStyle'])
+    style = next((s for s in skin_styles if s['id'] == skin_id), None)
+    if not style:
+        raise ValueError(f"Skin style with id '{skin_id}' not found")
+    
+    # 处理背景图片路径
+    image_path = style['app_bg_image'].replace('\\', '/') if isinstance(style['app_bg_image'], str) else ''
+    if not os.path.exists(image_path):
+        image_path = assetsUrl('skin', 'app_bg_image_1.png')
+    
+    # 设置头部和主体样式
+    app_header_style = s2t({"background-color": style['header_bg_color']})
+    app_main_style = s2t({
+      "background-color": style['main_bg_color'],
+      "border-image": f"url('{image_path}') stretch",
+    })
+    self.getWidget('app_header').setStyleSheet(f'#app_header{'{'}{app_header_style}{'}'}')
+    self.getWidget('app_main').setStyleSheet(f'#app_main{'{'}{app_main_style}{'}'}')

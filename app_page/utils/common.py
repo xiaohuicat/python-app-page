@@ -110,7 +110,7 @@ def encode(text:str) -> str:
     return '[#encode]:' + text.encode('utf-8').hex()
   except Exception as e:
     return text
-  
+
 
 def decode(text:str) -> str:
   """将base64字符串解码"""
