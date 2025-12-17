@@ -86,19 +86,21 @@ class Page(CorePage):
 
 
   def destroy(self) -> None:
-    self.hidePage()
-    self.status = 'hide'
-    self.hide()
-    self.__widgetsController = None
-    if hasattr(self, "localStore"):
-      self.localStore.clear()
-      self.localStore = None
-    self.pageParam = None
-    self.children = None
-    self.callback = None
-    self.template = None
-    self.__global_data = None
-    self.__parent = None
+    def handle(*args):
+      self.hidePage()
+      self.status = 'hide'
+      self.hide()
+      self.__widgetsController = None
+      if hasattr(self, "localStore"):
+        self.localStore.clear()
+        self.localStore = None
+      self.pageParam = None
+      self.children = None
+      self.callback = None
+      self.template = None
+      self.__global_data = None
+      self.__parent = None
+    self.async_run(handle)
 
 
   # 注册事件

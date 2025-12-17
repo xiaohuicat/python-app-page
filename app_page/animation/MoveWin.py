@@ -1,4 +1,3 @@
-import numpy as np
 from PySide6.QtWidgets import QMainWindow, QWidget
 from PySide6 import QtCore
 from PySide6 import QtGui
@@ -23,27 +22,27 @@ class MoveWin(QMainWindow):
     if self.param:
       self.window_position = param.get(id, None)
       if self.window_position and len(self.window_position) == 4:
-          print('根据已有参数设置窗口位置', self.window_position)
-          try:
-            self.target.setGeometry(*self.window_position)
-          except Exception as e:
-            print("设置窗口位置失败！！！ e=",e)
-      else:
-          print('自动设置窗口位置')
-          self.target.setFixedWidth(1080)
-          self.target.setFixedHeight(753)
-          self.center()
-          rect = self.target.geometry()
-          self.window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
+        print('根据已有参数设置窗口位置', self.window_position)
+        try:
           self.target.setGeometry(*self.window_position)
+        except Exception as e:
+          print("设置窗口位置失败！！！ e=",e)
+      else:
+        print('自动设置窗口位置')
+        self.target.setFixedWidth(1080)
+        self.target.setFixedHeight(753)
+        self.center()
+        rect = self.target.geometry()
+        self.window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
+        self.target.setGeometry(*self.window_position)
 
 
   # 将窗口移动屏幕中央
   def center(self):
-      qr = self.target.frameGeometry()
-      cp = QtGui.QGuiApplication.primaryScreen().availableGeometry().center()
-      qr.moveCenter(cp)
-      self.target.move(qr.topLeft())
+    qr = self.target.frameGeometry()
+    cp = QtGui.QGuiApplication.primaryScreen().availableGeometry().center()
+    qr.moveCenter(cp)
+    self.target.move(qr.topLeft())
 
 
   def mousePressEvent(self, event):
@@ -68,10 +67,10 @@ class MoveWin(QMainWindow):
 
 
   # 保存位置参数
-  def setPosition(self, add=0):
-      if not self.param:
-        return
-      rect = self.target.geometry()
-      new_window_position = [rect.left(),rect.top(),rect.width() + add,rect.height() + add]
-      self.window_position = new_window_position
-      self.param.set(key=self.id, value=self.window_position)
+  def setPosition(self):
+    if not self.param:
+      return
+    rect = self.target.geometry()
+    new_window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
+    self.window_position = new_window_position
+    self.param.set(key=self.id, value=self.window_position)

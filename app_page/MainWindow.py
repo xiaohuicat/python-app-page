@@ -12,7 +12,7 @@ from .utils import assetsUrl, setShadowEffect, assetsRead, s2t
 
 template = '''
 <template>
-  <div id="main-ui" class="main-container" width="1080" height="745">
+  <div id="main-ui" class="main-container">
     <v-box margins="[0,0,0,0]" spacing="0">
       <div id="app_header" class="header" height="50">
         <h-box spacing="0" margins="[15,0,15,0]">
@@ -126,6 +126,9 @@ main_window_style = lambda:'''
   color: #333;
   font-size: 16px;
 }
+#leftbar_container .QPushButton:hover {
+  background-color: rgba(0, 0, 0, 0.04);
+}
 '''
 
 
@@ -134,11 +137,13 @@ class MainWindow(QMainWindow):
   def __init__(self, param:Param):
     super().__init__()
     self.param = param
+    self.margin = 16
     self.callback = Callback()
     # 设置全局样式
     self.setStyleSheet(assetsRead('UI', 'style.qss'))
     # 设置阴影效果
-    setShadowEffect(self)
+    setShadowEffect(self, {'radius': self.margin})
+    self.setContentsMargins(self.margin, self.margin, self.margin, self.margin)
     self.setWindowTitle(getSetting("APP_TITLE"))
     self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 去除原来的边框
     self.setAttribute(QtCore.Qt.WA_TranslucentBackground)  # 透明背景
@@ -188,9 +193,9 @@ class MainWindow(QMainWindow):
       # 2. 切换到最大化状态
       self.showMaximized()
       current_position = self.getPosition()
-      self.updateMainUI(current_position)
+      self.setPosition(current_position)
       print("切换到最大化状态，当前窗口位置和尺寸:", current_position)
-      self.win.setPosition(20)  # 增加20像素以适应最大化边框
+      self.win.setPosition()
       self.param.set("is_maximized", True)
       self.widgetsController.setClass('btn_change', 'btn_restore')
     else:
@@ -198,7 +203,7 @@ class MainWindow(QMainWindow):
       position = self.param.get('original_position')
       print("还原窗口位置和尺寸:", position)
       self.setGeometry(*position)
-      self.updateMainUI(position)
+      self.setPosition(position)
       self.win.setPosition()
       self.param.set("is_maximized", False)
       self.widgetsController.setClass('btn_change', 'btn_big')
@@ -208,12 +213,12 @@ class MainWindow(QMainWindow):
     """获取窗口位置和尺寸"""
     rect = self.geometry()
     return [rect.left(), rect.top(), rect.width(), rect.height()]
-  
 
-  def updateMainUI(self, position):
-    """更新主界面位置和尺寸"""
-    self.widgetsController.getWidget('main-ui').setFixedHeight(position[3])
-    self.widgetsController.getWidget('main-ui').setFixedWidth(position[2])
+
+  def setPosition(self, position:list):
+    mainUI = self.widgetsController.getWidget('main-ui')
+    mainUI.setFixedHeight(position[3] - self.margin*2)
+    mainUI.setFixedWidth(position[2] - self.margin*2)
 
   
   def setUserInfo(self, userName:str, avatarPath:str):
@@ -224,6 +229,7 @@ class MainWindow(QMainWindow):
 
 
   def setAppStyle(self):
+    self.setPosition(self.getPosition())
     default_theme = Config().default_theme
     setting = Param(self.param.pathJoin("userPath", "setting.json"), default_theme)
     skin_id = setting.get("skinId", default_theme["skinId"])
