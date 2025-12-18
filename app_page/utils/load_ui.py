@@ -1,6 +1,5 @@
-import os
 import sys
-from typing import Optional, Any, Type, Union
+from typing import Optional
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtCore import QFile, QIODevice, QObject
 from ..core import Setting

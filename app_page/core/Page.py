@@ -8,7 +8,7 @@ from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
 from ..core.render import render
 from ..core.WidgetsController import WidgetsController
-from ..utils import layout_clear
+from ..utils import layout_clear, blur_image
 from ..MainWindow import MainWindow
 
 
@@ -212,6 +212,17 @@ class Page(CorePage):
       self.__layout = QGridLayout(self.__parent)
     else:
       raise ValueError("不支持的布局类型, 请使用 'v-box', 'h-box', 'grid' 之一")
+
+
+  def getSoftwarePath(self, typeName: str, *args):
+    if typeName not in ['userPath', 'tempPath', 'systemPath']:
+      raise ValueError(f"typeName: {typeName} 不在允许的列表['userPath', 'tempPath', 'systemPath']中")
+    return self.param.pathJoin(typeName, *args)
+
+
+  def getBlurImage(self, url: str, radius: float = 5, opacity: float = 1):
+    folder = self.getSoftwarePath("tempPath", "blur_images")
+    return blur_image(folder, url, radius, opacity)
 
 
   # 查看组件信息

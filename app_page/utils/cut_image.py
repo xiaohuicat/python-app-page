@@ -1,6 +1,7 @@
 from PIL import Image
-from typing import Tuple, Optional, Union
+from typing import Tuple, Optional
 import os
+
 
 def cut_image(
     input_path: str, 
@@ -84,12 +85,14 @@ def cut_image(
     
     return final_image
 
+
 # 为了向后兼容，保留原来的函数名
 def cut_image_in(input_path, output_path=None, target_size_WH=(256, 256)):
     """
     内裁剪模式，保持整个图片在目标尺寸内。
     """
     return cut_image(input_path, output_path, target_size_WH, mode="in")
+
 
 def cut_image_out(input_path, output_path=None, target_size_WH=(256, 256)):
     """

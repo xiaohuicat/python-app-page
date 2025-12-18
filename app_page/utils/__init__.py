@@ -5,6 +5,8 @@ from .set_style import setAppStyle, setWidgetStyle, setWidgetStyleById, mergeSty
 from .cut_image import cut_image, cut_image_in, cut_image_out
 from .select_image import select_image
 from .control_volume import get_system_volume, set_system_volume
+from .blur_image import blur_image
+from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder 
 from ..core.common import setShadowEffect, updateStyle
 
 __all__ = [
@@ -34,4 +36,9 @@ __all__ = [
   't2d',
   'encode',
   'decode',
+  'blur_image',
+  'get_file_md5',
+  'get_folder_size',
+  'clear_folder',
+  'create_folder',
 ]

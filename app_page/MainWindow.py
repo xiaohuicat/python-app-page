@@ -7,7 +7,7 @@ from .core.WidgetsController import WidgetsController
 from .core.Setting import getSetting
 from .animation import MoveWin
 from .config import Config
-from .utils import assetsUrl, setShadowEffect, assetsRead, s2t
+from .utils import assetsUrl, setShadowEffect, assetsRead, s2t, blur_image
 
 
 template = '''
@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
   def setAppStyle(self):
     self.setPosition(self.getPosition())
     default_theme = Config().default_theme
-    setting = Param(self.param.pathJoin("userPath", "setting.json"), default_theme)
+    setting = Param(self.getSoftwarePath("userPath", "setting.json"), default_theme)
     skin_id = setting.get("skinId", default_theme["skinId"])
     
     # 获取当前皮肤样式
@@ -245,11 +245,23 @@ class MainWindow(QMainWindow):
     if not os.path.exists(image_path):
         image_path = assetsUrl('skin', 'app_bg_image_1.png')
     
+    url = self.getBlurImage(image_path, setting.get('radius', 10))
     # 设置头部和主体样式
     app_header_style = s2t({"background-color": style['header_bg_color']})
     app_main_style = s2t({
       "background-color": style['main_bg_color'],
-      "border-image": f"url('{image_path}') stretch",
+      "border-image": f"url('{url}') stretch",
     })
     self.getWidget('app_header').setStyleSheet(f'#app_header{'{'}{app_header_style}{'}'}')
     self.getWidget('app_main').setStyleSheet(f'#app_main{'{'}{app_main_style}{'}'}')
+
+
+  def getSoftwarePath(self, typeName: str, *args):
+    if typeName not in ['userPath', 'tempPath', 'systemPath']:
+      raise ValueError(f"typeName: {typeName} 不在允许的列表['userPath', 'tempPath', 'systemPath']中")
+    return self.param.pathJoin(typeName, *args)
+
+
+  def getBlurImage(self, url: str, radius: float = 5, opacity: float = 1):
+    folder = self.getSoftwarePath("tempPath", "blur_images")
+    return blur_image(folder, url, radius, opacity)
