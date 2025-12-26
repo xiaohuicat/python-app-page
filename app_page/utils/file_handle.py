@@ -1,4 +1,4 @@
-import os, hashlib
+import sys, os, hashlib, subprocess
 from pathlib import Path
 from typing import Union
 
@@ -148,3 +148,16 @@ def clear_folder(folder_path: str, delete_subfolders: bool = False, confirm: boo
     
     except Exception as e:
         raise RuntimeError(f"清空文件夹时发生错误：{str(e)}")
+    
+
+def open_folder(folder_path:str):
+    """根据不同操作系统打开文件夹窗口"""
+    if not os.path.isdir(folder_path):
+        raise RuntimeError("路径无效，不是文件夹！")
+    
+    if sys.platform == "win32":
+        os.startfile(folder_path)
+    elif sys.platform == "darwin":
+        subprocess.run(["open", folder_path], check=True)
+    else:
+        subprocess.run(["xdg-open", folder_path], check=True)

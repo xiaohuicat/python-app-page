@@ -1,4 +1,4 @@
-app-page-core>=0.0.8
+app-page-core>=0.0.9
 nanoid
 PySide6
 numpy

@@ -1,6 +1,8 @@
+import time
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout
 from app_page_core import Param, Page as CorePage
+from nanoid import generate
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
 from ..core.PageManager import PageManager
@@ -32,7 +34,7 @@ class Page(CorePage):
     self.__layout:QLayout|None = None
     # 判断是否挂载参数存储器
     if name and hasattr(self, "param"):
-      path = self.param.pathJoin("userPath", f"pages/{name}/config.json")
+      path = self.getSoftwarePath("userPath", f"pages/{name}/config.json")
       self.localStore = Param(path, {})
       if getSetting("IS_DEBUG"):
         print(f"页面 {name} 的本地存储路径为: {path}")
@@ -86,21 +88,19 @@ class Page(CorePage):
 
 
   def destroy(self) -> None:
-    def handle(*args):
-      self.hidePage()
-      self.status = 'hide'
-      self.hide()
-      self.__widgetsController = None
-      if hasattr(self, "localStore"):
-        self.localStore.clear()
-        self.localStore = None
-      self.pageParam = None
-      self.children = None
-      self.callback = None
-      self.template = None
-      self.__global_data = None
-      self.__parent = None
-    self.async_run(handle)
+    self.hidePage()
+    self.status = 'hide'
+    self.hide()
+    self.__widgetsController = None
+    if hasattr(self, "localStore"):
+      self.localStore.clear()
+      self.localStore = None
+    self.pageParam = None
+    self.children = None
+    self.callback = None
+    self.template = None
+    self.__global_data = None
+    self.__parent = None
 
 
   # 注册事件
@@ -111,6 +111,55 @@ class Page(CorePage):
   # 导航到页面
   def navigateTo(self, id, *args) -> None:
     self.pageManager.open(*(id, *args))
+
+
+  # 设置定时器
+  def setTimeout(self, callback, seconds:float):
+    if not self.threadManager:
+      return
+    
+    thread_id = f"wait_{generate(size=6)}_{time.time()*1000}"
+    def func(*args, **kwargs):
+      try:
+        callback(*args, **kwargs)
+      except Exception as e:
+        print("等待回调失败：", e)
+      self.threadManager.remove(thread_id)
+
+    self.threadManager.add({
+      "id": thread_id,
+      "callback": func,
+      "function": lambda: time.sleep(seconds)
+    }, True)
+
+    return thread_id
+  
+
+  # 清除定时器
+  def clearTimeout(self, thread_id):
+    if not self.threadManager:
+      return
+    self.threadManager.remove(thread_id)
+
+
+  # 异步执行函数
+  def async_run(self, function, callback=None):
+    if not self.threadManager:
+      return
+
+    thread_id = f"async_run_{generate(size=6)}_{time.time()*1000}"
+    def func(*args, **kwargs):
+      try:
+        callback(*args, **kwargs)
+      except Exception as e:
+        print("异步回调失败：", e)
+      self.threadManager.remove(thread_id)
+    
+    self.threadManager.add({
+      "id": thread_id,
+      "callback": func,
+      "function": function
+    }, True)
 
 
   # 提示信息
@@ -172,7 +221,7 @@ class Page(CorePage):
   
 
   def getGlobal(self, key:str|None=None):
-    return self.__global_data.get(key, None) if type(key) == str else self.__global_data
+    return self.__global_data.get(key, None) if self.__global_data and type(key) == str else self.__global_data
   
 
   def setGlobal(self, key:str|dict, value:dict|None=None):
@@ -182,6 +231,10 @@ class Page(CorePage):
       self.__global_data = key
     else:
       raise TypeError("参数错误，key必须为字符串且value不能为空，或key必须为字典且value必须为空")
+
+
+  def onGlobalDestroy(self, callback:callable) -> None:
+    self.setGlobal('__destroy', callback)
 
 
   def getParent(self) -> QWidget | None:
