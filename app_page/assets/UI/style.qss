@@ -1,140 +1,60 @@
 * {
-  padding: 0;
-  margin: 0;
-  border: none;
-  outline: none;
+    padding: 0;
+    margin: 0;
+    border: none;
+    outline: none;
 }
 
-QPushButton {
-  font-weight: normal;
-  border-radius: 6px;
-}
-QPushButton:hover {
-  background-color: rgba(0, 0, 0, 0.05);
+QLabel {
+    color: #333;
 }
 
-/* 下拉选择框样式 */
-QComboBox {
-  font-size: 14px;
-  padding: 1px 15px 1px 3px;
-  border: 1px solid rgba(228, 228, 228, 1);
-  border-radius: 5px 5px 0 0;
+.QPushButton {
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    background-color: transparent;
 }
-QComboBox:hover {
-  background-color: #E8F5E9;
-}
-
-/* 下拉列表 */
-QComboBox::drop-down {
-  subcontrol-origin: padding;
-  subcontrol-position: top right;
-  width: 15px;
+.QPushButton:hover {
+    background-color: #f0f0f0;
 }
 
-/* 下拉箭头 */
-QComboBox::down-arrow {
-  image: url(./assets/icons/cil-arrow-bottom.png);
-}
-
-QComboBox QAbstractItemView {
-  background: #ffffff;
-  border: 1px solid rgba(228, 228, 228, 1);
-  border-radius: 0 0 5px 5px;
-  font-size: 14px;
-}
-
-QComboBox QAbstractItemView::item {
-  height: 28px;
-  color: #666666;
-  padding-left: 9px;
-  background-color: #FFFFFF;
-}
-QComboBox QAbstractItemView::item:hover,
-QComboBox QAbstractItemView::item:selected {
-  background-color: #409CE1;
-  color: #ffffff;
-}
-
-/* 标签页 */
-QTabWidget::pane {
-  border: none;
-}
-
-QTabWidget::tab-bar {
-  left: 10px;
-  top: 9px;
-}
-
-QTabBar::tab {
-  background: #fff;
-  min-width: 60px;
-  height: 24px;
-  font-size: 14px;
-  font-family: '微软雅黑';
-  border-bottom: 3px solid #ddd;
-}
-
-QTabBar::tab:selected {
-  color: #333;
-  border-bottom: 3px solid skyblue;
-}
-QTabBar::tab:!selected {
-  background-color: #ddd;
-  color: #999;
-}
-
-/* 表格 */
-QTableWidget {
-  background: #fff;
-}
-
-QHeaderView::section {
-  font-size: 14px;
-  font-family: "Microsoft YaHei";
-  color: #FFFFFF;
-  background: #1B5E20; /* 保留最后一个背景色设置 */
-  min-height: 30px;
-  max-height: 30px;
-  text-align: center;
-}
-
-/* 滚动条 */
-/* 垂直滚动条 */
-QScrollBar::vertical {
-  width: 8px;
-  border-radius: 3px;
+/* 垂直滚动条样式 */
+QScrollBar:vertical {
+    background: #ddd;
+    width: 8px;
+    border-radius: 3px;
+    margin: 0px 0px 0px 0px;
 }
 QScrollBar::handle:vertical {
-  background: #ddd;
-  width: 8px;
-  border-radius: 3px;
+    background: #ccc;
+    min-height: 20px;
+    border-radius: 3px;
 }
 QScrollBar::handle:vertical:hover {
-  background: #ccc;
+    background: #bbb;
 }
-QScrollBar::add-page:vertical, 
-QScrollBar::sub-page:vertical,
-QScrollBar::add-line:vertical,
-QScrollBar::sub-line:vertical {
-  border: none;
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+    width: 0px;
+    subcontrol-position: top;
+    subcontrol-origin: margin;
+}
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
 }
 
-/* 水平滚动条 */
+/* 水平滚动条样式 */
 QScrollBar:horizontal {
-  height: 8px;
-  border-radius: 3px;
+    background: #eee;
+    height: 8px;
+    border-radius: 3px;
 }
 QScrollBar::handle:horizontal {
-  background: #ddd;
-  height: 8px;
-  border-radius: 3px;
+    background: #ddd;
+    min-width: 20px;
+    border-radius: 3px;
 }
 QScrollBar::handle:horizontal:hover {
-  background: #ccc;
-}
-QScrollBar::add-page:horizontal, 
-QScrollBar::sub-page:horizontal,
-QScrollBar::add-line:horizontal,
-QScrollBar::sub-line:horizontal {
-  border: none;
+    background: #ccc;
 }

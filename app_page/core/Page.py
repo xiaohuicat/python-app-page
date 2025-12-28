@@ -99,7 +99,6 @@ class Page(CorePage):
     self.children = None
     self.callback = None
     self.template = None
-    self.__global_data = None
     self.__parent = None
 
 
