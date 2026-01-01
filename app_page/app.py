@@ -1,14 +1,16 @@
 import sys
 from PySide6.QtCore import QUrl
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QWidget
 from PySide6.QtGui import QIcon
-from app_page_core import Store, Param
+from app_page_core import Store, Param, Callback
 from .core import ThreadManager, PageManager, Page, Device, Setting
+from .core.render import EventFilter
 from .components import StackManager
 from .MainWindow import MainWindow
 from .config import Config
 from .utils import assetsPath
+from PySide6.QtCore import Qt, QEvent
 
 
 def createApp(SETTING: dict):
@@ -72,10 +74,21 @@ def createApp(SETTING: dict):
   param.set('tempPath', defaultValue.get('tempPath', ''))
   param.set('userPath', defaultValue.get('userPath', ''))
   playMedia = initPlayer(app)
+  
+  APP_CALLBACK = Callback()
+  def event_filter(widget:QWidget, event:QEvent):
+    # 点击事件过滤
+    if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+      APP_CALLBACK.run('event-filter', widget)
+      return True
+  
+  APP_EVENT_FILTER = EventFilter(event_filter)
   store = Store({
     'app': app,
     'param': param,
     'playMedia': playMedia,
+    'APP_EVENT_FILTER': APP_EVENT_FILTER,
+    'APP_CALLBACK': APP_CALLBACK,
   })
 
   mainWin = MainWindow(param)

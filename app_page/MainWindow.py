@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
     self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 去除原来的边框
     self.setAttribute(QtCore.Qt.WA_TranslucentBackground)  # 透明背景
     # 添加窗口移动功能
-    self.win = MoveWin(self, param, "main_window_position")
+    self.win = MoveWin(self, param, "main_window_position", (1080+self.margin*2, 753+self.margin*2))
     # 创建UI挂载节点
     self.ui = QWidget()
     self.ui.setStyleSheet(main_window_style())

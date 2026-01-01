@@ -7,9 +7,8 @@ def get_file_md5(file_path: str) -> str:
     """计算文件的MD5哈希值"""
     md5_obj = hashlib.md5()
     with open(file_path, 'rb') as f:
-      # 分块读取大文件，避免内存溢出
-      while chunk := f.read(4096):
-        md5_obj.update(chunk)
+        while chunk := f.read(4096):
+            md5_obj.update(chunk)
     return md5_obj.hexdigest()
 
 
@@ -161,3 +160,35 @@ def open_folder(folder_path:str):
         subprocess.run(["open", folder_path], check=True)
     else:
         subprocess.run(["xdg-open", folder_path], check=True)
+
+
+def delete_file(file_path):
+    """
+    根据文件路径删除文件，删除失败时抛出具体原因
+    
+    参数:
+        file_path (str): 要删除的文件的完整路径
+    
+    异常:
+        Exception: 包含删除失败具体原因的异常信息
+    """
+    # 先检查路径是否是文件（排除目录的情况）
+    if not os.path.isfile(file_path):
+        raise Exception(f"删除失败：路径 '{file_path}' 不是一个有效的文件，或文件不存在")
+    
+    try:
+        # 执行删除操作
+        os.remove(file_path)
+        print(f"文件 '{file_path}' 已成功删除")
+    except PermissionError:
+        raise Exception(f"删除失败：没有权限删除文件 '{file_path}'，请检查文件权限")
+    except IsADirectoryError:
+        raise Exception(f"删除失败：路径 '{file_path}' 是一个目录，不是文件，无法用此方法删除")
+    except FileNotFoundError:
+        raise Exception(f"删除失败：文件 '{file_path}' 不存在")
+    except OSError as e:
+        # 捕获其他操作系统相关的异常（如文件被占用、路径非法等）
+        raise Exception(f"删除失败：操作系统错误，原因：{e.strerror} (错误码: {e.errno})")
+    except Exception as e:
+        # 捕获其他未预期的异常
+        raise Exception(f"删除失败：未知错误，原因：{str(e)}")

@@ -2,29 +2,49 @@ from typing import Union, Dict, Any
 from PySide6.QtCore import Qt
 from ...utils import unescape_xml
 from ..common import setShadowEffect
+from .common import getWidget
+from app_page_core import Store
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QGridLayout, QComboBox, QPlainTextEdit, QLineEdit)
+from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QGridLayout,
+                                QComboBox, QPlainTextEdit, QLineEdit)
 
 
 def render_widget(parent:QWidget|QLayout, vnode:dict):
+    widgetList = []
+    widgetIdMap = {}
     # 如果父组件是布局，并且需要滚动，则创建一个滚动布局
-    if vnode.get('scroll', False):
-        parent = create_scroll_layout(parent)
+    if 'scroll' in vnode:
+        option = vnode.get('scroll', {})
+        parent = create_scroll_layout(parent, option, widgetList, widgetIdMap)
     # 递归渲染组件，并返回组件id映射表
-    return vnode_render(parent, vnode, [], {})
+    return vnode_render(parent, vnode, widgetList, widgetIdMap)
 
 
 # 创建可滚动布局
-def create_scroll_layout(layout:QLayout, style:str="background-color: transparent;"):
+def create_scroll_layout(layout:QLayout, option:dict, widgetList:list, widgetIdMap:dict):
     scroll_area = QScrollArea()
+    id = option.get('id', None)
+    if id:
+        scroll_area.setObjectName(id)
+        scroll_area.setProperty('id', id)
+        widgetIdMap[id] = scroll_area
     scroll_area.setWidgetResizable(True)
-    scroll_area.setStyleSheet(style)
+    style = option.get('style', None)
+    if style:
+        scroll_area.setStyleSheet(style)
+    widgetList.append(scroll_area)
     content_widget = QWidget()
+    widgetList.append(content_widget)
     scroll_area.setWidget(content_widget)
-    content_layout = QVBoxLayout(content_widget)
-    content_layout.setContentsMargins(0, 0, 0, 0)
-    layout.addWidget(scroll_area)
-    return content_layout
+    layout_type = getWidget(option.get('layout', 'v-box'))
+    if layout_type and hasattr(QtWidgets, layout_type):
+        Layout = getattr(QtWidgets, layout_type)
+        content_layout = Layout(content_widget)
+        content_layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(scroll_area)
+        return content_layout
+    else:
+        raise ValueError('不存在的布局')
 
 
 # 递归渲染组件
@@ -90,10 +110,11 @@ def set_attributes(
         'placeholder': lambda v: _handle_placeholder(widget, v),
         'password': lambda v: _handle_password(widget),
         'align': lambda v: _handle_alignment(widget, v),
-        'scroll': lambda v: _handle_scroll(widget, v),
+        'scroll': lambda v: _handle_scroll(widget, v, widget_list, widget_id_map),
         'options': lambda v: _handle_options(widget, v),
         'shadow': lambda v: _handle_shadow(widget, v),
-        'children': lambda v: _handle_children(widget, props, widget_list, widget_id_map)
+        'children': lambda v: _handle_children(widget, props, widget_list, widget_id_map),
+        'event-filter': lambda v: _handle_event_filter(widget, v),
     }
 
     for key, value in props.items():
@@ -109,6 +130,7 @@ def set_attributes(
 def _handle_id(widget: Union[QWidget, QLayout], value: str, widget_id_map: dict) -> None:
     """处理ID属性"""
     widget.setObjectName(value)
+    widget.setProperty('id', value)
     widget_id_map[value] = widget
 
 
@@ -184,10 +206,11 @@ def _handle_alignment(widget: Union[QWidget, QLayout], value: str) -> None:
         widget.setAlignment(getattr(Qt, value))
 
 
-def _handle_scroll(widget: Union[QWidget, QLayout], value: bool) -> None:
+def _handle_scroll(widget: Union[QWidget, QLayout], value: dict, widget_list: list,
+    widget_id_map: dict) -> None:
     """处理滚动属性"""
-    if isinstance(widget, QLayout) and value:
-        widget.__scroll_layout = create_scroll_layout(widget)
+    if isinstance(widget, QLayout):
+        widget.__scroll_layout = create_scroll_layout(widget, value, widget_list, widget_id_map)
 
 
 def _handle_options(widget: Union[QWidget, QLayout], value: list) -> None:
@@ -214,3 +237,11 @@ def _handle_children(
     else:
         parent = widget
     vnode_render(parent, props, widget_list, widget_id_map)
+    
+def _handle_event_filter(widget: Union[QWidget, QLayout], value: Any) -> None:
+    widget.setProperty('event-filter', value)
+    event_filter = Store().get('APP_EVENT_FILTER', None)
+    if not event_filter:
+        print('无法监听event-filter', value)
+        return
+    widget.installEventFilter(event_filter)

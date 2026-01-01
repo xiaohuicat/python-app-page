@@ -7,7 +7,7 @@ from .select_image import select_image
 from .image_handle import image_to_base64, base64_to_image, copy_image, png_to_ico, img_to_png
 from .control_volume import get_system_volume, set_system_volume
 from .blur_image import blur_image
-from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder, open_folder
+from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder, open_folder, delete_file
 from ..core.common import setShadowEffect, updateStyle
 
 __all__ = [
@@ -48,4 +48,5 @@ __all__ = [
   'clear_folder',
   'create_folder',
   'open_folder',
+  'delete_file',
 ]

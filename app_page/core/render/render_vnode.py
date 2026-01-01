@@ -3,30 +3,7 @@ from typing import Any, Dict, List, Union, Optional
 import xml.etree.ElementTree as ET
 from mako.template import Template
 from ...utils import t2d, decode
-
-# 组件类型别名映射
-aliasWidgetMap = {
-  # 基础组件
-  'div': 'QWidget',
-  'widget': 'QWidget',
-  'label': 'QLabel',
-  'button': 'QPushButton',
-  'line-edit': 'QLineEdit',
-  'text-edit': 'QPlainTextEdit',
-  'selector': 'QComboBox',
-  'checkbox': 'QCheckBox',
-  'radio': 'QRadioButton',
-  # 布局相关
-  'grid': 'QGridLayout',
-  'h-box': 'QHBoxLayout',
-  'v-box': 'QVBoxLayout',
-  'form': 'QFormLayout',
-  'stacked': 'QStackedLayout',
-  'graphics-anchor': 'QGraphicsAnchorLayout',
-  'graphics-grid': 'QGraphicsGridLayout',
-  'graphics-layout': 'QGraphicsLayout',
-  'graphics-linear': 'QGraphicsLinearLayout',
-}
+from .common import getWidget
 
 
 def render_vnode(template, params:dict={}):
@@ -39,10 +16,7 @@ def render_vnode(template, params:dict={}):
 # 处理xml节点
 def create_vnode(element) -> dict:
   # xml节点转换为组件字典
-  vnode = {
-    # 匹配组件别名
-    'type': aliasWidgetMap[element.tag] if element.tag in aliasWidgetMap else element.tag,
-  }
+  vnode = {'type': getWidget(element.tag)}
 
   # 预处理节点属性
   for key in element.attrib.keys():
@@ -85,12 +59,12 @@ def preprocess(item: Dict[str, Any], key: str, value: str) -> None:
         # 处理JSON数组类型的键
         "json_array": {
             "keys": ["options"],
-            "handler": lambda v: _safe_parse_json(v, default=[])
+            "handler": lambda v: _safe_parse_json(v, default=lambda *args:[])
         },
         # 处理JSON字典类型的键
         "json_dict": {
-            "keys": ["shadow"],
-            "handler": lambda v: _safe_parse_json(v, default={})
+            "keys": ["shadow", "scroll"],
+            "handler": lambda v: _safe_parse_json(v, default=lambda *args:{})
         },
         # 处理整数类型的键
         "integer": {
@@ -128,12 +102,15 @@ def _safe_parse_bool(value: str) -> bool:
     return normalized_val == "true"
 
 
-def _safe_parse_json(value: str, default: Any) -> Any:
+def _safe_parse_json(value: str, default:callable) -> Any:
     """安全解析JSON字符串，失败返回默认值"""
     try:
-        return t2d(value)
+        ret = t2d(value)
+        if isinstance(ret, str):
+            return default()
+        return ret
     except (json.JSONDecodeError, TypeError):
-        return default
+        return default()
 
 
 def _parse_four_element_list(value: str) -> List[int]:

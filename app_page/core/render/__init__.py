@@ -2,9 +2,11 @@
 from .render_main import render
 from .render_vnode import render_vnode
 from .render_widget import render_widget
+from .EventFilter import EventFilter
 
 __all__ = [
   "render_vnode",
   "render_widget",
   "render",
+  "EventFilter",
 ]

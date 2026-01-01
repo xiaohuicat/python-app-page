@@ -1,7 +1,7 @@
 import time
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout
-from app_page_core import Param, Page as CorePage
+from app_page_core import Callback, Param, Page as CorePage
 from nanoid import generate
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
@@ -32,6 +32,7 @@ class Page(CorePage):
     self.__global_data:dict = {}
     self.__parent:QWidget|None = None
     self.__layout:QLayout|None = None
+    self.style = None
     # 判断是否挂载参数存储器
     if name and hasattr(self, "param"):
       path = self.getSoftwarePath("userPath", f"pages/{name}/config.json")
@@ -56,6 +57,8 @@ class Page(CorePage):
     layout.setAlignment(Qt.AlignTop)
     layout.setContentsMargins(10, 10, 10, 10)
     layout.setSpacing(15)
+    if self.style:
+      self.getParent().setStyleSheet(self.style)
 
     # 判断是否挂载layout容器
     if self.getLayout():
@@ -95,6 +98,8 @@ class Page(CorePage):
     if hasattr(self, "localStore"):
       self.localStore.clear()
       self.localStore = None
+    app_callback:Callback = self.store.get('APP_CALLBACK')
+    app_callback.remove('event-filter')
     self.pageParam = None
     self.children = None
     self.callback = None
@@ -105,6 +110,12 @@ class Page(CorePage):
   # 注册事件
   def register(self, id:str, signal:str, callback) -> None:
     self.__widgetsController.register(id, signal, callback)
+    
+    
+  def regist_filter(self, callback):
+    app_callback:Callback = self.store.get('APP_CALLBACK')
+    app_callback.remove('event-filter')
+    app_callback.add('event-filter', callback)
 
 
   # 导航到页面

@@ -6,11 +6,12 @@ from ..core.EventHook import EventHook
 
 
 class MoveWin(QMainWindow):
-  def __init__(self, target:QMainWindow | QWidget, param:Param | None, id:str | None):
+  def __init__(self, target:QMainWindow | QWidget, param:Param | None, id:str | None, w_h = None):
     super().__init__(target)
     target.mousePressEvent = self.mousePressEvent
     target.mouseMoveEvent = self.mouseMoveEvent
     target.mouseReleaseEvent = self.mouseReleaseEvent
+    self.w_h = w_h
     self.target = target
     self.target.center = self.center
 
@@ -24,7 +25,10 @@ class MoveWin(QMainWindow):
       if self.window_position and len(self.window_position) == 4:
         print('根据已有参数设置窗口位置', self.window_position)
         try:
-          self.target.setGeometry(*self.window_position)
+          if self.w_h and len(self.w_h) == 2:
+            self.target.setGeometry(*self.window_position[:2], *self.w_h)
+          else:
+            self.target.setGeometry(*self.window_position)
         except Exception as e:
           print("设置窗口位置失败！！！ e=",e)
       else:
@@ -33,7 +37,10 @@ class MoveWin(QMainWindow):
         self.target.setFixedHeight(753)
         self.center()
         rect = self.target.geometry()
-        self.window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
+        if self.w_h and len(self.w_h) == 2:
+          self.window_position = [rect.left(),rect.top(),*self.w_h]
+        else:
+          self.window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
         self.target.setGeometry(*self.window_position)
 
 
@@ -73,4 +80,7 @@ class MoveWin(QMainWindow):
     rect = self.target.geometry()
     new_window_position = [rect.left(),rect.top(),rect.width(),rect.height()]
     self.window_position = new_window_position
-    self.param.set(key=self.id, value=self.window_position)
+    if self.w_h and len(self.w_h) == 2:
+      self.param.set(key=self.id, value=[*self.window_position[:2], *self.w_h])
+    else:
+      self.param.set(key=self.id, value=self.window_position)
