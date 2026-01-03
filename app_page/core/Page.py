@@ -173,22 +173,14 @@ class Page(CorePage):
 
 
   # 提示信息
-  def tips(self, msg, type='default', pos=None, close=None) -> None:
-    p = self.mainWin.win.window_position
-    pos = [p[0]+p[2]/2, p[1]+p[3]/2]
-
+  def tips(self, msg, type='default') -> None:
+    hook = self.mainWin.win.mouseMoveEventHook
     if hasattr(self.app, "tips_widget"):
-      self.mainWin.win.mouseMoveEventHook.remove(id="tips")
+      hook.remove(id="tips")
       self.app.tips_widget.deleteLater()
 
-    self.app.tips_widget = Tips(msg, type, pos)
-    self.app.tips_widget.show()
-    self.app.tips_widget.callback.add("close", close)
-
-    def move_callback(pos) -> None:
-      self.app.tips_widget.setPos([pos.x()+p[2]/2, pos.y()+p[3]/2])
-
-    self.mainWin.win.mouseMoveEventHook.add(id="tips", func=move_callback)
+    self.app.tips_widget = Tips(msg, type)
+    hook.add(id="tips", func=lambda *args: self.app.tips_widget.center())
 
 
   # 提示窗

@@ -21,20 +21,12 @@ def createApp(SETTING: dict):
     pages (dict): 页面字典
     pageOptionList (list): 页面配置项列表
     button_container_id (str): 按钮容器id
-    button_close_id (str): 关闭按钮id
-    button_login_id (str): 登录按钮id
-    button_name_id (str): 按钮名称id
-    Ui_MainWindow (Ui_MainWindow): 主窗口ui对象
     APP_ICON_PATH (str): 应用图标路径
     APP_TITLE (str): 应用标题
     APP_VERSION (str): 应用版本
     IS_DEBUG (bool): 是否调试模式
     PING_HOST (str): 网络连接检查地址
-    tips_ui (str|Ui_Form): 提示提示消息ui路径或Ui_Form类
     tipsBox_ui (str|Ui_Form): 提示提示框ui路径或Ui_Form类
-    loading_icon (str): 加载图标路径
-    small_page_icon (str): 缩小图标路径
-    maximize_page_icon (str): 最大窗口图标路径
   """
   if 'IS_DEBUG' in SETTING:
     Setting.applySetting('IS_DEBUG', SETTING['IS_DEBUG'])
@@ -44,19 +36,12 @@ def createApp(SETTING: dict):
     'pages': config.pages,
     'pageOptionList': config.pageOptionList,
     'button_container_id': config.button_container_id,
-    'button_close_id': config.button_close_id,
-    'button_login_id': config.button_login_id,
-    'button_name_id': config.button_name_id,
     'APP_ICON_PATH': config.APP_ICON_PATH,
     'APP_TITLE': config.APP_TITLE,
     'APP_VERSION': config.APP_VERSION,
     'IS_DEBUG': config.IS_DEBUG,
     'PING_HOST': config.PING_HOST,
-    'tips_ui': config.tips_ui,
     'tipsBox_ui': config.tipsBox_ui,
-    'loading_icon': config.loading_icon,
-    'small_page_icon': config.small_page_icon,
-    'maximize_page_icon': config.maximize_page_icon,
   }
   final_settings = {**default_settings, **SETTING}
   Setting.applySetting(final_settings)

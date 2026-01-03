@@ -4,11 +4,7 @@ from .core import Page
 
 class Config():
   def __init__(self):
-    self.tips_ui = assetsPath("UI", "tips.ui")
     self.tipsBox_ui = assetsPath("UI", "tipsBox.ui")
-    self.loading_icon = assetsPath("icon", "loading.gif")
-    self.small_page_icon = assetsPath("icon", "small_page.png")
-    self.maximize_page_icon = assetsPath("icon", "maximize_page.png")
 
     # 定义软件当前版本
     self.APP_VERSION = '1.0.0'
@@ -22,9 +18,6 @@ class Config():
     self.PING_HOST = 'greatnote.cn'
     self.filter_id = "leftBar"
     self.button_container_id = "leftbar_container"
-    self.button_close_id = "btn_close"
-    self.button_login_id = "btn_login_icon"
-    self.button_name_id = "btn_login_text"
 
     # 默认主题
     self.default_theme = {
