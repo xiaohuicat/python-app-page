@@ -87,7 +87,19 @@ class PageManager:
       last = self.current_page
       last.destroy()
     
-    # 点击的页面立即展示
+        # 刚才打开的页面将其隐藏
+    
+    # 隐藏当前页面
+    if self.current_page:
+      if not getSetting("IS_DEBUG"):
+        try:
+          remove_page()
+        except Exception as error:
+          print("隐藏页面出错：", error)
+      else:
+        remove_page()
+    
+    # 展示点击的页面
     if id in self.button_dict:
       temp_dict["id"] = id
       # 跳转到页面
@@ -104,16 +116,6 @@ class PageManager:
             return
         else:
           create_page(param, stack)
-
-    # 刚才打开的页面将其隐藏
-    if self.current_page:
-      if not getSetting("IS_DEBUG"):
-        try:
-          remove_page()
-        except Exception as error:
-          print("隐藏页面出错：", error)
-      else:
-        remove_page()
 
     # 将当前页面赋值
     if id in self.button_dict:

@@ -207,7 +207,7 @@ QScrollBar::handle:vertical {
   border-radius: 4px;
 }
 QScrollBar::handle:vertical:hover {
-  background: #ddd;
+  background: #fff;
 }
 QScrollBar::add-page:vertical, 
 QScrollBar::sub-page:vertical,
@@ -229,7 +229,7 @@ QScrollBar::handle:horizontal {
   border-radius: 4px;
 }
 QScrollBar::handle:horizontal:hover {
-  background: #ddd;
+  background: #fff;
 }
 QScrollBar::add-page:horizontal, 
 QScrollBar::sub-page:horizontal,

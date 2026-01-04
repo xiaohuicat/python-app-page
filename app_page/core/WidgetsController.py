@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import (QWidget, QLayout)
 from PySide6.QtGui import QIcon
+from app_page_core import Store
 from ..core.EventBus import EventBus
 from ..utils import assetsPath
 from .common import updateStyle
@@ -52,9 +53,13 @@ class WidgetsController:
 
 
   def destroy(self) -> None:
+    event_filter = Store().get('APP_EVENT_FILTER', None)
     # 移除组件映射
     for each in self.__widgetList:
       try:
+        if hasattr(each, 'has_event_filter') and each.has_event_filter and event_filter:
+          each.removeEventFilter(event_filter)
+          delattr(each, 'has_event_filter')
         if hasattr(each, 'deleteLater'):
           each.deleteLater()
       except Exception as e:

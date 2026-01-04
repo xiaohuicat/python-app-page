@@ -245,3 +245,4 @@ def _handle_event_filter(widget: Union[QWidget, QLayout], value: Any) -> None:
         print('无法监听event-filter', value)
         return
     widget.installEventFilter(event_filter)
+    widget.has_event_filter = True
