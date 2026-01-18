@@ -107,6 +107,7 @@ def set_attributes(
         'width': lambda v: _handle_fixed_width(widget, v),
         'height': lambda v: _handle_fixed_height(widget, v),
         'disabled': lambda v: _handle_disabled(widget, v),
+        'visible': lambda v: _handle_visible(widget, v),
         'placeholder': lambda v: _handle_placeholder(widget, v),
         'password': lambda v: _handle_password(widget),
         'align': lambda v: _handle_alignment(widget, v),
@@ -186,6 +187,12 @@ def _handle_disabled(widget: Union[QWidget, QLayout], value: bool) -> None:
     # 补充：通常禁用组件使用setEnabled
     if hasattr(widget, 'setEnabled'):
         widget.setEnabled(not value)
+
+
+def _handle_visible(widget: Union[QWidget, QLayout], value: bool) -> None:
+    """处理可见性属性"""
+    if hasattr(widget, 'setVisible'):
+        widget.setVisible(value)
 
 
 def _handle_placeholder(widget: Union[QWidget, QLayout], value: str) -> None:

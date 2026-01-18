@@ -87,7 +87,6 @@ class Page(CorePage):
     # 保存持久化数据
     if hasattr(self, "localStore"):
       self.localStore.save()
-    self.pageParam and self.pageParam.clear()
 
 
   def destroy(self) -> None:
@@ -100,6 +99,7 @@ class Page(CorePage):
       self.localStore = None
     app_callback:Callback = self.store.get('APP_CALLBACK')
     app_callback.remove('event-filter')
+    self.pageParam and self.pageParam.clear()
     self.pageParam = None
     self.children = None
     self.callback = None

@@ -1,9 +1,9 @@
 import os
-from PySide6.QtWidgets import QFileDialog, QSlider
+from PySide6.QtWidgets import QFileDialog, QSlider, QWidget
 from PySide6.QtCore import Qt, QDir
 from app_page_core import Param
 from ..core import Page
-from ..utils import assetsUrl, s2t, get_system_volume
+from ..utils import assetsUrl, s2t, get_system_volume, encode
 from ..plugins import Player, PlayMode
 from ..utils.date_time import format_milliseconds
 
@@ -27,10 +27,8 @@ def createImgBtn(id, icon) -> str:
 
 
 template = '''
-<% 
-  current = player.music.current_index
-  isRunning = player.is_playing()
-  currentFontWeight = lambda index: 'bold' if index == current else '400'
+<%
+  currentFontWeight = lambda index: '600' if index == current else '400'
   currentFontSize = lambda index: '18px' if index == current else '14px'
   currentTextColor = lambda index: '#000' if index == current else '#666'
 %>
@@ -41,13 +39,16 @@ template = '''
         <v-box scroll="True">
           <div>
             <v-box align="AlignTop" margins="[0,0,0,0]">
-            % for index, item in enumerate(player.music.playlist):
+            % for index, item in enumerate(playlist):
               <div height="25" style="color:${currentTextColor(index)};">
                 <v-box margins="[0,0,0,0]" >
                   <button
+                    index="${index}"
                     text="${'.'.join(item['name'].split('.')[:-1])}"
                     height="20"
-                    style="text-align:left;font-size:${currentFontSize(index)};font-weight:{currentFontWeight(index)};" 
+                    class="music-button"
+                    style="font-size:${currentFontSize(index)};font-weight:{currentFontWeight(index)};" 
+                    event-filter="play-music"
                   />
                 </v-box>
               </div>
@@ -62,9 +63,10 @@ template = '''
           ${createImgBtn('playMode', playModeIcon)}
           ${createImgBtn('previous', 'left.png')}
           ${createImgBtn('startStop', 'pause.png' if isRunning else 'start.png')}
-          ${createImgBtn('next', 'right.png')}
-          <label id="startTime" text="0:00" />
+          ${createImgBtn('next', 'right.png')} 
           <QSlider id="slider" height="32" />
+          <label id="startTime" text="0:00" />
+          <label text="${encode('/')}" />
           <label id="endTime" text="0:00" />
         </h-box>
       </div>
@@ -81,13 +83,19 @@ STYLE = """
   background-color: rgba(255, 255, 255, 0.6);
 }
 .player-panel {
-  background-color:#fff;
+  background-color: #fff;
   border-radius: 8px;
 }
 #startTime, #endTime {
   font-weight:400;
   color:#666;
   font-size:13px;
+}
+.music-button {
+  text-align:left;
+}
+.music-button:hover {
+  color: #50C1FF;
 }
 """
 
@@ -130,18 +138,6 @@ class MusicPlayer(Page):
     self.onGlobalDestroy(self.saveGlobal)
   
     player = self.getPlayer()
-    
-    index = self.getGlobal('index')
-    position = self.getGlobal('position')
-    range_max = self.getGlobal('range_max')
-
-    player.music.current_index = index if isNum(index) else self.localStore.get('index', 0)
-    player.music.position = position if isNum(position) else self.localStore.get('position', 0)
-    player.music.duration = range_max if isNum(range_max) else self.localStore.get('range_max', 0)
-
-    play_mode = self.localStore.get('play_mode', 'repeat_all')
-    player.set_play_mode(PLAY_MODE[play_mode if play_mode in PLAY_MODE.keys() else 'repeat_all'])
-
     player.callback.remove()
     player.callback.add('rerender', self.render)
     player.callback.add('setPosition', self.setValue)
@@ -150,10 +146,12 @@ class MusicPlayer(Page):
     self.player = player
 
     return {
-      's2t': s2t,
-      'player': player,
+      'encode': encode,
       'createImgBtn': createImgBtn,
       'playModeIcon': getPlayMode(self.getPlayMode()),
+      'current': player.music.current_index,
+      'playlist': player.music.playlist,
+      'isRunning': player.is_playing(),
     }
 
 
@@ -163,9 +161,21 @@ class MusicPlayer(Page):
     else:
       player = Player()
       self.setGlobal('player', player)
+
+      index = self.getGlobal('index')
+      position = self.getGlobal('position')
+      range_max = self.getGlobal('range_max')
+
+      player.music.current_index = index if isNum(index) else self.localStore.get('index', 0)
+      player.music.position = position if isNum(position) else self.localStore.get('position', 0)
+      player.music.duration = range_max if isNum(range_max) else self.localStore.get('range_max', 0)
+
       path = self.localStore.get("player_path", None)
       if path:
         player.load_playlist(path)
+
+      play_mode = self.localStore.get('play_mode', 'repeat_all')
+      player.set_play_mode(PLAY_MODE[play_mode if play_mode in PLAY_MODE.keys() else 'repeat_all'])
       return player
 
 
@@ -180,6 +190,7 @@ class MusicPlayer(Page):
     self.register('startStop', 'clicked', self.startStop)
     self.register('next', 'clicked', self.next)
     self.register('playMode', 'clicked', self.playModeToggle)
+    self.regist_filter(self.click_filter)
 
     slider:QSlider = self.getWidget('slider')
     if slider and self.player:
@@ -200,9 +211,15 @@ class MusicPlayer(Page):
     path = QFileDialog.getExistingDirectory(None, "选择音乐文件夹", lastPath)
     if path:
       self.player.load_playlist(path)
+      self.player.music.current_index = 0
       self.localStore.set("player_path", path)
       self.clear()
       self.render(self.player.music.current_index, self.player.music.position)
+
+
+  def click_filter(self, widget:QWidget):
+    index = int(widget.property('index'))
+    self.player.playByIndex(index)
 
 
   def prev(self):
@@ -221,12 +238,15 @@ class MusicPlayer(Page):
       return
     # 有self.player的时候重新刷新页面
     self.rerender({
-      's2t': s2t,
-      'player': self.player,
+      'encode': encode,
       'createImgBtn': createImgBtn,
       'playModeIcon': getPlayMode(self.getPlayMode()),
+      'current': self.player.music.current_index,
+      'playlist': self.player.music.playlist,
+      'isRunning': self.player.is_playing(),
     })
     self.show()
+
 
   def setValue(self, value):
     self.setGlobal('position', value)
@@ -260,8 +280,11 @@ class MusicPlayer(Page):
           self.tips('请导入音乐', 'warning')
           return
         print('播放音乐')
-        self.player.play()
-
+        try:
+          self.player.play()
+        except Exception as error:
+          self.tips('播放出错', 'fail')
+          print('播放出错：', error)
 
 
   def getPlayMode(self):
@@ -273,10 +296,12 @@ class MusicPlayer(Page):
     play_mode = self.getPlayMode()
     self.localStore.set('play_mode', play_mode)
     self.rerender({
-      's2t': s2t,
-      'player': self.player,
+      'encode': encode,
       'createImgBtn': createImgBtn,
       'playModeIcon': getPlayMode(play_mode),
+      'current': self.player.music.current_index,
+      'playlist': self.player.music.playlist,
+      'isRunning': self.player.is_playing(),
     })
     self.show()
 

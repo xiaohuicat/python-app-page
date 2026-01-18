@@ -181,7 +181,7 @@ def delete_file(file_path):
         os.remove(file_path)
         print(f"文件 '{file_path}' 已成功删除")
     except PermissionError:
-        raise Exception(f"删除失败：没有权限删除文件 '{file_path}'，请检查文件权限")
+        raise Exception(f"删除失败：没有权限删除文件，请检查文件权限")
     except IsADirectoryError:
         raise Exception(f"删除失败：路径 '{file_path}' 是一个目录，不是文件，无法用此方法删除")
     except FileNotFoundError:

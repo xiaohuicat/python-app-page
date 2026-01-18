@@ -73,7 +73,7 @@ def preprocess(item: Dict[str, Any], key: str, value: str) -> None:
         },
         # 处理布尔类型的键（修复原函数重复的scroll键）
         "boolean": {
-            "keys": ["scroll", "disabled"],
+            "keys": ["scroll", "disabled", "visible"],
             "handler": lambda v: _safe_parse_bool(v)
         }
     }

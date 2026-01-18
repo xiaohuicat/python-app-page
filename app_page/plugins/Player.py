@@ -18,16 +18,18 @@ class Music:
         self.reset()
 
     def reset(self):
-        self.playlist: list[dict] = []  # [{'url': str, 'name': str}, ...]
+        self.playlist: list[dict] = []
         self.current_index: int = -1
         self.position: int = 0
         self.duration: int = 0
-        self.play_history: set[int] = set()  # 用于随机模式避免重复
-        self.is_source_set = False  # 新增：是否已为当前歌曲设置过源
+        self.play_history: set[int] = set()
 
     def load_from_folder(self, folder_path: str) -> int:
         self.playlist.clear()
         self.play_history.clear()
+        self.current_index = -1
+        self.position = 0
+
         path = Path(folder_path)
         if not path.is_dir():
             return 0
@@ -56,19 +58,16 @@ class Music:
         return self.playlist[self.current_index]['name']
 
     def next_index_sequence(self) -> int:
-        """顺序播放：下一首"""
         if not self.has_songs():
             return -1
         return (self.current_index + 1) % len(self.playlist)
 
     def next_index_shuffle(self) -> int:
-        """随机播放：随机选择一首未播放过的，如果全部播放过则重置"""
         if not self.has_songs():
             return -1
 
         available = set(range(len(self.playlist))) - self.play_history
         if not available:
-            # 全部播放过，重置历史
             self.play_history.clear()
             available = set(range(len(self.playlist)))
 
@@ -77,7 +76,7 @@ class Music:
         return next_idx
 
     def set_index(self, index: int):
-        if not self.has_songs():
+        if not self.has_songs() or index < 0:
             return
         self.current_index = index % len(self.playlist)
 
@@ -94,28 +93,28 @@ class Player:
         self.player.positionChanged.connect(self._on_position_changed)
         self.player.durationChanged.connect(self._on_duration_changed)
         self.player.playbackStateChanged.connect(self._on_state_changed)
+        self.player.mediaStatusChanged.connect(self._on_media_status_changed)
         self.player.errorOccurred.connect(self._on_error)
 
-        self.play_mode: PlayMode = PlayMode.REPEAT_ALL  # 默认顺序播放
+        self.play_mode: PlayMode = PlayMode.REPEAT_ALL
 
     # ================== 播放模式控制 ==================
 
     def set_play_mode(self, mode: PlayMode):
-        """设置播放模式"""
-        self.play_mode = mode
-        # 随机模式时重置播放历史
         if mode == PlayMode.SHUFFLE:
             self.music.play_history.clear()
+        elif self.play_mode == PlayMode.SHUFFLE:
+            # 从随机切走时也清理历史
+            self.music.play_history.clear()
+        self.play_mode = mode
 
     def toggle_play_mode(self) -> PlayMode:
-        """循环切换播放模式"""
         modes = [PlayMode.REPEAT_ONE, PlayMode.REPEAT_ALL, PlayMode.SHUFFLE]
         current_idx = modes.index(self.play_mode)
         next_idx = (current_idx + 1) % len(modes)
-        self.play_mode = modes[next_idx]
-        if self.play_mode == PlayMode.SHUFFLE:
-            self.music.play_history.clear()
-        return self.play_mode
+        new_mode = modes[next_idx]
+        self.set_play_mode(new_mode)
+        return new_mode
 
     def get_play_mode_name(self) -> str:
         names = {
@@ -130,64 +129,79 @@ class Player:
     def load_playlist(self, folder_path: str) -> int:
         count = self.music.load_from_folder(folder_path)
         if count > 0:
-            self.music.current_index = 0
-            if self.play_mode == PlayMode.SHUFFLE:
-                self.music.play_history.clear()
-        else:
-            self.music.current_index = -1
-        self._set_source()
+            self.music.set_index(0)  # 自动选中第一首
+        self._notify_update()
         return count
 
     def play(self):
         if not self.music.has_songs():
             return
-        # 只在必要时设置源（第一次播放当前歌曲或切换歌曲时）
-        if not self.music.is_source_set:
-            if not self._set_source():
-                return
-            self.music.is_source_set = True
-        self.player.play()
+
+        if self.music.get_current_url() is None:
+            return
+
+        # 如果当前歌曲还没加载源，或者源不对，则重新设置
+        if self.player.source().toLocalFile() != self.music.get_current_url():
+            self.player.setSource(QUrl.fromLocalFile(self.music.get_current_url()))
+
+        # 如果是暂停状态，继续播放；如果是停止状态，从保存位置开始
+        if self.player.playbackState() == QMediaPlayer.PausedState:
+            self.player.play()
+        elif self.player.playbackState() == QMediaPlayer.StoppedState:
+            self.player.setPosition(self.music.position)
+            self.player.play()
+        else:
+            self.player.play()
 
     def pause(self):
         self.player.pause()
-        self.music.position = self.player.position()  # 更新保存的位置
+        self.music.position = self.player.position()
 
     def stop(self):
-        self.music.position = 0  # 停止时重置位置（可选，根据需求）
+        self.music.position = 0
         self.player.stop()
 
     def next(self):
         if not self.music.has_songs():
             return
         self._choose_next_song()
-        self.music.is_source_set = False  # 切换歌曲 → 需要重新设置源
-        self.music.position = 0           # 切换歌曲时通常从头开始
-        self._set_source()
-        self.player.play()
+        self._play_current_from_start()
 
     def prev(self):
-        """上一首：无论何种模式，总是按列表顺序上一首"""
         if not self.music.has_songs():
             return
-        self.music.current_index = (self.music.current_index - 1) % len(self.music.playlist)
-        self.music.is_source_set = False  # 切换歌曲 → 需要重新设置源
+        prev_idx = (self.music.current_index - 1) % len(self.music.playlist)
+        self.music.set_index(prev_idx)
+        self._play_current_from_start()
+
+    # 新增：通过索引直接播放某首歌（用户点击列表时调用）
+    def playByIndex(self, index: int):
+        if not self.music.has_songs() or index < 0 or index >= len(self.music.playlist):
+            return
+        # 如果是同一首歌且正在播放，不重复加载
+        if index == self.music.current_index and self.player.playbackState() == QMediaPlayer.PlayingState:
+            return
+
+        self.music.set_index(index)
+        self._play_current_from_start()
+
+    def _play_current_from_start(self):
+        """切换到当前索引的歌曲并从头播放"""
         self.music.position = 0
-        self._set_source()
-        self.player.play()
+        url = self.music.get_current_url()
+        if url:
+            self.player.setSource(QUrl.fromLocalFile(url))
+            self.player.setPosition(0)
+            self.player.play()
+        self._notify_update()
 
     def _choose_next_song(self):
-        """根据当前播放模式决定下一首"""
         if self.play_mode == PlayMode.REPEAT_ONE:
-            # 单曲循环：保持当前索引
-            pass
+            return  # 保持当前
         elif self.play_mode == PlayMode.REPEAT_ALL:
-            # 列表循环：顺序下一首
             self.music.current_index = self.music.next_index_sequence()
         elif self.play_mode == PlayMode.SHUFFLE:
-            # 随机播放
             self.music.current_index = self.music.next_index_shuffle()
-        else:
-            print('未知播放模式')
 
     def seek(self, position_ms: int):
         if position_ms < 0:
@@ -206,13 +220,6 @@ class Player:
 
     # ================== 信号槽 ==================
 
-    def _set_source(self) -> bool:
-        url = self.music.get_current_url()
-        if not url:
-            return False
-        self.player.setSource(QUrl.fromLocalFile(url))
-        return True
-
     @Slot(int)
     def _on_position_changed(self, position: int):
         self.music.position = position
@@ -226,21 +233,16 @@ class Player:
     @Slot(QMediaPlayer.PlaybackState)
     def _on_state_changed(self, state: QMediaPlayer.PlaybackState):
         print('_on_state_changed:', state)
-        if state == QMediaPlayer.StoppedState:
-            # 判断是否自然播放结束（有一定容差）
-            if self.music.position >= self.music.duration - 500:
-                if self.play_mode == PlayMode.REPEAT_ONE:
-                    self.music.is_source_set = False
-                    self.music.position = 0
-                    self._set_source()
-                    self.player.play()
-                elif self.play_mode == PlayMode.REPEAT_ALL:
-                    self.next()
-                elif self.play_mode == PlayMode.SHUFFLE:
-                    self.next()
-        self.seek(self.music.position)
-        if state in [QMediaPlayer.PlayingState, QMediaPlayer.PausedState]:
-            self._notify_update()
+        self._notify_update()
+
+    @Slot(QMediaPlayer.MediaStatus)
+    def _on_media_status_changed(self, status: QMediaPlayer.MediaStatus):
+        if status == QMediaPlayer.EndOfMedia:
+            # 自然播放结束
+            if self.play_mode == PlayMode.REPEAT_ONE:
+                self._play_current_from_start()
+            else:
+                self.next()
 
     @Slot(QMediaPlayer.Error, str)
     def _on_error(self, error, error_string):
@@ -248,5 +250,5 @@ class Player:
         self.callback.run('onError', error, error_string)
 
     def _notify_update(self):
-        """通知 UI 更新"""
+        """通知 UI 更新当前歌曲和进度"""
         self.callback.run('rerender', self.music.current_index, self.music.position)

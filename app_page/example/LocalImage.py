@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from app_page import Page, Param
+from app_page import Page
 from app_page.utils import (encode, s2t, assetsUrl, get_file_md5, create_folder, 
                             cut_image, open_folder, copy_image, delete_file)
 from PySide6.QtWidgets import QWidget
@@ -11,12 +11,12 @@ from ..components import ShowImage
 # 页面模板
 TEMPLATE = """
 <template>
-    <div class="container" margins="[0,0,0,0]">
+    <div class="container">
         <v-box spacing="10" align="AlignTop">
             <div height="40">
                 <h-box margins="[0,0,0,0]">
-                    <label class="card-title" text="${title}" />
-                    <button class="primary-button" id="openFolder" text="打开" width="60" height="25" />
+                    <label class="title" text="${title}" />
+                    <button class="primary-button" id="openFolder" text="打开" width="60" height="26" />
                 </h-box>
             </div>
             <div>
@@ -67,13 +67,12 @@ TEMPLATE = """
 # 页面样式
 STYLE = """
 .container {
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    background-color: rgba(255, 255, 255, 0.6);
+    background-color: rgba(255,255,255,0.6);
+    border-radius: 10px;
 }
-.card-title {
-    font-size: 18px;
+.title {
+    background-color: transparent;
+    font-size: 22px;
     font-weight: bold;
 }
 .primary-button {
@@ -137,8 +136,7 @@ class LocalImage(Page):
     """
     
     def __init__(self):
-        super().__init__('local_images')
-        self.current_store = Param()
+        super().__init__()
         self.image_dir: Path = Path(os.path.expanduser("~/Pictures"))
         self.template = TEMPLATE
         self.style = STYLE
@@ -153,7 +151,7 @@ class LocalImage(Page):
         Returns:
             dict: 模板渲染所需的上下文数据
         """
-        images = self.current_store.get('images', [])
+        images = self.pageParam.get('images', [])
         title = f"{PAGE_TITLE_DEFAULT} ({len(images)})" if images else PAGE_TITLE_DEFAULT
         
         return {
@@ -162,7 +160,7 @@ class LocalImage(Page):
             'assetsUrl': assetsUrl,
             'title': title,
             'images': images,
-            'isLoading': self.current_store.get('isLoading', False),
+            'isLoading': self.pageParam.get('isLoading', False),
             'getImageStyle': self._get_image_style,  # 替换lambda为独立方法，更易维护
         }
 
@@ -182,7 +180,7 @@ class LocalImage(Page):
     def show(self, *args):
         """页面显示时的初始化操作"""
         # 是否加载图片
-        if not self.current_store.get('load-finished', False):
+        if not self.pageParam.get('load-finished', False):
             self.load_images()
             return
         
@@ -193,7 +191,6 @@ class LocalImage(Page):
 
     def hide(self, *args):
         """页面隐藏时清理资源"""
-        self.current_store.set('images', [])
         self._close_image_viewer()
         # 清空MD5缓存
         self._md5_cache.clear()
@@ -201,7 +198,7 @@ class LocalImage(Page):
     def load_images(self):
         """加载本地图片（对外接口）"""
         print("加载本地图片...")
-        self.current_store.set('isLoading', True)
+        self.pageParam.set('isLoading', True)
         self.rerender(self.setup())
         # 异步加载图片信息
         self.async_run(self._load_image_info, self._load_callback)
@@ -262,7 +259,7 @@ class LocalImage(Page):
     def _click_filter(self, widget:QWidget):
         filter_type = widget.property('event-filter')
         index = int(widget.property('index'))
-        images = self.current_store.get('images', [])
+        images = self.pageParam.get('images', [])
         if filter_type == 'open':
             self.open_image(images[index]['path'])
         elif filter_type == 'copy':
@@ -383,9 +380,9 @@ class LocalImage(Page):
         Args:
             result: 加载到的图片信息列表
         """
-        self.current_store.set('isLoading', False)
-        self.current_store.set('images', result)
-        self.current_store.set('load-finished', True)
+        self.pageParam.set('isLoading', False)
+        self.pageParam.set('images', result)
+        self.pageParam.set('load-finished', True)
         self.rerender(self.setup())
         self.show()
 
