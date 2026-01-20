@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from app_page import Page
 from app_page.utils import (encode, s2t, assetsUrl, get_file_md5, create_folder, 
-                            cut_image, open_folder, copy_image, delete_file)
+                            cut_image, open_folder, copy_image, delete_file, empty_container_qss, empty_container_xml)
 from PySide6.QtWidgets import QWidget
 from ..utils.date_time import timestamp_to_str
 from ..components import ShowImage
@@ -50,12 +50,7 @@ TEMPLATE = """
                         </div>
                     % endfor
                 % else:
-                    <div class="empty-box" >
-                        <v-box align="AlignCenter">
-                            <label class="empty-image" width="128" height="128" />
-                            <label class="empty-text" height="60" text="${'没有找到图片' if not isLoading else '正在加载...'}" align="AlignCenter" />
-                        </v-box>
-                    </div>
+                    ${empty_container_xml('没有找到图片' if not isLoading else '正在加载...')}
                 % endif
                 </v-box>
             </div>
@@ -102,18 +97,8 @@ STYLE = """
     color: #8a8e99;
     font-size: 12px;
 }
-.empty-box {
-    background-color: #fff;
-    border-radius: 10px;
-}
-.empty-image {
-    border-image: url('"""+assetsUrl('image', 'empty.png')+"""');
-    border-radius: 20px;
-}
-.empty-text {
-    color:#8a8e99;
-}
-"""
+
+""" + empty_container_qss()
 
 # 支持的图片扩展名
 IMAGE_EXTENSIONS = ('.jpg', '.jpeg', '.png', '.bmp', '.gif', '.webp', '.tiff', '.tif', '.ico')
@@ -162,6 +147,7 @@ class LocalImage(Page):
             'images': images,
             'isLoading': self.pageParam.get('isLoading', False),
             'getImageStyle': self._get_image_style,  # 替换lambda为独立方法，更易维护
+            'empty_container_xml': empty_container_xml,
         }
 
     def _get_image_style(self, img: dict) -> str:

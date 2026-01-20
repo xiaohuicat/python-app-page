@@ -12,7 +12,7 @@ QLabel {
 }
 
 /* 按钮样式 */
-.QPushButton {
+QPushButton {
     color: #333;
     border: none;
     border-radius: 5px;
@@ -143,8 +143,6 @@ QRadioButton::indicator:checked {
     border-color: #409eff;
 }
 QRadioButton::indicator:checked::before {
-    content: "";
-    display: block;
     width: 8px;
     height: 8px;
     border-radius: 4px;

@@ -131,7 +131,6 @@ class Skin(Page):
         self.register('comfirm', 'clicked', comfirm)
     
     def hide(self, *args):
-        super().hide()
         self.setting.save()
 
     def pick_skin(self, index: int):

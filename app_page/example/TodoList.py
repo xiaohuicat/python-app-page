@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from PySide6.QtWidgets import QWidget, QPushButton, QLineEdit
 from app_page import Page
-from app_page.utils import encode, assetsUrl
+from app_page.utils import encode, assetsUrl, empty_container_qss, empty_container_xml
 from nanoid import generate
 
 
@@ -70,8 +70,8 @@ template = """
                                     <div>
                                         <v-box>
                                             <!-- 可编辑的任务内容 -->
-                                            <div>
-                                                <h-box margins="[0,0,0,0]">
+                                            <div height="32">
+                                                <h-box margins="[0,0,0,0]" spacing="10">
                                                     <button
                                                         id="${task['id']+'-button'}"
                                                         data-id="${task['id']}"
@@ -80,7 +80,7 @@ template = """
                                                         event-filter="edit-content"
                                                         class="task-text ${'done' if task['done'] else ''}"
                                                     />
-                                                    <line-edit id="${task['id']+'-edit'}" class="task-text" visible="false" />
+                                                    <line-edit id="${task['id']+'-edit'}" class="task-text line-edit" visible="false" />
                                                     <button id="${task['id']+'-submit'}" text="确定" class="task-handle primary" visible="false" />
                                                     <button id="${task['id']+'-cancel'}" text="取消" class="task-handle default" visible="false" />
                                                 </h-box>
@@ -119,12 +119,7 @@ template = """
                         </v-box>
                     </div>
                 % else:
-                    <div class="empty-container">
-                        <v-box align="AlignCenter" height="400">
-                            <label width="400" height="300" class="empty-image" />
-                            <label text="暂无任务，快去添加一个吧~" align="AlignCenter" class="empty-text" />
-                        </v-box>
-                    </div>
+                    """ + empty_container_xml("暂无任务，快去添加一个吧~") + """
                 % endif
                 </v-box>
             </div>
@@ -133,7 +128,7 @@ template = """
 </template>
 """
 
-STYLE = """
+style = lambda : """
 .container {
     background-color: rgba(255,255,255,0.6);
     border-radius: 10px;
@@ -176,8 +171,11 @@ STYLE = """
     font-size: 15px;
     color: #333;
     text-align: left;
-    padding: 0;
+    padding: 5px;
     background-color: transparent;
+}
+.line-edit {
+    background-color: #ffffff;
 }
 .task-text.done {
     text-decoration: line-through;
@@ -193,7 +191,7 @@ STYLE = """
 }
 .task-handle.default {
     background-color: #f0f0f0;
-    color: #ffffff;
+    color: #333;
 }
 .due-text {
     font-size: 12px;
@@ -208,7 +206,7 @@ STYLE = """
     border-image: url('""" + assetsUrl('icon', 'label.png') + """');
 }
 .empty-container {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.8);
     border-radius: 10px;
 }
 .empty-image {
@@ -278,7 +276,8 @@ STYLE = """
 .stat-button.danger.active {
     background-color: #f5c6cb;
 }
-"""
+
+""" + empty_container_qss()
 
 DEFAULT_CONTENT = '新任务（点击可编辑）'
 
@@ -295,7 +294,7 @@ class TodoList(Page):
     def __init__(self):
         super().__init__('todo-list')
         self.template = template
-        self.style = STYLE
+        self.style = style()
         self.is_editing = False
         self.content_len = 45
 
@@ -370,6 +369,14 @@ class TodoList(Page):
                     task['due_color'] = '#6c757d'
                 
                 display_tasks.append(task)
+
+        # 排序规则：
+        # 1. 有created字段的任务，按时间倒序（最新的在前）
+        # 2. 无created字段的任务，统一排到最后
+        display_tasks.sort(
+            key=lambda x: datetime.fromisoformat(x.get('created')) if x.get('created') else datetime.min,
+            reverse=True  # 倒序排列，最新的在前
+        )
 
         return {
             'encode': encode,

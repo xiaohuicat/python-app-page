@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QFileDialog, QSlider, QWidget
 from PySide6.QtCore import Qt, QDir
 from app_page_core import Param
 from ..core import Page
-from ..utils import assetsUrl, s2t, get_system_volume, encode
+from ..utils import assetsUrl, s2t, get_system_volume, encode, empty_container_qss, empty_container_xml
 from ..plugins import Player, PlayMode
 from ..utils.date_time import format_milliseconds
 
@@ -37,24 +37,28 @@ template = '''
     <v-box spacing="0" margins="[0,0,0,0]">
       <div>
         <v-box scroll="True">
-          <div>
-            <v-box align="AlignTop" margins="[0,0,0,0]">
-            % for index, item in enumerate(playlist):
-              <div height="25" style="color:${currentTextColor(index)};">
-                <v-box margins="[0,0,0,0]" >
-                  <button
-                    index="${index}"
-                    text="${'.'.join(item['name'].split('.')[:-1])}"
-                    height="20"
-                    class="music-button"
-                    style="font-size:${currentFontSize(index)};font-weight:{currentFontWeight(index)};" 
-                    event-filter="play-music"
-                  />
-                </v-box>
-              </div>
-            % endfor
-            </v-box>
-          </div>
+          % if len(playlist) > 0:
+            <div>
+              <v-box align="AlignTop" margins="[0,0,0,0]">
+              % for index, item in enumerate(playlist):
+                <div height="25" style="color:${currentTextColor(index)};">
+                  <v-box margins="[0,0,0,0]" >
+                    <button
+                      index="${index}"
+                      text="${'.'.join(item['name'].split('.')[:-1])}"
+                      height="20"
+                      class="music-button"
+                      style="font-size:${currentFontSize(index)};font-weight:{currentFontWeight(index)};" 
+                      event-filter="play-music"
+                    />
+                  </v-box>
+                </div>
+              % endfor
+              </v-box>
+            </div>
+          % else:
+            ''' + empty_container_xml("暂无音乐，点击左下角导入音乐文件夹吧~") + '''
+          % endif
         </v-box>
       </div>
       <div class="player-panel" height="45">
@@ -97,7 +101,7 @@ STYLE = """
 .music-button:hover {
   color: #50C1FF;
 }
-"""
+""" + empty_container_qss()
 
 PLAY_MODE = {
   'repeat_all': PlayMode.REPEAT_ALL, # 列表循环

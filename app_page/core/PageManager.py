@@ -79,7 +79,8 @@ class PageManager:
         params = current.setup()
       temp_dict["current"] = current
       current.setParent(stack)
-      current.rerender(params)
+      if params:
+        current.rerender(params)
       current.status = 'show'
       current.show(*{*args, *param})
     
@@ -128,7 +129,6 @@ class PageManager:
     # 隐藏当前页面
     if self.current_page:
       try:
-        self.current_page.hidePage()
         self.current_page.hide()
       except Exception as e:
         print('销毁页面管理器报错：', e)

@@ -1,7 +1,7 @@
 import time
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication, QWidget, QLayout, QVBoxLayout, QHBoxLayout, QGridLayout
-from app_page_core import Callback, Param, Page as CorePage
+from app_page_core import Callback, Children, Param, Store
 from nanoid import generate
 from ..core.Tips import Tips
 from ..core.TipsBox import TipsBox
@@ -14,10 +14,15 @@ from ..utils import layout_clear, blur_image
 from ..MainWindow import MainWindow
 
 
-class Page(CorePage):
+class Page:
   def __init__(self, name=None) -> None:
-    super().__init__(name)
-    self.status:str
+    self.name = name
+    self.id = generate(size=10)
+    self.callback = Callback()                     # 挂载回调函数管理对象
+    self.children = Children()
+    self.store:Store = Store()
+    self.status:str = 'hide'
+
     self.app:QApplication
     self.root:Page
     self.mainWin:MainWindow
@@ -26,19 +31,24 @@ class Page(CorePage):
     self.param:Param
     self.localStore:Param
     self.pageParam:Param = Param()
-    self.template:str
+
+    self.template:str = "<template></template>"
+    self.style:str = ""
     self.playMedia:callable
     self.__widgetsController:WidgetsController = WidgetsController()
     self.__global_data:dict = {}
     self.__parent:QWidget|None = None
     self.__layout:QLayout|None = None
-    self.style = None
     # 判断是否挂载参数存储器
-    if name and hasattr(self, "param"):
+    if name:
       path = self.getSoftwarePath("userPath", f"pages/{name}/config.json")
       self.localStore = Param(path, {})
       if getSetting("IS_DEBUG"):
         print(f"页面 {name} 的本地存储路径为: {path}")
+
+  
+  def setup(self) -> dict|None:
+    return None
 
 
   def rerender(self, params:dict):
@@ -46,13 +56,13 @@ class Page(CorePage):
       print('[传递给模板的变量]', params)
     if not hasattr(self, 'template'):
       return
-    self.hidePage()
+    self.hideBefore()
     layout = self.getLayout()
     if not layout:
       self.setLayout('v-box')
       layout = self.getLayout()
     else:
-      self.hidePage()
+      self.hideBefore()
     
     layout.setAlignment(Qt.AlignTop)
     layout.setContentsMargins(10, 10, 10, 10)
@@ -62,7 +72,7 @@ class Page(CorePage):
 
     # 判断是否挂载layout容器
     if self.getLayout():
-      self.hidePage()
+      self.hideBefore()
     else:
       self.setLayout(layout)
 
@@ -73,7 +83,15 @@ class Page(CorePage):
     self.__widgetsController.setWidgetList(renderResult['allWidgets'])
 
 
-  def hidePage(self) -> None:
+  def show(self, *args) -> None:
+    print("显示页面:", self.name or self.id, "参数:", args)
+
+
+  def hide(self, *args) -> None:
+    print("隐藏页面:", self.name or self.id, "参数:", args)
+
+
+  def hideBefore(self) -> None:
     if self.__layout:
       layout_clear(self.__layout)
       self.__layout = None
@@ -90,9 +108,12 @@ class Page(CorePage):
 
 
   def destroy(self) -> None:
-    self.hidePage()
+    self.hideBefore()
     self.status = 'hide'
-    self.hide()
+    try:
+      self.hide()
+    except Exception as e:
+      print("页面隐藏时出错：", e)
     self.__widgetsController = None
     if hasattr(self, "localStore"):
       self.localStore.clear()
@@ -284,3 +305,14 @@ class Page(CorePage):
   @property
   def info(self):
     return f"\n当前页面有{len(self.children.components.keys())}子页面。\n"+self.children.info()
+
+
+  def __getitem__(self, __name):
+    return super().__getattribute__(__name)
+
+
+  def __getattribute__(self, __name):
+    if self["store"].has(__name):
+      return self["store"].get(__name)
+    else:
+      return super().__getattribute__(__name)

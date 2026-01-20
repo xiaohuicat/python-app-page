@@ -9,6 +9,7 @@ from .control_volume import get_system_volume, set_system_volume
 from .blur_image import blur_image
 from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder, open_folder, delete_file
 from ..core.common import setShadowEffect, updateStyle
+from .easy_create import empty_container_qss, empty_container_xml
 
 __all__ = [
   'assetsPath',
@@ -49,4 +50,6 @@ __all__ = [
   'create_folder',
   'open_folder',
   'delete_file',
+  'empty_container_qss',
+  'empty_container_xml',
 ]
