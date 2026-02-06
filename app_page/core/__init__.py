@@ -3,7 +3,6 @@ from .EventBus import EventBus
 from .EventHook import EventHook
 from .Page import Page
 from .Thread import EasyThread, Waiting_time, ThreadManager
-from .FileParam import FileParam
 from .PageManager import PageManager
 from ..core import Setting, Device
 from .render import render, render_widget, render_vnode
@@ -20,7 +19,6 @@ __all__ = [
   "EasyThread",
   "ThreadManager",
   "Waiting_time",
-  "FileParam",
   "render",
   "render_widget",
   "render_vnode",

@@ -98,24 +98,24 @@ def set_attributes(
     """
     # 处理特殊属性的映射表：属性名 -> 处理函数
     prop_handlers = {
-        'id': lambda v: _handle_id(widget, v, widget_id_map),
-        'text': lambda v: _handle_text(widget, v),
-        'title': lambda v: _handle_title(widget, v),
-        'style': lambda v: _handle_style(widget, v),
-        'margins': lambda v: _handle_margins(widget, v),
-        'spacing': lambda v: _handle_spacing(widget, v),
-        'width': lambda v: _handle_fixed_width(widget, v),
-        'height': lambda v: _handle_fixed_height(widget, v),
-        'disabled': lambda v: _handle_disabled(widget, v),
-        'visible': lambda v: _handle_visible(widget, v),
-        'placeholder': lambda v: _handle_placeholder(widget, v),
-        'password': lambda v: _handle_password(widget),
-        'align': lambda v: _handle_alignment(widget, v),
-        'scroll': lambda v: _handle_scroll(widget, v, widget_list, widget_id_map),
-        'options': lambda v: _handle_options(widget, v),
-        'shadow': lambda v: _handle_shadow(widget, v),
-        'children': lambda v: _handle_children(widget, props, widget_list, widget_id_map),
-        'event-filter': lambda v: _handle_event_filter(widget, v),
+        'id': lambda v: _set_id(widget, v, widget_id_map),
+        'text': lambda v: _set_text(widget, v),
+        'title': lambda v: _set_title(widget, v),
+        'style': lambda v: _set_style(widget, v),
+        'margins': lambda v: _set_margins(widget, v),
+        'spacing': lambda v: _set_spacing(widget, v),
+        'width': lambda v: _set_fixed_width(widget, v),
+        'height': lambda v: _set_fixed_height(widget, v),
+        'disabled': lambda v: _set_disabled(widget, v),
+        'visible': lambda v: _set_visible(widget, v),
+        'placeholder': lambda v: _set_placeholder(widget, v),
+        'password': lambda v: _set_password(widget),
+        'align': lambda v: _set_alignment(widget, v),
+        'scroll': lambda v: _set_scroll(widget, v, widget_list, widget_id_map),
+        'options': lambda v: _set_options(widget, v),
+        'shadow': lambda v: _set_shadow(widget, v),
+        'children': lambda v: _set_children(widget, props, widget_list, widget_id_map),
+        'event-filter': lambda v: _set_event_filter(widget, v),
     }
 
     for key, value in props.items():
@@ -128,14 +128,14 @@ def set_attributes(
 
 
 # 以下为属性处理的辅助函数
-def _handle_id(widget: Union[QWidget, QLayout], value: str, widget_id_map: dict) -> None:
+def _set_id(widget: Union[QWidget, QLayout], value: str, widget_id_map: dict) -> None:
     """处理ID属性"""
     widget.setObjectName(value)
     widget.setProperty('id', value)
     widget_id_map[value] = widget
 
 
-def _handle_text(widget: Union[QWidget, QLayout], value: str) -> None:
+def _set_text(widget: Union[QWidget, QLayout], value: str) -> None:
     """处理文本属性"""
     unescaped_value = unescape_xml(value)
     if isinstance(widget, QPlainTextEdit):
@@ -144,43 +144,43 @@ def _handle_text(widget: Union[QWidget, QLayout], value: str) -> None:
         widget.setText(unescaped_value)
 
 
-def _handle_title(widget: Union[QWidget, QLayout], value: str) -> None:
+def _set_title(widget: Union[QWidget, QLayout], value: str) -> None:
     """处理标题/提示属性"""
     if hasattr(widget, 'setToolTip'):
         widget.setToolTip(unescape_xml(value))
 
 
-def _handle_style(widget: Union[QWidget, QLayout], value: str) -> None:
+def _set_style(widget: Union[QWidget, QLayout], value: str) -> None:
     """处理样式属性"""
     if hasattr(widget, 'setStyleSheet'):
         widget.setStyleSheet(value)
 
 
-def _handle_margins(widget: Union[QWidget, QLayout], value: list) -> None:
+def _set_margins(widget: Union[QWidget, QLayout], value: list) -> None:
     """处理边距属性"""
     if hasattr(widget, 'setContentsMargins'):
         widget.setContentsMargins(*value)
 
 
-def _handle_spacing(widget: Union[QWidget, QLayout], value: int) -> None:
+def _set_spacing(widget: Union[QWidget, QLayout], value: int) -> None:
     """处理间距属性"""
     if hasattr(widget, 'setSpacing'):
         widget.setSpacing(value)
 
 
-def _handle_fixed_width(widget: Union[QWidget, QLayout], value: int) -> None:
+def _set_fixed_width(widget: Union[QWidget, QLayout], value: int) -> None:
     """处理宽度属性"""
     if hasattr(widget, 'setFixedWidth'):
         widget.setFixedWidth(value)
 
 
-def _handle_fixed_height(widget: Union[QWidget, QLayout], value: int) -> None:
+def _set_fixed_height(widget: Union[QWidget, QLayout], value: int) -> None:
     """处理高度属性"""
     if hasattr(widget, 'setFixedHeight'):
         widget.setFixedHeight(value)
 
 
-def _handle_disabled(widget: Union[QWidget, QLayout], value: bool) -> None:
+def _set_disabled(widget: Union[QWidget, QLayout], value: bool) -> None:
     """处理禁用属性"""
     if hasattr(widget, 'setReadOnly'):
         widget.setReadOnly(value)
@@ -189,49 +189,49 @@ def _handle_disabled(widget: Union[QWidget, QLayout], value: bool) -> None:
         widget.setEnabled(not value)
 
 
-def _handle_visible(widget: Union[QWidget, QLayout], value: bool) -> None:
+def _set_visible(widget: Union[QWidget, QLayout], value: bool) -> None:
     """处理可见性属性"""
     if hasattr(widget, 'setVisible'):
         widget.setVisible(value)
 
 
-def _handle_placeholder(widget: Union[QWidget, QLayout], value: str) -> None:
+def _set_placeholder(widget: Union[QWidget, QLayout], value: str) -> None:
     """处理占位符属性"""
     if hasattr(widget, 'setPlaceholderText'):
         widget.setPlaceholderText(unescape_xml(value))
 
 
-def _handle_password(widget: Union[QWidget, QLayout]) -> None:
+def _set_password(widget: Union[QWidget, QLayout]) -> None:
     """处理密码框属性"""
     if hasattr(widget, 'setEchoMode'):
         widget.setEchoMode(QLineEdit.Password)
 
 
-def _handle_alignment(widget: Union[QWidget, QLayout], value: str) -> None:
+def _set_alignment(widget: Union[QWidget, QLayout], value: str) -> None:
     """处理对齐属性"""
     if hasattr(widget, 'setAlignment') and hasattr(Qt, value):
         widget.setAlignment(getattr(Qt, value))
 
 
-def _handle_scroll(widget: Union[QWidget, QLayout], value: dict, widget_list: list,
+def _set_scroll(widget: Union[QWidget, QLayout], value: dict, widget_list: list,
     widget_id_map: dict) -> None:
     """处理滚动属性"""
     if isinstance(widget, QLayout):
         widget.__scroll_layout = create_scroll_layout(widget, value, widget_list, widget_id_map)
 
 
-def _handle_options(widget: Union[QWidget, QLayout], value: list) -> None:
+def _set_options(widget: Union[QWidget, QLayout], value: list) -> None:
     """处理选项属性（下拉框）"""
     if isinstance(widget, QComboBox):
         widget.addItems(value)
 
 
-def _handle_shadow(widget: Union[QWidget, QLayout], value: Any) -> None:
+def _set_shadow(widget: Union[QWidget, QLayout], value: Any) -> None:
     """处理阴影效果属性"""
     setShadowEffect(widget, value)
 
 
-def _handle_children(
+def _set_children(
     widget: Union[QWidget, QLayout],
     props: dict,
     widget_list: list,
@@ -245,7 +245,7 @@ def _handle_children(
         parent = widget
     vnode_render(parent, props, widget_list, widget_id_map)
     
-def _handle_event_filter(widget: Union[QWidget, QLayout], value: Any) -> None:
+def _set_event_filter(widget: Union[QWidget, QLayout], value: Any) -> None:
     widget.setProperty('event-filter', value)
     event_filter = Store().get('APP_EVENT_FILTER', None)
     if not event_filter:

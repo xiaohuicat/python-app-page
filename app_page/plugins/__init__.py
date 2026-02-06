@@ -3,6 +3,7 @@ from .Excel import Excel
 from .Player import Player, PlayMode
 from .Record import Record
 from .Timer import Timer
+from .FileTools import FileTools
 
 __all__ = [
   "Excel",
@@ -10,4 +11,5 @@ __all__ = [
   "PlayMode",
   "Record",
   "Timer",
+  "FileTools",
 ]
