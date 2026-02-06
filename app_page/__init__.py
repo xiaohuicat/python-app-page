@@ -1,6 +1,6 @@
 from app_page_core import Store, Param, Callback, LocalStore
 from .core import (Page, EventBus, EventHook, EasyThread, ThreadManager,
-                   PageManager, Waiting_time, Setting, Device, FileParam,
+                   PageManager, Waiting_time, Setting, Device,
                    WidgetsController, render, render_vnode, render_widget)
 from .core.Setting import getSetting, applySetting
 from .app import createApp
@@ -25,7 +25,6 @@ __all__ = [
   "updateStyle",
   "Setting",
   "Device",
-  "FileParam",
   "render",
   "render_vnode",
   "render_widget",
