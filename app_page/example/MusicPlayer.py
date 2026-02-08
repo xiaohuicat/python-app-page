@@ -166,6 +166,13 @@ class MusicPlayer(Page):
       player = Player()
       self.setGlobal('player', player)
 
+      path = self.localStore.get("player_path", None)
+      if path:
+        player.load_playlist(path)
+
+      play_mode = self.localStore.get('play_mode', 'repeat_all')
+      player.set_play_mode(PLAY_MODE[play_mode if play_mode in PLAY_MODE.keys() else 'repeat_all'])
+      
       index = self.getGlobal('index')
       position = self.getGlobal('position')
       range_max = self.getGlobal('range_max')
@@ -174,12 +181,6 @@ class MusicPlayer(Page):
       player.music.position = position if isNum(position) else self.localStore.get('position', 0)
       player.music.duration = range_max if isNum(range_max) else self.localStore.get('range_max', 0)
 
-      path = self.localStore.get("player_path", None)
-      if path:
-        player.load_playlist(path)
-
-      play_mode = self.localStore.get('play_mode', 'repeat_all')
-      player.set_play_mode(PLAY_MODE[play_mode if play_mode in PLAY_MODE.keys() else 'repeat_all'])
       return player
 
 
@@ -223,6 +224,7 @@ class MusicPlayer(Page):
 
   def click_filter(self, widget:QWidget):
     index = int(widget.property('index'))
+    self.setGlobal('index', index)
     self.player.playByIndex(index)
 
 

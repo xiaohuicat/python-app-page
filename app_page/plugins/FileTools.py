@@ -3,23 +3,7 @@ import hashlib
 import zipfile
 import platform
 from typing import Dict, List, Optional, Callable
-# 新增图片处理相关导入
 from PIL import Image, ImageDraw, ImageFont
-import textwrap
-
-
-def md5_file(path: str) -> str:
-    """计算文件的MD5值（分块读取，支持大文件）"""
-    try:
-        with open(path, 'rb') as f:
-            md5 = hashlib.md5()
-            # 按4096字节分块读取，避免一次性加载大文件到内存
-            for chunk in iter(lambda: f.read(4096), b""):
-                md5.update(chunk)
-            return md5.hexdigest()
-    except Exception as e:
-        print(f"计算MD5失败 {path}: {e}")
-        return ""
 
 
 class FileTools:
@@ -49,61 +33,76 @@ class FileTools:
         """
         唯一的目录遍历函数，加载所有文件信息到file_info_map
         :param option: 可选配置字典，支持的key：
-                       - skip_folders: 列表，需要跳过的文件夹名称（如['__pycache__', '.git']）
+                    - skip_folders: 列表，需要跳过的文件夹名称（如['__pycache__', '.git']）
+                    - enable_md5: 布尔值，是否开启MD5计算（默认True）
         """
         if self._loaded:
             return  # 已加载过则直接返回，避免重复遍历
 
-        # 初始化配置，设置默认跳过的文件夹为空列表
+        # 初始化配置
         option = option or {}
         skip_folders = option.get('skip_folders', [])
-        # 确保skip_folders是列表类型，容错处理
+        enable_md5 = option.get('enable_md5', False)
+        
+        # 容错处理
         if not isinstance(skip_folders, list):
             skip_folders = []
+        if not isinstance(enable_md5, bool):
+            enable_md5 = True
 
-        self.file_info_map.clear()  # 清空旧数据
-        self._total_size = 0  # 重置总大小
-        root_dir_name: str = os.path.basename(self.filePath)  # 优化路径分割逻辑，跨平台兼容
+        # 转换为集合，提升查询效率
+        skip_folders_set = set(skip_folders)
+        
+        self.file_info_map.clear()
+        self._total_size = 0
+        root_dir_name: str = os.path.basename(self.filePath)
 
         try:
-            for foldername, _, filenames in os.walk(self.filePath):
-                # 核心修改：过滤需要跳过的文件夹
-                folder_basename = os.path.basename(foldername)
-                if folder_basename in skip_folders:
-                    print(f"跳过文件夹：{foldername}")
-                    continue  # 跳过当前文件夹，不处理其中的文件
+            # 关键修复：使用topdown=True（默认），并修改dirs列表来跳过整个目录树
+            for foldername, dirs, filenames in os.walk(self.filePath, topdown=True):
+                # 核心修复：提前过滤文件夹，直接从dirs中移除，os.walk会跳过这些文件夹的遍历
+                # 遍历dirs的副本，避免修改原列表导致的遍历异常
+                for dir_name in list(dirs):
+                    if dir_name in skip_folders_set:
+                        dirs.remove(dir_name)  # 从遍历列表中移除，彻底跳过该文件夹及其子目录
+                        print(f"跳过文件夹（递归）：{os.path.join(foldername, dir_name)}")
 
+                # 处理当前文件夹下的文件
                 for filename in filenames:
-                    if filename in skip_folders:
+                    # 跳过需要忽略的文件（比如.DS_Store这类文件）
+                    if filename in skip_folders_set:
                         print(f"跳过文件：{os.path.join(foldername, filename)}")
-                        continue  # 跳过当前文件，不处理
+                        continue
+                    
                     file_path: str = os.path.join(foldername, filename)
-                    # 跳过损坏的文件或无法访问的文件
                     if not os.path.isfile(file_path):
                         continue
 
                     # 计算文件属性
                     size: int = os.path.getsize(file_path)
-                    md5: str = md5_file(file_path)
-                    ext: str = os.path.splitext(filename)[1].lower()  # 统一扩展名小写
-                    # 生成相对路径（替换为根目录名，统一使用/分隔）
+                    if enable_md5:
+                        md5: str = _md5_file(file_path)
+                    else:
+                        md5: str = ""
+                    ext: str = os.path.splitext(filename)[1].lower()
                     ret_path: str = os.path.relpath(file_path, self.filePath).replace("\\", "/")
                     ret_path = f"{root_dir_name}/{ret_path}"
 
                     # 存储文件信息
                     self.file_info_map[file_path] = {
-                        "abs_path": file_path,          # 文件绝对路径
-                        "ret_path": ret_path,           # 相对根目录的路径
-                        "md5": md5,                     # 文件MD5值
-                        "size": size,                   # 文件大小（字节）
-                        "ext": ext,                     # 文件扩展名
-                        "filename": filename,           # 文件名（含扩展名）
-                        "folder": foldername            # 文件所在文件夹
+                        "abs_path": file_path,
+                        "ret_path": ret_path,
+                        "md5": md5,
+                        "size": size,
+                        "ext": ext,
+                        "filename": filename,
+                        "folder": foldername
                     }
-                    self._total_size += size  # 累加总大小
+                    self._total_size += size
 
-            self._loaded = True  # 标记加载完成
-            print(f"加载完成，共扫描 {len(self.file_info_map)} 个文件，总大小 {self._total_size/1024/1024:.2f} MB")
+            self._loaded = True
+            md5_status = "开启" if enable_md5 else "关闭"
+            print(f"加载完成，共扫描 {len(self.file_info_map)} 个文件，总大小 {self._total_size/1024/1024:.2f} MB，MD5计算：{md5_status}")
         except Exception as e:
             print(f"遍历目录失败 {self.filePath}: {e}")
             self._loaded = False
@@ -209,8 +208,8 @@ class FileTools:
             
             # 补充文件信息
             if node['type'] == 'file':
-                size_str = f" ({node['size']} B / {node['size']/1024:.2f} KB)" if show_size else ""
-                md5_str = f" | MD5: {node['md5']}" if show_md5 else ""
+                size_str = f" ({node['size']/1024:.2f} KB)" if show_size else ""
+                md5_str = f" | MD5: {node['md5']}" if show_md5 and node['md5'] else ""
                 line += size_str + md5_str
             
             lines.append(line)
@@ -245,40 +244,10 @@ class FileTools:
         tree_lines = self._generate_tree_text(show_size, show_md5)
         print("\n" + "\n".join(tree_lines))
 
-    def _get_default_font(self, font_size: int) -> ImageFont.FreeTypeFont:
-        """新增：自动获取系统默认的支持Unicode的字体，解决符号显示问题"""
-        system = platform.system()  # 获取系统类型：Windows/Darwin(Linux)/Linux
-        font_candidates = self._SYSTEM_FONTS.get(system, self._SYSTEM_FONTS['Linux'])
-        
-        # 遍历候选字体，找到系统中存在的字体
-        if system == 'Windows':
-            font_dirs = [os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts')]
-        elif system == 'Darwin':
-            font_dirs = ['/System/Library/Fonts', '/Library/Fonts', os.path.expanduser('~/Library/Fonts')]
-        else:  # Linux
-            font_dirs = ['/usr/share/fonts', '/usr/local/share/fonts', os.path.expanduser('~/.fonts')]
-
-        # 查找可用字体文件
-        font_file = None
-        for dir_path in font_dirs:
-            if not os.path.exists(dir_path):
-                continue
-            for font_name in font_candidates:
-                f_path = os.path.join(dir_path, font_name)
-                if os.path.exists(f_path):
-                    font_file = f_path
-                    break
-        if font_file:
-            try:
-                return ImageFont.truetype(font_file, font_size, encoding='utf-8')
-            except Exception:
-                pass
-        # 兜底：使用Pillow默认字体，开启抗锯齿
-        return ImageFont.load_default(size=font_size)
-
-    def draw(self, output_path: str = None, show_size: bool = True, show_md5: bool = False, 
-             font_path: str = None, font_size: int = 12, bg_color: str = "white", 
-             text_color: str = "black") -> str:
+    def draw(self, output_path: str = None, show_size: bool = False, show_md5: bool = False, 
+            font_path: str = None, font_size: int = 12, bg_color: str = "white", 
+            text_color: str = "black", line_height: Optional[int] = None, 
+            img_width: Optional[int] = None) -> str:
         """
         将目录结构绘制为PNG图片（修复符号显示问题，新增系统字体自动适配）
         :param output_path: 输出图片路径（默认：原目录名+_tree.png）
@@ -288,6 +257,8 @@ class FileTools:
         :param font_size: 字体大小（默认12）
         :param bg_color: 背景颜色（默认white）
         :param text_color: 文字颜色（默认black）
+        :param line_height: 行高（可选，默认 font_size + 3）
+        :param img_width: 图片宽度（可选，默认根据文本宽度自动计算）
         :return: 生成的图片文件路径
         """
         if not self._loaded:
@@ -299,7 +270,7 @@ class FileTools:
         # 设置默认输出路径
         if output_path is None:
             output_path = os.path.join(os.path.dirname(self.filePath), 
-                                      f"{os.path.basename(self.filePath)}_tree.png")
+                                    f"{os.path.basename(self.filePath)}_tree.png")
         
         # 确保输出目录存在
         output_dir = os.path.dirname(output_path)
@@ -311,27 +282,33 @@ class FileTools:
             if font_path and os.path.exists(font_path):
                 font = ImageFont.truetype(font_path, font_size, encoding='utf-8')
             else:
-                font = self._get_default_font(font_size)
+                font = _get_default_font(self._SYSTEM_FONTS, font_size)
 
             # 计算文本尺寸（优化：使用font.getlength，更准确的Unicode字符宽度计算）
-            line_spacing = font_size + 3  # 增大行间距，避免拥挤
-            max_width = int(max([font.getlength(line) for line in tree_lines]))
-            total_height = int(sum([font.size + line_spacing for line in tree_lines]))
+            if line_height is None:
+                line_height = font_size + 3  # 如果没有传入line_height，使用默认值
+
+            # 如果指定了图片宽度，使用指定宽度，否则计算文本最大宽度
+            if img_width is None:
+                max_width = int(max([font.getlength(line) for line in tree_lines]))
+            else:
+                max_width = img_width
+
+            total_height = int(sum([font.size + line_height for line in tree_lines]))
 
             # 添加边距
             padding = 25
-            img_width = max_width + 2 * padding
             img_height = total_height + 2 * padding
 
             # 创建图片（RGB模式，支持彩色）
-            img = Image.new('RGB', (img_width, img_height), color=bg_color)
+            img = Image.new('RGB', (max_width + 2 * padding, img_height), color=bg_color)
             draw = ImageDraw.Draw(img)
 
             # 绘制文本（优化：起始坐标微调，对齐更美观）
             y = padding + font_size // 2
             for line in tree_lines:
                 draw.text((padding, y), line, font=font, fill=text_color, align='left')
-                y += font.size + line_spacing
+                y += font.size + line_height
 
             # 保存图片（优化：设置PNG压缩级别，减小文件体积）
             img.save(output_path, 'PNG', compress_level=6)
@@ -342,7 +319,7 @@ class FileTools:
             print(f"生成图片失败：{e}")
             return ""
 
-    def write(self, output_path: str = None, show_size: bool = True, show_md5: bool = False, 
+    def write(self, output_path: str = None, show_size: bool = False, show_md5: bool = False, 
           title: str = "目录结构") -> str:
       """
       将目录结构写入Markdown文件
@@ -446,23 +423,47 @@ class FileTools:
         return list(self.file_info_map.values())
 
 
-# 测试示例
-if __name__ == "__main__":
-    # 使用当前脚本所在目录进行测试
-    ft = FileTools(os.path.dirname(os.path.abspath(__file__)))
+def _md5_file(path: str) -> str:
+    """计算文件的MD5值（分块读取，支持大文件）"""
+    try:
+        with open(path, 'rb') as f:
+            md5 = hashlib.md5()
+            # 按4096字节分块读取，避免一次性加载大文件到内存
+            for chunk in iter(lambda: f.read(4096), b""):
+                md5.update(chunk)
+            return md5.hexdigest()
+    except Exception as e:
+        print(f"计算MD5失败 {path}: {e}")
+        return ""
+
+
+def _get_default_font(system_fonts_map, font_size: int) -> ImageFont.FreeTypeFont:
+    """新增：自动获取系统默认的支持Unicode的字体，解决符号显示问题"""
+    system = platform.system()  # 获取系统类型：Windows/Darwin(Linux)/Linux
+    font_candidates = system_fonts_map.get(system, system_fonts_map['Linux'])
     
-    # 示例1：跳过__pycache__文件夹
-    ft.load(option={"skip_folders": ["__pycache__", ".git", "venv"]})
-    
-    # 打印目录结构（不会包含__pycache__、.git、venv文件夹下的文件）
-    ft.print(show_size=True, show_md5=False)
-    
-    # 示例2：不跳过任何文件夹（默认行为）
-    # ft.load()
-    
-    # 生成目录结构图片
-    # ft.draw()
-    
-    # 压缩文件（不会包含跳过的文件夹中的文件）
-    # zip_path = ft.zip()
-    # print(f"压缩包路径：{zip_path}")
+    # 遍历候选字体，找到系统中存在的字体
+    if system == 'Windows':
+        font_dirs = [os.path.join(os.environ.get('WINDIR', 'C:\\Windows'), 'Fonts')]
+    elif system == 'Darwin':
+        font_dirs = ['/System/Library/Fonts', '/Library/Fonts', os.path.expanduser('~/Library/Fonts')]
+    else:  # Linux
+        font_dirs = ['/usr/share/fonts', '/usr/local/share/fonts', os.path.expanduser('~/.fonts')]
+
+    # 查找可用字体文件
+    font_file = None
+    for dir_path in font_dirs:
+        if not os.path.exists(dir_path):
+            continue
+        for font_name in font_candidates:
+            f_path = os.path.join(dir_path, font_name)
+            if os.path.exists(f_path):
+                font_file = f_path
+                break
+    if font_file:
+        try:
+            return ImageFont.truetype(font_file, font_size, encoding='utf-8')
+        except Exception:
+            pass
+    # 兜底：使用Pillow默认字体，开启抗锯齿
+    return ImageFont.load_default(size=font_size)
