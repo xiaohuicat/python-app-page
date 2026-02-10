@@ -242,7 +242,8 @@ class FileTools:
 
         # 获取目录结构文本行并打印
         tree_lines = self._generate_tree_text(show_size, show_md5)
-        print("\n" + "\n".join(tree_lines))
+        text = "\n" + "\n".join(tree_lines)
+        return text  # 返回文本，方便AI调用后获取结果
 
     def draw(self, output_path: str = None, show_size: bool = False, show_md5: bool = False, 
             font_path: str = None, font_size: int = 12, bg_color: str = "white", 

@@ -236,7 +236,7 @@ class Page:
         # 生成唯一线程ID
         thread_id = f"timeout_{self.id}_{generate(size=6)}"
 
-        def wrapper(param) -> None:
+        def wrapper(*args) -> None:
             """定时器包装函数（带异常处理和参数传递）"""
             try:
                 callback(*args, **kwargs)
@@ -280,14 +280,11 @@ class Page:
         # 生成唯一线程ID
         thread_id = f"async_{self.id}_{generate(size=6)}"
 
-        def wrapper(param) -> None:
+        def wrapper(*args) -> None:
             """异步任务包装函数"""
             try:
-                # 执行异步函数并获取结果
-                result = function(*args, **kwargs)
-                # 执行回调并传递结果
                 if callable(callback):
-                    callback(result)
+                    callback(*args)
             except Exception as e:
                 if getSetting('IS_DEBUG'):
                     print(f"异步任务 {thread_id} 执行失败: {e}")
