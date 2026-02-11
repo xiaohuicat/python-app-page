@@ -39,7 +39,8 @@ def list_directory():
     md_tree = file_tool.print(show_size=False, show_md5=False)
 
     # 返回 JSON 响应
-    response_data = {"code": 0, "msg": "成功", "data": md_tree}
+    content = f'目录 {target_path} 的 Markdown 结构树如下：\n\n{md_tree}'
+    response_data = {"code": 0, "data": content}
     return Response(json.dumps(response_data, ensure_ascii=False), mimetype='application/json')
 
 # 读取文件/read_file
@@ -48,7 +49,7 @@ def read_file():
     data = request.get_json()
     if not data or 'file_path' not in data:
         return Response(
-            json.dumps({"code": 1, "msg": "缺少 file_path 参数", "data": None}),
+            json.dumps({"code": 1, "data": "缺少 file_path 参数"}),
             mimetype='application/json'
         )
 
@@ -56,10 +57,10 @@ def read_file():
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
             content = f.read()
-        content = f'读取{file_path}成功，文件内容如下：\n\n{content}'
-        response_data = {"code": 0, "msg": "成功", "data": content}
+        content = f'读取文件 {file_path} 成功，文件内容如下：\n\n{content}'
+        response_data = {"code": 0, "data": content}
     except Exception as e:
-        response_data = {"code": 1, "msg": f"读取文件失败: {str(e)}", "data": None}
+        response_data = {"code": 1, "data": f"读取文件 {file_path} 失败: {str(e)}"}
 
     return Response(json.dumps(response_data, ensure_ascii=False), mimetype='application/json')
 
@@ -78,9 +79,9 @@ def write_file():
     try:
         with open(file_path, 'w', encoding='utf-8') as f:
             f.write(content)
-        response_data = {"code": 0, "msg": "成功", "data": None}
+        response_data = {"code": 0, "data": f"写入文件 {file_path} 成功"}
     except Exception as e:
-        response_data = {"code": 1, "msg": f"写入文件失败: {str(e)}", "data": None}
+        response_data = {"code": 1, "data": f"写入文件 {file_path} 失败: {str(e)}"}
 
     return Response(json.dumps(response_data, ensure_ascii=False), mimetype='application/json')
 

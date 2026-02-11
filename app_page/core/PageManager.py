@@ -129,7 +129,7 @@ class PageManager:
     # 隐藏当前页面
     if self.current_page:
       try:
-        self.current_page.hide()
+        self.current_page.destroy()
       except Exception as e:
         print('销毁页面管理器报错：', e)
         pass

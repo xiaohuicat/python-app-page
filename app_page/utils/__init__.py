@@ -10,6 +10,7 @@ from .blur_image import blur_image
 from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder, open_folder, delete_file
 from ..core.common import setShadowEffect, updateStyle
 from .easy_create import empty_container_qss, empty_container_xml
+from .chat_api import call_qwen
 
 __all__ = [
   'assetsPath',
@@ -52,4 +53,5 @@ __all__ = [
   'delete_file',
   'empty_container_qss',
   'empty_container_xml',
+  'call_qwen',
 ]
