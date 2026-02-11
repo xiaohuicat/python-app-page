@@ -9,22 +9,46 @@ pip install app-page
 - animation   动画模块
 - plugins     插件模块
 - utils       工具模块
+- example     示例页面，可参考学习或直接使用
 
 # 使用案例
 ```python
 from app_page import Page, createApp
+from app_page.example import TodoList, LocalImage
 
 # 模版支持moka语法，接受setup返回词典中的变量
-template = """
+editor_template = """
 <template>
-  <div style="color:#333;background-color:#fff;border-radius:10px;" height="250">
+  <div class="container" height="250">
     <v-box>
-      <label text="${title}" style="font-size:20px;color:#333;" />
-      <text-edit id="editor" style="background-color:#e0e0e0;border-radius:10px;padding:10px;font-size:16px;" />
-      <button id="help" text="${button_text}" height="32" width="100" style="background-color:#000;color:#fff;border-radius:10px;" />
+      <label text="${title}" class="title" />
+      <text-edit id="editor" style="edit-content" />
+      <button id="help" text="${button_text}" height="32" width="100" class="button" />
     </v-box>
   </div>
 </template>
+"""
+editor_style = """
+.container {
+  color: #333;
+  border-radius: 10px;
+  background-color: #fff;
+}
+.title {
+  color: #333;
+  font-size: 20px;
+}
+#editor {
+  padding: 10px;
+  font-size: 16px;
+  border-radius: 10px;
+  background-color: #e0e0e0;
+}
+.button {
+  color: #fff;
+  border-radius: 10px;
+  background-color: #000;
+}
 """
 
 # 编辑页面
@@ -32,7 +56,8 @@ class Editor(Page):
   def __init__(self):
     # 初始化添加名称自动生成持久化对象，可通过self.localStore访问
     super().__init__("editor")
-    self.template = template
+    self.template = editor_template
+    self.style = editor_style
 
   def setup() -> dict:
     # 此处返回的变量可在moka模版中使用
@@ -54,19 +79,32 @@ class Editor(Page):
   def textChange(self):
     self.localStore.set("editor-value", self.getWidget("editor").toPlainText())
 
+setting_template = """
+  <template>
+    <div class="container">
+      <v-box>
+        <label text="系统设置" class="title" />
+      </v-box>
+    </div>
+  </template>
+"""
+setting_style = """
+  .container {
+    color: #333;
+    border-radius: 10px;
+    background-color: #fff;
+  }
+  .title {
+    color: #333;
+    font-size: 20px;
+  }
+"""
 # 设置页面
 class Setting(Page):
   def __init__(self):
     super().__init__()
-    self.template = """
-<template>
-  <div style="color:#333;background-color:#fff;border-radius:10px;">
-    <v-box>
-      <label text="系统设置" style="font-size:20px;color:#333;" />
-    </v-box>
-  </div>
-</template>
-"""
+    self.template = setting_template
+    self.style = setting_style
 
 # 创建应用
 createApp(SETTING={
@@ -75,6 +113,8 @@ createApp(SETTING={
   "pages": {
     "editor": Editor, 
     "setting": Setting,
+    "todo-list": TodoList,
+    "local-image": LocalImage,
   },
   "pageOptionList": [
     {
@@ -88,9 +128,23 @@ createApp(SETTING={
       "id": "setting",
       "filter": "leftBar",
       "stack_id": "app_page_setting",
+    },
+    {
+      "name": "待办事项",
+      "id": "todo-list",
+      "filter": "leftBar",
+      "stack_id": "app_page_todo_list",
+    },
+    {
+      "name": "本地图片",
+      "id": "local-image",
+      "filter": "leftBar",
+      "stack_id": "app_page_local_image",
     }
   ],
 })
 ```
 # 运行结果
-<img src="./assets/example.png" alt="app-page" />
+<img src="./assets/example1.png" alt="app-page" />
+<img src="./assets/example2.png" alt="app-page" />
+<img src="./assets/example3.png" alt="app-page" />

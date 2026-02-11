@@ -18,7 +18,11 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
 from PySide6.QtWidgets import (QApplication, QFrame, QHBoxLayout, QLabel,
     QMainWindow, QMenuBar, QPushButton, QSizePolicy,
     QSpacerItem, QStatusBar, QVBoxLayout, QWidget)
-import apprcc_rc
+try:
+    import apprcc_rc
+except ImportError:
+    print("提示：apprcc_rc 模块不存在，已跳过导入")
+    pass
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
