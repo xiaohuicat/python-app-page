@@ -39,6 +39,7 @@ editor_style = """
   font-size: 20px;
 }
 #editor {
+  color: #333;
   padding: 10px;
   font-size: 16px;
   border-radius: 10px;
@@ -59,7 +60,7 @@ class Editor(Page):
     self.template = editor_template
     self.style = editor_style
 
-  def setup() -> dict:
+  def setup(self) -> dict:
     # 此处返回的变量可在moka模版中使用
     return {
       'title': '写点东西吧(自动保存)',
@@ -79,40 +80,12 @@ class Editor(Page):
   def textChange(self):
     self.localStore.set("editor-value", self.getWidget("editor").toPlainText())
 
-setting_template = """
-  <template>
-    <div class="container">
-      <v-box>
-        <label text="系统设置" class="title" />
-      </v-box>
-    </div>
-  </template>
-"""
-setting_style = """
-  .container {
-    color: #333;
-    border-radius: 10px;
-    background-color: #fff;
-  }
-  .title {
-    color: #333;
-    font-size: 20px;
-  }
-"""
-# 设置页面
-class Setting(Page):
-  def __init__(self):
-    super().__init__()
-    self.template = setting_template
-    self.style = setting_style
-
 # 创建应用
 createApp(SETTING={
   "APP_TITLE": "桌面软件",
   "IS_DEBUG": True, # 调试模式，面板打印更多调试数据
   "pages": {
     "editor": Editor, 
-    "setting": Setting,
     "todo-list": TodoList,
     "local-image": LocalImage,
   },
@@ -122,12 +95,6 @@ createApp(SETTING={
       "id": "editor",
       "filter": "leftBar",
       "stack_id": "app_page_editor",
-    },
-    {
-      "name": "系统设置",
-      "id": "setting",
-      "filter": "leftBar",
-      "stack_id": "app_page_setting",
     },
     {
       "name": "待办事项",
