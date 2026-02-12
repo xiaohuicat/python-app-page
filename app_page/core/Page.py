@@ -394,15 +394,16 @@ class Page:
         """检查全局数据是否存在指定键"""
         return key in self.__global_data
 
-    def getGlobal(self, key: Optional[str] = None) -> Any:
+    def getGlobal(self, key: Optional[str] = None, default: Any = None) -> Any:
         """
         获取全局数据
         :param key: 数据键（None时返回所有全局数据）
+        :param default: 默认值（当key不存在时返回该值）
         :return: 对应值或全部数据
         """
         if key is None:
             return self.__global_data
-        return self.__global_data.get(key, None)
+        return self.__global_data.get(key, default)
 
     def setGlobal(self, key: str | Dict[str, Any], value: Optional[Any] = None) -> None:
         """

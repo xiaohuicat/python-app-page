@@ -126,18 +126,18 @@ class PageManager:
 
   # 销毁页面
   def destroy(self):
-    # 隐藏当前页面
+    # 检查global_data是否存在需要保存的东西
+    for key in self.global_data.keys():
+      each = self.global_data[key]
+      if GLOBAL_DESTROY_KEY in each and callable(each[GLOBAL_DESTROY_KEY]):
+        each[GLOBAL_DESTROY_KEY]()
+    # 销毁当前页面
     if self.current_page:
       try:
         self.current_page.destroy()
       except Exception as e:
         print('销毁页面管理器报错：', e)
         pass
-    # 检查global_data是否存在需要保存的东西
-    for key in self.global_data.keys():
-      each = self.global_data[key]
-      if GLOBAL_DESTROY_KEY in each and callable(each[GLOBAL_DESTROY_KEY]):
-        each[GLOBAL_DESTROY_KEY]()
     # 清除数据
     self.page_dict = {}
     self.button_dict = {}
