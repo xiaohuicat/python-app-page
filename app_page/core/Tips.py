@@ -3,14 +3,12 @@ from PySide6.QtWidgets import QVBoxLayout, QWidget, QLabel
 from app_page_core import Store
 from ..animation import FadeEffect
 
-
 color_dict = {
     'success': '#28be28',
     'fail': '#e64035',
     'warning': '#eaa640',
     'default': '#4d4d4d'
 }
-
 
 class Tips(QWidget):
     """拟态提示框组件"""
@@ -37,6 +35,7 @@ class Tips(QWidget):
             border: none;
         """)
         
+        # 设置标签样式
         self.label.setStyleSheet(f"""
             background-color: {color_dict.get(type, '#4d4d4d')};
             font-size: 14px;

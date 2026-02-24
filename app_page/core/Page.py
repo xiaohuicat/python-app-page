@@ -46,7 +46,7 @@ class Page:
         self.param: Optional[Param] = None
 
         # 模板与样式
-        self.template: str = "<template></template>"
+        self.template: str = ""
         self.style: str = ""
         self.playMedia: Optional[Callable] = None
 
@@ -69,7 +69,7 @@ class Page:
         """页面初始化钩子"""
         return None
 
-    def rerender(self, params: Dict[str, Any]) -> None:
+    def rerender(self, params: Dict[str, Any], save_local_store: bool = False) -> None:
         """
         重新渲染页面
         :param params: 传递给模板的渲染参数
@@ -84,7 +84,7 @@ class Page:
             print('[传递给模板的变量]', params)
 
         # 1. 清理旧内容（仅执行一次）
-        self.hideBefore()
+        self.hideBefore(save_local_store)
 
         # 2. 确保父容器和布局存在
         if not self.getParent():
@@ -118,7 +118,7 @@ class Page:
         print("隐藏页面:", self.name or self.id, "参数:", args)
         self.setStatus('hide')
 
-    def hideBefore(self) -> None:
+    def hideBefore(self, save_local_store: bool = True) -> None:
         """页面隐藏前的清理工作"""
         # 清理布局
         if self.__layout:
@@ -136,7 +136,7 @@ class Page:
             self.callback.clear()
 
         # 保存本地存储数据
-        if self.localStore:
+        if save_local_store and self.localStore:
             self.localStore.save()
 
     def destroy(self) -> None:
@@ -168,18 +168,6 @@ class Page:
             if self.pageParam:
                 self.pageParam.clear()
                 self.pageParam = None
-
-            # 执行全局数据销毁回调
-            destroy_callback = self.getGlobal('__destroy')
-            if callable(destroy_callback):
-                try:
-                    destroy_callback()
-                except Exception as e:
-                    if getSetting('IS_DEBUG'):
-                        print(f"全局销毁回调执行失败: {e}")
-
-            # 清空全局数据
-            self.setGlobal({})
 
             # 清空引用，帮助GC回收
             self.children = None
@@ -327,12 +315,12 @@ class Page:
             _show_tips()
 
     def tipsBox(self,
-               topic: str = '',
-               title: str = '',
-               content: str = '',
-               confirm: Optional[Callable] = None,
-               cancel: Optional[Callable] = None,
-               close: Optional[Callable] = None) -> None:
+            topic: str = '',
+            title: str = '',
+            content: str = '',
+            confirm: Optional[Callable] = None,
+            cancel: Optional[Callable] = None,
+            close: Optional[Callable] = None) -> None:
         """
         显示提示框（修正了原有的cancle拼写错误）
         :param topic: 提示框主题
@@ -520,12 +508,6 @@ class Page:
         except:
             # 当store未初始化时直接返回实例属性
             return super().__getattribute__(name)
-
-    def __del__(self) -> None:
-        """析构函数，确保资源最终释放"""
-        if getSetting('IS_DEBUG'):
-            print(f"页面 {self.name or self.id} 开始析构")
-        self.destroy()
 
 
 # 类型别名（方便后续扩展）

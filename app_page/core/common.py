@@ -24,3 +24,11 @@ def updateStyle(target:QWidget):
     """更新组件样式"""
     target.style().unpolish(target)
     target.style().polish(target)
+
+
+def tryRun(func, *args, **kwargs):
+    """尝试执行函数，捕获异常并打印"""
+    try:
+        return func(*args, **kwargs)
+    except Exception as e:
+        print(f"tryRun执行函数 {func.__name__} 出错：", e)

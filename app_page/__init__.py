@@ -5,7 +5,7 @@ from .core import (Page, EventBus, EventHook, EasyThread, ThreadManager,
 from .core.Setting import getSetting, applySetting
 from .app import createApp
 from .config import Config
-from .core.common import setShadowEffect, updateStyle
+from .core.common import setShadowEffect, updateStyle, tryRun
 
 __all__ = [
   "createApp",
@@ -31,5 +31,6 @@ __all__ = [
   "getSetting",
   "applySetting",
   "Config",
-  "WidgetsController"
+  "WidgetsController",
+  "tryRun",
 ]

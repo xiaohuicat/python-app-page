@@ -63,9 +63,7 @@ class PageManager:
     temp_dict = {}
     
     def create_page(param, stack):
-      # 创建页面对象
       Page = self.page_dict[id]
-      # 实例化页面
       current = Page()
       # 添加全局数据
       if id not in self.global_data:
@@ -79,17 +77,15 @@ class PageManager:
         params = current.setup()
       temp_dict["current"] = current
       current.setParent(stack)
-      if params:
-        current.rerender(params)
+      if current.template:
+        current.rerender(params if params else {})
       current.status = 'show'
       current.show(*{*args, *param})
     
     def remove_page():
       last = self.current_page
       last.destroy()
-    
-        # 刚才打开的页面将其隐藏
-    
+
     # 隐藏当前页面
     if self.current_page:
       if not getSetting("IS_DEBUG"):
@@ -126,11 +122,6 @@ class PageManager:
 
   # 销毁页面
   def destroy(self):
-    # 检查global_data是否存在需要保存的东西
-    for key in self.global_data.keys():
-      each = self.global_data[key]
-      if GLOBAL_DESTROY_KEY in each and callable(each[GLOBAL_DESTROY_KEY]):
-        each[GLOBAL_DESTROY_KEY]()
     # 销毁当前页面
     if self.current_page:
       try:
@@ -138,6 +129,11 @@ class PageManager:
       except Exception as e:
         print('销毁页面管理器报错：', e)
         pass
+    # 检查global_data是否存在需要保存的东西
+    for key in self.global_data.keys():
+      each = self.global_data[key]
+      if GLOBAL_DESTROY_KEY in each and callable(each[GLOBAL_DESTROY_KEY]):
+        each[GLOBAL_DESTROY_KEY]()
     # 清除数据
     self.page_dict = {}
     self.button_dict = {}
