@@ -16,7 +16,7 @@ from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
 from ..core.render import render
 from ..core.WidgetsController import WidgetsController
-from ..utils import layout_clear, blur_image
+from ..utils import layout_clear, blur_image, updateStyle
 from ..MainWindow import MainWindow
 
 
@@ -480,6 +480,21 @@ class Page:
         """
         folder = self.getSoftwarePath("tempPath", "blur_images")
         return blur_image(folder, url, radius, opacity)
+    
+    def setClass(self, id: str, className: str, immediate: bool = True) -> None:
+        """设置组件的class属性
+        :param id: 组件ID
+        :param className: 要设置的class名称
+        :param immediate: 是否立即更新样式
+        """
+        widget = self.getWidget(id)
+        if widget:
+            widget.setProperty('class', className)
+            if immediate:
+                updateStyle(widget)
+        else:
+            if getSetting('IS_DEBUG'):
+                print(f"组件 {id} 不存在，无法设置class")
 
     @property
     def info(self) -> str:

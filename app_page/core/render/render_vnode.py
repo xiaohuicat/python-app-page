@@ -7,31 +7,31 @@ from .common import getWidget
 
 
 def render_vnode(template, params:dict={}):
-  xml_template:str = Template(template).render(**params)
-  xml_tree:dict = ET.fromstring(xml_template)
-  vnode:dict = create_vnode(xml_tree)
-  return vnode
+    xml_template:str = Template(template).render(**params)
+    xml_tree:dict = ET.fromstring(xml_template)
+    vnode:dict = create_vnode(xml_tree)
+    return vnode
 
 
 # 处理xml节点
 def create_vnode(element) -> dict:
-  # xml节点转换为组件字典
-  vnode = {'type': getWidget(element.tag)}
+    # xml节点转换为组件字典
+    vnode = {'type': getWidget(element.tag)}
 
-  # 预处理节点属性
-  for key in element.attrib.keys():
-    preprocess(vnode, key, element.attrib.get(key))
-  
-  # 判断是否有children
-  if len(element) > 0:
-    vnode['children'] = []
+    # 预处理节点属性
+    for key in element.attrib.keys():
+        preprocess(vnode, key, element.attrib.get(key))
+    
+    # 判断是否有children
+    if len(element) > 0:
+        vnode['children'] = []
 
-  # 递归处理子节点
-  for child in element:
-    child_component = create_vnode(child)
-    vnode['children'].append(child_component)
+    # 递归处理子节点
+    for child in element:
+        child_component = create_vnode(child)
+        vnode['children'].append(child_component)
 
-  return vnode
+    return vnode
 
 
 # 预处理
@@ -58,7 +58,7 @@ def preprocess(item: Dict[str, Any], key: str, value: str) -> None:
         },
         # 处理JSON数组类型的键
         "json_array": {
-            "keys": ["options"],
+            "keys": ["options", "size-policy"],
             "handler": lambda v: _safe_parse_json(v, default=lambda *args:[])
         },
         # 处理JSON字典类型的键
@@ -73,7 +73,7 @@ def preprocess(item: Dict[str, Any], key: str, value: str) -> None:
         },
         # 处理布尔类型的键（修复原函数重复的scroll键）
         "boolean": {
-            "keys": ["scroll", "disabled", "visible"],
+            "keys": ["disabled", "visible"],
             "handler": lambda v: _safe_parse_bool(v)
         }
     }

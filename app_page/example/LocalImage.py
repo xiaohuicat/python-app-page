@@ -4,8 +4,8 @@ from app_page import Page
 from app_page.utils import (encode, s2t, assetsUrl, get_file_md5, create_folder, 
                             cut_image, open_folder, copy_image, delete_file, empty_container_qss, empty_container_xml)
 from PySide6.QtWidgets import QWidget
-from ..utils.date_time import timestamp_to_str
-from ..components import ShowImage
+from app_page.utils.date_time import timestamp_to_str
+from app_page.components import ShowImage
 
 
 # 页面模板

@@ -2,7 +2,7 @@ import setuptools
 from pathlib import Path
 
 package_name = "app-page"
-version = '0.0.63'
+version = "0.0.64"
 # 读取 README.md 作为长描述
 long_description = open("README.md", encoding="utf-8").read()
 # 读取 requirements.txt 文件
@@ -22,7 +22,7 @@ setuptools.setup(
     license="MIT",
     packages=setuptools.find_packages(),
     package_data={
-        'app_page': ['*', 'assets/*', 'assets/*/*'],
+        "app_page": ["*", "assets/*", "assets/*/*"],
     },
     install_requires=requirements,
     zip_safe=False,

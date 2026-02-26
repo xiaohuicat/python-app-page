@@ -2,10 +2,11 @@ import os
 from PySide6.QtWidgets import QFileDialog, QSlider, QWidget
 from PySide6.QtCore import Qt, QDir
 from app_page_core import Param
-from ..core import Page
-from ..utils import assetsUrl, s2t, get_system_volume, encode, empty_container_qss, empty_container_xml
-from ..plugins import Player, PlayMode
-from ..utils.date_time import format_milliseconds
+from app_page.core import Page
+from app_page.utils import assetsUrl, d2t, get_system_volume, encode, empty_container_qss, empty_container_xml
+from app_page.plugins import Player, PlayMode
+from app_page.animation.ScrollMethod import smoothScroll
+from app_page.utils.date_time import format_milliseconds
 
 
 ICON_BUTTON_STYLE = {
@@ -13,17 +14,6 @@ ICON_BUTTON_STYLE = {
   'border-radius': '8px',
   'background-color': '#f0f0f0',
 }
-
-# 创建按钮
-def createImgBtn(id, icon) -> str:
-  url = assetsUrl('icon', 'player', icon)
-  image_style = {
-    'background-image': f'url({url})',
-    'background-repeat': 'no-repeat',
-    'background-position': 'center',
-    'background-color': 'transparent',
-  }
-  return f'<button id="{id}" width="24" height="24" style="{s2t(ICON_BUTTON_STYLE, image_style)}"/>'
 
 
 template = '''
@@ -36,7 +26,7 @@ template = '''
   <div class="container">
     <v-box spacing="0" margins="[0,0,0,0]">
       <div>
-        <v-box scroll="True">
+        <v-box scroll="${music_scroll_option}">
           % if len(playlist) > 0:
             <div>
               <v-box align="AlignTop" margins="[0,0,0,0]">
@@ -63,11 +53,11 @@ template = '''
       </div>
       <div class="player-panel" height="45">
         <h-box spacing="10">
-          ${createImgBtn('openFolder', 'import.png')}
-          ${createImgBtn('playMode', playModeIcon)}
-          ${createImgBtn('previous', 'left.png')}
-          ${createImgBtn('startStop', 'pause.png' if isRunning else 'start.png')}
-          ${createImgBtn('next', 'right.png')} 
+          <button id="openFolder" width="24" height="24" class="operation-btn import"/>
+          <button id="playMode" width="24" height="24" class="operation-btn ${playMode}"/>
+          <button id="previous" width="24" height="24" class="operation-btn previous"/>
+          <button id="startStop" width="24" height="24" class="operation-btn ${'pause' if isRunning else 'start'}"/>
+          <button id="next" width="24" height="24" class="operation-btn next"/>
           <QSlider id="slider" height="32" />
           <label id="startTime" text="0:00" />
           <label text="${encode('/')}" />
@@ -101,6 +91,37 @@ STYLE = """
 .music-button:hover {
   color: #50C1FF;
 }
+.operation-btn {
+  border-radius: 6px;
+  background-color: transparent;
+}
+.operation-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+.operation-btn.import {
+  background-image: url("""+ assetsUrl('icon', 'player', 'import.png') +""");
+}
+.operation-btn.repeat_all {
+  background-image: url("""+ assetsUrl('icon', 'player', 'circle.png') +""");
+}
+.operation-btn.repeat_one {
+  background-image: url("""+ assetsUrl('icon', 'player', 'circle1.png') +""");
+}
+.operation-btn.shuffle {
+  background-image: url("""+ assetsUrl('icon', 'player', 'shuffle.png') +""");
+}
+.operation-btn.previous {
+  background-image: url("""+ assetsUrl('icon', 'player', 'left.png') +""");
+}
+.operation-btn.start {
+  background-image: url("""+ assetsUrl('icon', 'player', 'start.png') +""");
+}
+.operation-btn.pause {
+  background-image: url("""+ assetsUrl('icon', 'player', 'pause.png') +""");
+}
+.operation-btn.next {
+  background-image: url("""+ assetsUrl('icon', 'player', 'right.png') +""");
+}
 """ + empty_container_qss()
 
 PLAY_MODE = {
@@ -120,15 +141,6 @@ def isNum(value):
   return isinstance(value, (int, float))
 
 
-def getPlayMode(playMode):
-  if playMode == 'repeat_one':
-    return 'circle1.png'
-  elif playMode == 'repeat_all':
-    return 'circle.png'
-  else:
-    return 'shuffle.png'
-
-
 class MusicPlayer(Page):
   def __init__(self):
     super().__init__('music-player')
@@ -136,6 +148,7 @@ class MusicPlayer(Page):
     self.style:str = STYLE
     self.slider:QSlider = None
     self.player:Player = None
+    self.reject_update = False
 
 
   def setup(self):
@@ -151,11 +164,11 @@ class MusicPlayer(Page):
 
     return {
       'encode': encode,
-      'createImgBtn': createImgBtn,
-      'playModeIcon': getPlayMode(self.getPlayMode()),
+      'playMode': self.getPlayMode(),
       'current': player.music.current_index,
       'playlist': player.music.playlist,
       'isRunning': player.is_playing(),
+      'music_scroll_option': d2t({'id': 'music_scroll_area'}),
     }
 
 
@@ -208,6 +221,8 @@ class MusicPlayer(Page):
       self.slider = slider
 
     self.updateStartEndTime()
+    scroll_value = self.localStore.get('scroll_value', -1)
+    self.setTimeout(lambda *args: smoothScroll(self.getWidget('music_scroll_area'), 'vertical', scroll_value), 0.1)
 
 
   def importMusic(self):
@@ -237,32 +252,42 @@ class MusicPlayer(Page):
 
 
   def render(self, index=-1, position=0):
+    if self.reject_update:
+      return
     # 没有self.player的时候直接保存数据
     self.setGlobal('index', index)
     self.setGlobal('position', position)
     if not self.player:
       return
+    scroll_value = self.getWidget('music_scroll_area').verticalScrollBar().value()
+    self.localStore.set('scroll_value', scroll_value)
     # 有self.player的时候重新刷新页面
     self.rerender({
       'encode': encode,
-      'createImgBtn': createImgBtn,
-      'playModeIcon': getPlayMode(self.getPlayMode()),
+      'playMode': self.getPlayMode(),
       'current': self.player.music.current_index,
       'playlist': self.player.music.playlist,
       'isRunning': self.player.is_playing(),
+      'music_scroll_option': d2t({'id': 'music_scroll_area'}),
     })
     self.show()
 
 
   def setValue(self, value):
+    if self.reject_update:
+      return
     self.setGlobal('position', value)
     if not self.slider:
       return
+    scroll_value = self.getWidget('music_scroll_area').verticalScrollBar().value()
+    self.localStore.set('scroll_value', scroll_value)
     self.slider.setValue(value)
     self.updateStartEndTime()
 
 
   def setRange(self, value):
+    if self.reject_update:
+      return
     self.setGlobal('range_max', value)
     if not self.slider:
       return
@@ -276,21 +301,33 @@ class MusicPlayer(Page):
 
   def startStop(self):
     if self.player.is_playing():
+      self.setClass('startStop', 'operation-btn start')
       self.player.pause()
     else:
       volume = get_system_volume()
-      if volume > 0.8:
-        self.tipsBox(topic='警告', title=f'当前音量为{int(volume*100)}%，是否播放', content='声音过大可能损坏听力', confirm=lambda:self.player.play())
-      else:
+      def play():
+        print('播放音乐')
         if len(self.player.music.playlist) <= 0:
           self.tips('请导入音乐', 'warning')
           return
-        print('播放音乐')
         try:
+          self.reject_update = True
+          position = self.player.music.position
           self.player.play()
+          def delay():
+            self.setClass('startStop', 'operation-btn pause')
+            self.reject_update = False
+            self.player.player.setPosition(position)
+          self.setTimeout(lambda *args: delay(), 0.1)
         except Exception as error:
+          self.reject_update = False
           self.tips('播放出错', 'fail')
           print('播放出错：', error)
+  
+      if volume > 0.8:
+        self.tipsBox(topic='警告', title=f'当前音量为{int(volume*100)}%，是否播放', content='声音过大可能损坏听力', confirm=play)
+      else:
+        play()
 
 
   def getPlayMode(self):
@@ -301,13 +338,15 @@ class MusicPlayer(Page):
     self.player.toggle_play_mode()
     play_mode = self.getPlayMode()
     self.localStore.set('play_mode', play_mode)
+    scroll_value = self.getWidget('music_scroll_area').verticalScrollBar().value()
+    self.localStore.set('scroll_value', scroll_value)
     self.rerender({
       'encode': encode,
-      'createImgBtn': createImgBtn,
-      'playModeIcon': getPlayMode(play_mode),
+      'playModeIcon': play_mode,
       'current': self.player.music.current_index,
       'playlist': self.player.music.playlist,
       'isRunning': self.player.is_playing(),
+      'music_scroll_option': d2t({'id': 'music_scroll_area'}),
     })
     self.show()
 

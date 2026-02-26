@@ -20,14 +20,14 @@ def timestamp_to_str(timestamp):
 
 
 def isToday(given_date):
-  # 获取当前日期时间
-  current_date = datetime.now()
+    # 获取当前日期时间
+    current_date = datetime.now()
 
-  # 判断给定日期是否是今天
-  if given_date.year == current_date.year and given_date.month == current_date.month and given_date.day == current_date.day:
-    return True
-  else:
-    return False
+    # 判断给定日期是否是今天
+    if given_date.year == current_date.year and given_date.month == current_date.month and given_date.day == current_date.day:
+        return True
+    else:
+        return False
 
 
 def format_milliseconds(ms: int) -> str:

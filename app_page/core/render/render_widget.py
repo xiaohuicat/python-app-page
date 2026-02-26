@@ -5,7 +5,7 @@ from ..common import setShadowEffect
 from .common import getWidget
 from app_page_core import Store
 from PySide6 import QtWidgets
-from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QVBoxLayout, QGridLayout,
+from PySide6.QtWidgets import (QWidget, QScrollArea, QLayout, QGridLayout, QSizePolicy,
                                 QComboBox, QPlainTextEdit, QLineEdit)
 
 
@@ -116,6 +116,7 @@ def set_attributes(
         'shadow': lambda v: _set_shadow(widget, v),
         'children': lambda v: _set_children(widget, props, widget_list, widget_id_map),
         'event-filter': lambda v: _set_event_filter(widget, v),
+        'size-policy': lambda v: _set_size_policy(widget, v)
     }
 
     for key, value in props.items():
@@ -253,3 +254,16 @@ def _set_event_filter(widget: Union[QWidget, QLayout], value: Any) -> None:
         return
     widget.installEventFilter(event_filter)
     widget.has_event_filter = True
+
+def _set_size_policy(widget: Union[QWidget, QLayout], value: list) -> None:
+    """处理尺寸策略属性"""
+    if isinstance(value, list) and len(value) == 2:
+        horizontal = value[0]
+        vertical = value[1]
+    else:
+        horizontal = 'Expanding'
+        vertical = 'Expanding'
+    
+    if hasattr(widget, 'setSizePolicy') and hasattr(QSizePolicy, horizontal) and hasattr(QSizePolicy, vertical):
+        sizePolicy = QSizePolicy(getattr(QSizePolicy, horizontal),getattr(QSizePolicy, vertical))
+        widget.setSizePolicy(sizePolicy)
