@@ -132,6 +132,9 @@ class Player:
             self.music.set_index(0)  # 自动选中第一首
         self._notify_update()
         return count
+    
+    def setPosition(self, position_ms: int):
+        self.player.setPosition(position_ms)
 
     def play(self):
         if not self.music.has_songs():
@@ -144,14 +147,7 @@ class Player:
         if self.player.source().toLocalFile() != self.music.get_current_url():
             self.player.setSource(QUrl.fromLocalFile(self.music.get_current_url()))
 
-        # 如果是暂停状态，继续播放；如果是停止状态，从保存位置开始
-        if self.player.playbackState() == QMediaPlayer.PausedState:
-            self.player.play()
-        elif self.player.playbackState() == QMediaPlayer.StoppedState:
-            self.player.setPosition(self.music.position)
-            self.player.play()
-        else:
-            self.player.play()
+        self.player.play()
 
     def pause(self):
         self.player.pause()

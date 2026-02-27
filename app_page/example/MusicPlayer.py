@@ -148,7 +148,7 @@ class MusicPlayer(Page):
     self.style:str = STYLE
     self.slider:QSlider = None
     self.player:Player = None
-    self.reject_update = False
+    self.reject_position = False
 
 
   def setup(self):
@@ -230,6 +230,7 @@ class MusicPlayer(Page):
     lastPath = os.path.dirname(lastPath)
     path = QFileDialog.getExistingDirectory(None, "选择音乐文件夹", lastPath)
     if path:
+      self.player.stop()
       self.player.load_playlist(path)
       self.player.music.current_index = 0
       self.localStore.set("player_path", path)
@@ -252,7 +253,7 @@ class MusicPlayer(Page):
 
 
   def render(self, index=-1, position=0):
-    if self.reject_update:
+    if self.reject_position:
       return
     # 没有self.player的时候直接保存数据
     self.setGlobal('index', index)
@@ -274,7 +275,7 @@ class MusicPlayer(Page):
 
 
   def setValue(self, value):
-    if self.reject_update:
+    if self.reject_position:
       return
     self.setGlobal('position', value)
     if not self.slider:
@@ -286,8 +287,6 @@ class MusicPlayer(Page):
 
 
   def setRange(self, value):
-    if self.reject_update:
-      return
     self.setGlobal('range_max', value)
     if not self.slider:
       return
@@ -311,16 +310,16 @@ class MusicPlayer(Page):
           self.tips('请导入音乐', 'warning')
           return
         try:
-          self.reject_update = True
+          self.reject_position = True
           position = self.player.music.position
           self.player.play()
           def delay():
             self.setClass('startStop', 'operation-btn pause')
-            self.reject_update = False
-            self.player.player.setPosition(position)
+            self.reject_position = False
+            self.player.setPosition(position)
           self.setTimeout(lambda *args: delay(), 0.1)
         except Exception as error:
-          self.reject_update = False
+          self.reject_position = False
           self.tips('播放出错', 'fail')
           print('播放出错：', error)
   
@@ -342,7 +341,7 @@ class MusicPlayer(Page):
     self.localStore.set('scroll_value', scroll_value)
     self.rerender({
       'encode': encode,
-      'playModeIcon': play_mode,
+      'playMode': play_mode,
       'current': self.player.music.current_index,
       'playlist': self.player.music.playlist,
       'isRunning': self.player.is_playing(),
@@ -379,3 +378,4 @@ class MusicPlayer(Page):
     self.localStore.set('index', 0)
     self.localStore.set('position', 0)
     self.localStore.set('range_max', 0)
+    self.localStore.set('scroll_value', 0)

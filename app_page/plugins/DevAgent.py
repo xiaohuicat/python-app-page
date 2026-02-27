@@ -18,78 +18,6 @@ MCP_DICT = {
     }
 }
 
-class DevAgent:
-    def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print):
-        self.mcp_dict = mcp_dict
-        self.call_api = call_api
-        self.max_steps = max_steps
-        self.log = log
-        self.tool_history = []
-
-    def call_mcp(self, name, payload):
-        url = self.mcp_dict[name]["url"]
-        try:
-            resp = requests.post(url, json=payload, timeout=10)
-            return resp.json()['data']
-        except Exception as e:
-            return f"{name}工具调用失败: {str(e)}"
-
-    def call_ai(self, prompt=None):
-        system_prompt = f"""
-你是一个专业的开发助理，你可以调用以下工具：
-
-{create_tool_description(self.mcp_dict)}
-
-规则：
-1. 你需要根据用户输入判断是否调用工具，调用哪个工具；如果需要，必须严格按照上述“调用格式”输出，不要加任何多余文字
-2. 工具调用必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
-3. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
-4. 若工具调用错误后续不再继续调用，提醒用户失败原因。
-5. 参数为路径时必须是绝对路径。
-"""     
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt + '\r\n\r\n非常重要：工具调用必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，不要解析，否则无法调用工具！！！'}
-        ]
-        resp = self.call_api(messages)
-        return resp.strip()
-
-    def chat(self, user_input):
-        current_query = user_input
-        step = 0
-
-        while step < self.max_steps:
-            print(f"\r\n🧠 AI 思考中... (步骤 {step + 1})")
-            ai_reply = self.call_ai(current_query)
-
-            try:
-                tool_name, payload = extract_tool_call(ai_reply, self.mcp_dict)
-            except Exception as e:
-                print(f"⚠️ 工具调用格式错误: {e}")
-                self.log(f'调用工具出错')
-                return ai_reply
-
-            if tool_name is None:
-                print(f"\r\n✅ AI 最终回答：{ai_reply}")
-                return ai_reply
-
-            print(f"\r\n🔍 解析工具调用：工具={tool_name} 参数={payload}")
-            tool_result = self.call_mcp(tool_name, payload)
-            self.tool_history.append((tool_name, payload, tool_result))
-            
-            tool_history_str = "\r\n\r\n".join(
-                f"  - 你调用了工具: {entry[0]}, 返回结果: {entry[2]}"
-                for entry in self.tool_history
-            )
-            
-            current_query = (
-                f"用户最初的问题：{user_input}\r\n\r\n"
-                f"工具调用历史：\n{tool_history_str}"
-            )
-            step += 1
-        
-        return "❌ 超过最大工具调用次数（5次），已终止。可能陷入循环或任务过于复杂。"
-
 def extract_tool_call(reply: str, mcp_dict):
     pattern = r'\[TOOL\]\s*(.+?)\s*\[TOOL END\]'
     match = re.search(pattern, reply.strip(), re.DOTALL | re.MULTILINE)
@@ -136,3 +64,103 @@ def create_tool_description(mcp_dict):
         tool_descriptions.append(f"工具: {tool_name} 作用: {desc} 调用格式: {example_call}")
 
     return "\n\n".join(tool_descriptions)
+
+def create_system_prompt(mcp_dict):
+    return f"""
+你是一个专业的开发助理，你可以调用以下工具：
+
+{create_tool_description(mcp_dict)}
+
+调用规则：
+1. 你需要根据用户输入判断是否调用工具，调用哪个工具；如果需要，必须严格按照上述“调用格式”输出，不要加任何多余文字
+2. 工具调用必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
+3. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
+4. 若工具调用错误后续不再继续调用，提醒用户失败原因。
+5. 参数为路径时必须是绝对路径。
+"""
+
+TAIL_TEXT = '\r\n\r\n非常重要：工具调用必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，不要解析，否则无法调用工具！！！'
+
+class DevAgent:
+    def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print, history_mode=True):
+        self.log = log
+        self.mcp_dict = mcp_dict
+        self.call_api = call_api
+        self.max_steps = max_steps
+        self.history_mode = history_mode
+        self.tool_results = []
+        self.messages = [{"role": "system", "content": create_system_prompt(mcp_dict)}]
+
+    def call_mcp(self, name, payload) -> str:
+        url = self.mcp_dict[name]["url"]
+        try:
+            resp = requests.post(url, json=payload, timeout=10)
+            return resp.json()['data']
+        except Exception as e:
+            return f"{name}工具调用失败: {str(e)}"
+
+    def call_ai(self, prompt:str = None) -> str:
+        if self.history_mode:
+            messages = []
+            for msg in self.messages:
+                if isinstance(msg.get('content'), str) and TAIL_TEXT in msg['content']:
+                    msg['content'] = msg['content'].replace(TAIL_TEXT, '')
+                item = msg.copy()
+                messages.append(item)
+            
+            if prompt is not None:
+                msg = {"role": "user", "content": prompt + TAIL_TEXT}
+                self.messages.append(msg)
+                messages.append(msg)
+            
+        else:
+            messages = [
+                {"role": "system", "content": create_system_prompt(self.mcp_dict)},
+                {"role": "user", "content": prompt + TAIL_TEXT},
+            ]
+        resp = self.call_api(messages)
+        return resp.strip()
+
+    def chat(self, user_input: str) -> str:
+        current_query = user_input
+        step = 0
+
+        while step < self.max_steps:
+            self.log(f"\r\n🧠 AI 思考中... (步骤 {step + 1})")
+            ai_reply = self.call_ai(current_query)
+            self.messages.append({"role": "assistant", "content": ai_reply})
+
+            try:
+                tool_name, payload = extract_tool_call(ai_reply, self.mcp_dict)
+            except Exception as e:
+                self.log(f"⚠️ 工具调用格式错误: {e}")
+                return ai_reply
+
+            if tool_name is None:
+                self.log(f"\r\n✅ AI 最终回答：{ai_reply}")
+                return ai_reply
+
+            self.log(f"\r\n🔍 解析工具调用：工具={tool_name} 参数={payload}")
+            tool_result = self.call_mcp(tool_name, payload)
+            self.tool_results.append((tool_name, payload, tool_result))
+            self.messages.append({"role": "user", "content": f"工具 {tool_name} 的返回结果: {tool_result}"})
+            
+            if not self.history_mode:
+                tool_results_str = "\r\n\r\n".join(
+                    f"  - 你调用了工具: {entry[0]}, 返回结果: {entry[2]}"
+                    for entry in self.tool_results
+                )
+                current_query = (
+                    f"用户最初的问题：{user_input}\r\n\r\n"
+                    f"工具调用历史：\n{tool_results_str}"
+                )
+            else:
+                current_query = None
+            
+            step += 1
+        
+        return f"❌ 超过最大工具调用次数（{self.max_steps}次），已终止。可能陷入循环或任务过于复杂。"
+    
+    def reset(self):
+        self.tool_results.clear()
+        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict)}]

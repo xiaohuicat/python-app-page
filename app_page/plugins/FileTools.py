@@ -321,55 +321,55 @@ class FileTools:
             return ""
 
     def write(self, output_path: str = None, show_size: bool = False, show_md5: bool = False, 
-          title: str = "目录结构") -> str:
-      """
-      将目录结构写入Markdown文件
-      :param output_path: 输出md文件路径（默认：原目录名+_tree.md）
-      :param show_size: 是否显示文件大小（默认显示）
-      :param show_md5: 是否显示文件MD5（默认不显示）
-      :param title: md文件中的标题（默认：目录结构）
-      :return: 生成的md文件路径
-      """
-      if not self._loaded:
-          self.load()  # 懒加载：未加载则先执行load
+            title: str = "目录结构") -> str:
+        """
+        将目录结构写入Markdown文件
+        :param output_path: 输出md文件路径（默认：原目录名+_tree.md）
+        :param show_size: 是否显示文件大小（默认显示）
+        :param show_md5: 是否显示文件MD5（默认不显示）
+        :param title: md文件中的标题（默认：目录结构）
+        :return: 生成的md文件路径
+        """
+        if not self._loaded:
+            self.load()  # 懒加载：未加载则先执行load
 
-      # 生成目录结构文本
-      tree_lines = self._generate_tree_text(show_size, show_md5)
-      
-      # 设置默认输出路径
-      if output_path is None:
-          output_path = os.path.join(os.path.dirname(self.filePath), 
-                                    f"{os.path.basename(self.filePath)}_tree.md")
-      
-      # 确保输出目录存在
-      output_dir = os.path.dirname(output_path)
-      if not os.path.exists(output_dir):
-          os.makedirs(output_dir)
+        # 生成目录结构文本
+        tree_lines = self._generate_tree_text(show_size, show_md5)
+        
+        # 设置默认输出路径
+        if output_path is None:
+            output_path = os.path.join(os.path.dirname(self.filePath), 
+                                        f"{os.path.basename(self.filePath)}_tree.md")
+        
+        # 确保输出目录存在
+        output_dir = os.path.dirname(output_path)
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
-      try:
-          # 构建Markdown内容（添加标题、代码块包裹，保证格式美观）
-          md_content = []
-          # 添加标题（一级标题）
-          md_content.append(f"# {title}")
-          md_content.append("")  # 空行分隔
-          # 目录结构用代码块包裹（markdown的```语法），保证符号不被转义
-          md_content.append("```bash")
-          md_content.extend(tree_lines)
-          md_content.append("```")
-          md_content.append("")  # 文件末尾空行
-          # 合并为完整文本
-          md_text = "\n".join(md_content)
+        try:
+            # 构建Markdown内容（添加标题、代码块包裹，保证格式美观）
+            md_content = []
+            # 添加标题（一级标题）
+            md_content.append(f"# {title}")
+            md_content.append("")  # 空行分隔
+            # 目录结构用代码块包裹（markdown的```语法），保证符号不被转义
+            md_content.append("```bash")
+            md_content.extend(tree_lines)
+            md_content.append("```")
+            md_content.append("")  # 文件末尾空行
+            # 合并为完整文本
+            md_text = "\n".join(md_content)
 
-          # 写入文件（指定utf-8编码，避免中文乱码）
-          with open(output_path, 'w', encoding='utf-8') as f:
-              f.write(md_text)
-          
-          print(f"Markdown文件已生成：{output_path}")
-          return output_path
+            # 写入文件（指定utf-8编码，避免中文乱码）
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(md_text)
+            
+            print(f"Markdown文件已生成：{output_path}")
+            return output_path
 
-      except Exception as e:
-          print(f"写入Markdown失败：{e}")
-          return ""
+        except Exception as e:
+            print(f"写入Markdown失败：{e}")
+            return ""
     
     def walk(self, callback: Optional[Callable[[Dict], None]] = None) -> None:
         """遍历已加载的文件信息，执行回调函数（无需重复遍历目录）"""
