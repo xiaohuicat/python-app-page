@@ -18,6 +18,8 @@ MCP_DICT = {
     }
 }
 
+TAIL_TEXT = '\r\n\r\n非常重要：工具调用必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，不要解析，否则无法调用工具！！！'
+
 def extract_tool_call(reply: str, mcp_dict):
     pattern = r'\[TOOL\]\s*(.+?)\s*\[TOOL END\]'
     match = re.search(pattern, reply.strip(), re.DOTALL | re.MULTILINE)
@@ -65,7 +67,8 @@ def create_tool_description(mcp_dict):
 
     return "\n\n".join(tool_descriptions)
 
-def create_system_prompt(mcp_dict):
+def create_system_prompt(mcp_dict, has_tail=True):
+    tail_text = '' if has_tail else TAIL_TEXT
     return f"""
 你是一个专业的开发助理，你可以调用以下工具：
 
@@ -76,20 +79,18 @@ def create_system_prompt(mcp_dict):
 2. 工具调用必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
 3. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
 4. 若工具调用错误后续不再继续调用，提醒用户失败原因。
-5. 参数为路径时必须是绝对路径。
-"""
-
-TAIL_TEXT = '\r\n\r\n非常重要：工具调用必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，不要解析，否则无法调用工具！！！'
+5. 参数为路径时必须是绝对路径。{tail_text}"""
 
 class DevAgent:
-    def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print, history_mode=True):
+    def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print, history_mode=True, has_tail=True):
         self.log = log
         self.mcp_dict = mcp_dict
         self.call_api = call_api
         self.max_steps = max_steps
         self.history_mode = history_mode
+        self.has_tail = has_tail
         self.tool_results = []
-        self.messages = [{"role": "system", "content": create_system_prompt(mcp_dict)}]
+        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict, has_tail=self.has_tail)}]
 
     def call_mcp(self, name, payload) -> str:
         url = self.mcp_dict[name]["url"]
@@ -103,20 +104,20 @@ class DevAgent:
         if self.history_mode:
             messages = []
             for msg in self.messages:
-                if isinstance(msg.get('content'), str) and TAIL_TEXT in msg['content']:
+                if self.has_tail and isinstance(msg.get('content'), str) and TAIL_TEXT in msg['content']:
                     msg['content'] = msg['content'].replace(TAIL_TEXT, '')
                 item = msg.copy()
                 messages.append(item)
             
             if prompt is not None:
-                msg = {"role": "user", "content": prompt + TAIL_TEXT}
+                msg = {"role": "user", "content": prompt + TAIL_TEXT if self.has_tail else prompt}
                 self.messages.append(msg)
                 messages.append(msg)
             
         else:
             messages = [
                 {"role": "system", "content": create_system_prompt(self.mcp_dict)},
-                {"role": "user", "content": prompt + TAIL_TEXT},
+                {"role": "user", "content": prompt + TAIL_TEXT if self.has_tail else prompt},
             ]
         resp = self.call_api(messages)
         return resp.strip()
@@ -163,4 +164,4 @@ class DevAgent:
     
     def reset(self):
         self.tool_results.clear()
-        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict)}]
+        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict, has_tail=self.has_tail)}]
