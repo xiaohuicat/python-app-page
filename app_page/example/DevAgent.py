@@ -1,10 +1,8 @@
 import time
 from PySide6.QtCore import QObject, Signal
-from app_page import Page
+from app_page import Page, getSetting
 from app_page.utils import encode, call_qwen
-from app_page.plugins import DevAgent
-
-API_KEY = "sk-**************************"
+from app_page.plugins import DevAgent as DevAgentPlugin
 
 template = """
 <template>
@@ -45,6 +43,9 @@ style = """
   font-size: 14px;
   background-color: rgba(255,255,255,0.8);
 }
+.running {
+  background-color: #45C8FC;
+}
 """
 
 mcp_dict = {
@@ -63,26 +64,50 @@ mcp_dict = {
     "param": ["file_path", "content"],
     "description": "写入内容到本地文件，path是文件路径，content是要写入的字符串内容"
   },
+  "delete_file": {
+    "url": "http://127.0.0.1:8080/delete_file",
+    "param": ["file_path"],
+    "description": "删除本地文件，path是文件路径"
+  },
+  "download_file": {
+    "url": "http://127.0.0.1:8080/download_file",
+    "param": ["url", "save_path"],
+    "description": "下载文件到本地，url是文件链接，save_path是要保存的本地路径"
+  },
   "system_info": {
     "url": "http://127.0.0.1:8080/system_info",
     "param": [],
     "description": "获取系统信息，如处理器型号、内存大小、硬盘使用情况等"
   },
+  "get_weather": {
+    "url": "http://127.0.0.1:8080/get_weather",
+    "param": ['citycode'],
+    "description": "获取天气信息，citycode是城市编码，北京是110101"
+  },
+  "draw_image": {
+    "url": "http://127.0.0.1:8080/draw_image",
+    "param": ['prompt', 'size'],
+    "description": "根据提示词生成图像，prompt是提示词。size是图像大小，支持1328*1328"
+  },
 }
+
+BLOCK_LINE = '\r\n\r\n'
 
 def convert_messages(messages):
   result = ""
   for item in messages:
+    head = BLOCK_LINE if result else ""
     if item['role'] == 'system':
+      continue
       result += f"💻system: {item['content']}"
     elif item['role'] == 'user':
-      result += f"\r\n\r\n👨user: {item['content']}"
+      result += f"{head}👨user: {item['content']}"
     else:
-      result += f"\r\n\r\n🤖assistant: {item['content']}"
+      result += f"{head}🤖assistant: {item['content']}"
   return result
 
 
-class Agent(Page):
+class DevAgent(Page):
   class ResultSignal(QObject):
     signal = Signal(str)
 
@@ -101,10 +126,10 @@ class Agent(Page):
       self.pageParam.set('reply', '')
       send_to_ai = convert_messages(messages)
       log(send_to_ai)
-      resp = call_qwen(messages, api_key=API_KEY)
-      log("\r\n\r\n🤖assistant: " + resp)
+      resp = call_qwen(messages, api_key=getSetting('QWEN_API_KEY'))
+      log(f"{BLOCK_LINE}🤖assistant: " + resp)
       return resp
-    self.agent = DevAgent(call_api, mcp_dict, max_steps=5)
+    self.agent = DevAgentPlugin(call_api, mcp_dict, max_steps=5, has_tail=False)
 
   def setup(self):
     return {
@@ -131,18 +156,21 @@ class Agent(Page):
 
     self.getWidget('message').setText('')
     self.getWidget('submit').setText('稍等')
+    self.setClass('shell', 'shell running')
     self.async_run(self.devmate_ask, self.devmate_response)
 
   def devmate_ask(self):
     return self.agent.chat(self.pageParam.get('message', ''))
 
   def devmate_response(self, reply):
+    self.setClass('shell', 'shell')
     self.getWidget('submit').setText('发送')
     start_time = self.pageParam.get('start_time', 0)
     end_time = time.time()
     cost_time = round(end_time - start_time, 2)
-    result = f"\r\n\r\n✅任务结束(耗时{cost_time}秒)"
+    result = f"{BLOCK_LINE}✅任务结束(耗时{cost_time}秒)"
     self.update_content(result)
+    self.playMedia('media', 'task_done_ai.mp3')
 
   def update_content(self, text):
     reply = self.pageParam.get('reply', '') + text

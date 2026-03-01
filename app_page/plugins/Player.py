@@ -3,7 +3,7 @@ import random
 from pathlib import Path
 from PySide6.QtMultimedia import QMediaPlayer, QAudioOutput
 from PySide6.QtCore import QUrl, Slot
-from app_page import Callback
+from app_page_core import Callback
 
 
 class PlayMode(Enum):

@@ -29,7 +29,7 @@ def extract_tool_call(reply: str, mcp_dict):
 
     tool_content = match.group(1).strip()
     if '{' not in tool_content:
-        return None, None
+        raise ValueError(f"工具调用格式错误，缺少参数部分: {tool_content}")
     
     tool_name_part, params_json_part = tool_content.split('{', 1)
     tool_name = tool_name_part.strip()
@@ -39,16 +39,15 @@ def extract_tool_call(reply: str, mcp_dict):
         params_json_str = params_json_str[:params_json_str.rindex('}') + 1]
     
     if tool_name not in mcp_dict:
-        return None, None
+        raise ValueError(f"工具调用错误: 未知工具 {tool_name}")
     
     try:
         params = json.loads(params_json_str)
     except json.JSONDecodeError as e:
-        print(f"JSON解析失败: {e}")
-        return None, None
+        raise ValueError(f"工具 {tool_name} 的参数不是合法的JSON字符串: {e}")
 
     if not isinstance(params, dict):
-        return None, None
+        raise ValueError(f"工具 {tool_name} 的参数必须是一个JSON对象（键值对），当前解析结果: {params}")
 
     required_params = set(mcp_dict[tool_name]["param"])
     if not required_params.issubset(params.keys()):
@@ -79,6 +78,7 @@ def create_system_prompt(mcp_dict, has_tail=True):
 2. 工具调用必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
 3. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
 4. 若工具调用错误后续不再继续调用，提醒用户失败原因。
+5. 若工具调用成功继续完成后续任务，解决用户问题。
 5. 参数为路径时必须是绝对路径。{tail_text}"""
 
 class DevAgent:
@@ -133,19 +133,19 @@ class DevAgent:
 
             try:
                 tool_name, payload = extract_tool_call(ai_reply, self.mcp_dict)
+                # 如果没有工具调用，直接返回AI回答作为最终结果
+                if tool_name is None:
+                    self.log(f"\r\n✅ AI 最终回答：{ai_reply}")
+                    return ai_reply
+                # 如果有工具调用，执行工具并将结果反馈给AI继续下一轮对话
+                self.log(f"\r\n🔍 解析工具调用：工具={tool_name} 参数={payload}")
+                tool_result = self.call_mcp(tool_name, payload)
+                self.tool_results.append((tool_name, payload, tool_result))
+                self.messages.append({"role": "user", "content": f"调用工具 {tool_name} 的返回结果: {tool_result}"})
             except Exception as e:
-                self.log(f"⚠️ 工具调用格式错误: {e}")
-                return ai_reply
+                self.log(f"⚠️ 工具调用失败: {e}")
+                self.messages.append({"role": "user", "content": f"工具调用失败: {e}"})
 
-            if tool_name is None:
-                self.log(f"\r\n✅ AI 最终回答：{ai_reply}")
-                return ai_reply
-
-            self.log(f"\r\n🔍 解析工具调用：工具={tool_name} 参数={payload}")
-            tool_result = self.call_mcp(tool_name, payload)
-            self.tool_results.append((tool_name, payload, tool_result))
-            self.messages.append({"role": "user", "content": f"工具 {tool_name} 的返回结果: {tool_result}"})
-            
             if not self.history_mode:
                 tool_results_str = "\r\n\r\n".join(
                     f"  - 你调用了工具: {entry[0]}, 返回结果: {entry[2]}"

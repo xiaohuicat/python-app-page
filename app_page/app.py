@@ -12,7 +12,6 @@ from .config import Config
 from .utils import assetsPath
 from PySide6.QtCore import Qt, QEvent
 
-
 def createApp(SETTING: dict):
   """创建应用
   Args:
@@ -103,20 +102,19 @@ def createApp(SETTING: dict):
   
   mainWin.callback.add('close', lambda: root.closeApp())
   root.closeApp = closeApp
-  
+
   mainWin.setUserInfo('请登录', '')
   mainWin.setAppStyle()
-  
+
   initMainWinRegister(root, mainWin, stackManager)
   root.setup()
   mainWin.show()
-  
+
   if 'onMounted' in SETTING and callable(SETTING['onMounted']):
     SETTING['onMounted'](root)
-  
+
   exit_code = app.exec()
   sys.exit(exit_code)
-
 
 def initPlayer(target):
   """初始化 QMediaPlayer 并返回播放函数"""
@@ -131,13 +129,16 @@ def initPlayer(target):
     Args:
         args (tuple): 目录，文件名
     """
-    player.setSource(QUrl.fromLocalFile(assetsPath(*args)))
-    player.play()
+    try:
+        player.stop()  # 停止当前播放
+        player.setSource(QUrl.fromLocalFile(assetsPath(*args)))
+        player.play()
+    except Exception as e:
+        print(f"播放媒体时发生错误: {e}")
   
   target.__player = player
   target.__audioOutput = audioOutput
   return playMedia
-
 
 def initMainWinRegister(root: Page, mainWin: MainWindow, stackManager: StackManager):
   """注册主窗口右上角的按钮事件"""
@@ -160,7 +161,6 @@ def initMainWinRegister(root: Page, mainWin: MainWindow, stackManager: StackMana
   mainWin.register('btn_setting', 'clicked', lambda: navigate_and_clear('setting'))
   mainWin.register('btn_message', 'clicked', lambda: navigate_and_clear('message'))
   mainWin.register('btn_skin', 'clicked', lambda: navigate_and_clear('skin'))
-
 
 def initStackManager(root: Page, mainWin: MainWindow):
   """初始化页面管理器和堆栈管理器"""

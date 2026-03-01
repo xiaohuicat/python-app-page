@@ -151,4 +151,3 @@ def platformInfo():
     "processor_info": processor_info,
     "brief": f"{os_name},{os_version}"
   }
-
