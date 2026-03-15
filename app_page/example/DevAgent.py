@@ -62,32 +62,62 @@ mcp_dict = {
   "write_file": {
     "url": "http://127.0.0.1:8080/write_file",
     "param": ["file_path", "content"],
-    "description": "写入内容到本地文件，path是文件路径，content是要写入的字符串内容"
+    "description": "写入内容到本地文件，file_path是文件路径，content是要写入的字符串内容"
   },
   "delete_file": {
     "url": "http://127.0.0.1:8080/delete_file",
     "param": ["file_path"],
-    "description": "删除本地文件，path是文件路径"
+    "description": "删除本地文件，file_path是文件路径"
   },
   "download_file": {
     "url": "http://127.0.0.1:8080/download_file",
     "param": ["url", "save_path"],
     "description": "下载文件到本地，url是文件链接，save_path是要保存的本地路径"
   },
+  "search_files": {
+    "url": "http://127.0.0.1:8080/search_files",
+    "param": ["pattern", "path", "max_results"],
+    "description": "按模式搜索文件，pattern是搜索模式，path是搜索路径（默认当前目录），max_results是最大返回结果数（默认100）"
+  },
   "system_info": {
     "url": "http://127.0.0.1:8080/system_info",
     "param": [],
-    "description": "获取系统信息，如处理器型号、内存大小、硬盘使用情况等"
+    "description": "获取系统信息，如CPU、内存、磁盘、处理器型号、内存大小、硬盘使用情况等"
+  },
+  "list_processes": {
+    "url": "http://127.0.0.1:8080/list_processes",
+    "param": [],
+    "description": "列出所有运行中的进程信息"
+  },
+  "kill_process": {
+    "url": "http://127.0.0.1:8080/kill_process",
+    "param": ["pid", "force"],
+    "description": "终止指定PID的进程，pid是进程ID，force是否强制杀死（默认false）"
+  },
+  "run_shell_command": {
+    "url": "http://127.0.0.1:8080/run_shell_command",
+    "param": ["command", "timeout", "cwd"],
+    "description": "执行Shell命令，command是要执行的命令，timeout超时时间（默认30秒），cwd工作目录"
+  },
+  "network_info": {
+    "url": "http://127.0.0.1:8080/network_info",
+    "param": [],
+    "description": "获取网络接口、路由、端口等网络信息"
+  },
+  "view_logs": {
+    "url": "http://127.0.0.1:8080/view_logs",
+    "param": ["log_path", "lines"],
+    "description": "查看日志文件内容，log_path是日志文件路径，lines是读取行数（默认100）"
   },
   "get_weather": {
     "url": "http://127.0.0.1:8080/get_weather",
-    "param": ['citycode'],
-    "description": "获取天气信息，citycode是城市编码，北京是110101"
+    "param": ["citycode"],
+    "description": "获取指定城市的天气信息，citycode是城市编码，北京是110101"
   },
   "draw_image": {
     "url": "http://127.0.0.1:8080/draw_image",
-    "param": ['prompt', 'size'],
-    "description": "根据提示词生成图像，prompt是提示词。size是图像大小，支持1328*1328"
+    "param": ["prompt", "size"],
+    "description": "根据提示词生成图像，prompt是提示词，size是图像大小（支持1328*1328）"
   },
 }
 

@@ -96,7 +96,7 @@ class DevAgent:
         url = self.mcp_dict[name]["url"]
         try:
             resp = requests.post(url, json=payload, timeout=10)
-            return resp.json()['data']
+            return resp.json()
         except Exception as e:
             return f"{name}工具调用失败: {str(e)}"
 

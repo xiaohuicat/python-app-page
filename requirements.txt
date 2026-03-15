@@ -6,3 +6,4 @@ pillow
 mako
 comtypes
 pycaw
+dashscope
