@@ -7,27 +7,27 @@ from .common import updateStyle
 
 
 class WidgetsController:
-  def __init__(self, widgetIdMap:dict|None=None) -> None:
-    self.__widgetList = []
-    self.__widgetIdMap = widgetIdMap if widgetIdMap else {}
-    self.__eventBus = EventBus(self.__widgetIdMap)
+  def __init__(self, widget_id_map:dict|None=None, widget_list:list=None) -> None:
+    self.__widget_list = widget_list if widget_list else []
+    self.__widget_id_map = widget_id_map if widget_id_map else {}
+    self.__eventBus = EventBus(self.__widget_id_map)
 
 
   def getWidget(self, id:str) -> QWidget|QLayout:
-    return self.__widgetIdMap.get(id, None) if type(id) is str else self.__widgetIdMap
+    return self.__widget_id_map.get(id, None) if type(id) is str else self.__widget_id_map
 
 
   def getWidgets(self) -> dict:
-    return self.__widgetIdMap
+    return self.__widget_id_map
 
 
-  def setWidgets(self, widgetIdMap:dict) -> None:
-    self.__widgetIdMap = widgetIdMap
-    self.__eventBus.setWidgets(widgetIdMap)
+  def setWidgets(self, widget_id_map:dict) -> None:
+    self.__widget_id_map = widget_id_map
+    self.__eventBus.setWidgets(widget_id_map)
 
 
-  def setWidgetList(self, widgetList:list) -> None:
-    self.__widgetList = widgetList
+  def setWidgetList(self, widget_list:list) -> None:
+    self.__widget_list = widget_list
 
 
   def setIcon(self, id:str, *args) -> None:
@@ -55,7 +55,7 @@ class WidgetsController:
   def destroy(self) -> None:
     event_filter = Store().get('APP_EVENT_FILTER', None)
     # 移除组件映射
-    for each in self.__widgetList:
+    for each in self.__widget_list:
       try:
         if hasattr(each, 'has_event_filter') and each.has_event_filter and event_filter:
           each.removeEventFilter(event_filter)
@@ -65,4 +65,4 @@ class WidgetsController:
       except Exception as e:
         print(f"Widget delete error: {e}")
     self.__eventBus.clear()
-    self.__widgetIdMap = {}
+    self.__widget_id_map = {}

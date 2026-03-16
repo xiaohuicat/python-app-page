@@ -186,7 +186,7 @@ class StackManager(Stack):
 
       # 保存记录
       if not NO_RECORD:
-        self.record.addRecord(id)
+        self.record.add_record(id)
 
       self.current_btn = id
       self.timestamp = current
@@ -201,12 +201,12 @@ class StackManager(Stack):
 
 
   def left_record(self):
-    id = self.record.leftRecord()
+    id = self.record.move_left()
     if id:
       self.click(id)(True) # 不记录
 
 
   def right_record(self):
-    id = self.record.rightRecord()
+    id = self.record.move_right()
     if id:
       self.click(id)(True) # 不记录

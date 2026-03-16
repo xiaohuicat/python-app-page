@@ -154,9 +154,11 @@ class MainWindow(QMainWindow):
     self.ui.setStyleSheet(main_window_style())
     self.setCentralWidget(self.ui)
     # 渲染UI
-    self.widgetsController:WidgetsController = WidgetsController(render(self.ui, template, {
-      "title": getSetting('APP_TITLE'),
-    })['widgets'])
+    render_dict = render(self.ui, template, {"title": getSetting('APP_TITLE')})
+    self.widgetsController:WidgetsController = WidgetsController(
+        widget_id_map=render_dict['widget_id_map'],
+        widget_list=render_dict['widget_list']
+    )
     # 绑定按钮事件
     self.register('btn_close', 'clicked', self.closePage)
     self.register('btn_small', 'clicked', self.showMinimized)

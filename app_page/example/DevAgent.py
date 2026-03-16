@@ -49,6 +49,11 @@ style = """
 """
 
 mcp_dict = {
+  "store_text": {
+    "url": "http://127.0.0.1:8080/store_text",
+    "description": "存储文本内容，参数text是要存储的文本字符串，调用成功后会返回一个8位提取码，其它工具若支持可以直接输入提取码来获取文本内容。适用于需要存储较长文本内容的场景，避免直接在工具调用中传输过长文本导致解析困难。",
+    "usage": "[TOOL STORE TEXT START]和[TOOL STORE TEXT END]标签包裹的文本就是要存储的内容",
+  },
   "read_project": {
     "url": "http://127.0.0.1:8080/list_dir",
     "param": ["path"],
@@ -62,7 +67,7 @@ mcp_dict = {
   "write_file": {
     "url": "http://127.0.0.1:8080/write_file",
     "param": ["file_path", "content"],
-    "description": "写入内容到本地文件，file_path是文件路径，content是要写入的字符串内容"
+    "description": "写入内容到本地文件。file_path是文件路径；content是要写入的字符串内容，支持直接输入提取码"
   },
   "delete_file": {
     "url": "http://127.0.0.1:8080/delete_file",
@@ -122,6 +127,20 @@ mcp_dict = {
 }
 
 BLOCK_LINE = '\r\n\r\n'
+SYSTEM_PROMPT = '''
+调用规则：
+1. 你需要根据用户输入判断是否调用工具，调用哪个工具；如果需要，必须严格按照上述“调用格式”输出，不要加任何多余文字
+2. 工具调用除store_text外，必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
+3. 工具调用store_text，必须以"[TOOL STORE TEXT START]"和"[TOOL STORE TEXT END]"标签包裹要存储的文本内容，如"[TOOL STORE TEXT START]这是要存储的文本内容[TOOL STORE TEXT END]"。
+4. 调用工具的参数为路径时必须是绝对路径。
+5. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
+6. 若工具调用错误后续不再继续调用，提醒用户失败原因。
+7. 若工具调用成功认真判断后续操作，避免反复调用工具。
+8. 你每次只能调用一个工具，请勿调用多个。
+9. 调用工具返回的结果用户能看见你无需复述，只需要给出你觉得必要的回答。
+
+写入文本之前建议先使用store_text工具，并使用提取码来获取文本内容， 这样不容易出现错误，并且节约token。
+'''
 
 def convert_messages(messages):
   result = ""
@@ -159,7 +178,7 @@ class DevAgent(Page):
       resp = call_qwen(messages, api_key=getSetting('QWEN_API_KEY'))
       log(f"{BLOCK_LINE}🤖assistant: " + resp)
       return resp
-    self.agent = DevAgentPlugin(call_api, mcp_dict, max_steps=5, has_tail=False)
+    self.agent = DevAgentPlugin(call_api, mcp_dict, max_steps=5, has_tail=False, system_prompt=SYSTEM_PROMPT)
 
   def setup(self):
     return {

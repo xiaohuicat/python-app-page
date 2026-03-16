@@ -18,25 +18,32 @@ MCP_DICT = {
     }
 }
 
-TAIL_TEXT = '\r\n\r\n非常重要：工具调用必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，不要解析，否则无法调用工具！！！'
+SYSTEM_PROMPT = '''
+调用规则：
+1. 你需要根据用户输入判断是否调用工具，调用哪个工具；如果需要，必须严格按照上述“调用格式”输出，不要加任何多余文字
+2. 工具调用除store_text外，必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
+3. 工具调用store_text，必须以"[TOOL STORE TEXT START]"和"[TOOL STORE TEXT END]"标签包裹要存储的文本内容，如"[TOOL STORE TEXT START]这是要存储的文本内容[TOOL STORE TEXT END]"。
+4. 调用工具的参数为路径时必须是绝对路径。
+5. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
+6. 若工具调用错误后续不再继续调用，提醒用户失败原因。
+7. 若工具调用成功认真判断后续操作，避免反复调用工具。
+8. 调用工具返回的结果用户能看见你无需复述，只需要给出你觉得必要的回答。
+'''
+TAIL_TEXT = '\r\n\r\n非常重要：工具调用除store_text外，必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，' \
+'其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，' \
+'不要解析，否则无法调用工具！！！'
 
 def extract_tool_call(reply: str, mcp_dict):
-    pattern = r'\[TOOL\]\s*(.+?)\s*\[TOOL END\]'
-    match = re.search(pattern, reply.strip(), re.DOTALL | re.MULTILINE)
+    """优化后的工具调用解析方法，更健壮的字符串处理"""
+    # 使用更精确的正则表达式，匹配完整的工具调用格式
+    pattern = r'\[TOOL\]\s*(\w+)\s*(\{.*?\})\s*\[TOOL END\]'
+    match = re.search(pattern, reply.strip(), re.DOTALL)
     
     if not match:
         return None, None
 
-    tool_content = match.group(1).strip()
-    if '{' not in tool_content:
-        raise ValueError(f"工具调用格式错误，缺少参数部分: {tool_content}")
-    
-    tool_name_part, params_json_part = tool_content.split('{', 1)
-    tool_name = tool_name_part.strip()
-    params_json_str = '{' + params_json_part
-    
-    if '}' in params_json_str:
-        params_json_str = params_json_str[:params_json_str.rindex('}') + 1]
+    tool_name = match.group(1).strip()
+    params_json_str = match.group(2).strip()
     
     if tool_name not in mcp_dict:
         raise ValueError(f"工具调用错误: 未知工具 {tool_name}")
@@ -44,45 +51,65 @@ def extract_tool_call(reply: str, mcp_dict):
     try:
         params = json.loads(params_json_str)
     except json.JSONDecodeError as e:
-        raise ValueError(f"工具 {tool_name} 的参数不是合法的JSON字符串: {e}")
+        raise ValueError(f"工具 {tool_name} 的参数不是合法的JSON字符串: {e}，参数内容={params_json_str}")
 
     if not isinstance(params, dict):
         raise ValueError(f"工具 {tool_name} 的参数必须是一个JSON对象（键值对），当前解析结果: {params}")
 
-    required_params = set(mcp_dict[tool_name]["param"])
-    if not required_params.issubset(params.keys()):
-        missing = required_params - params.keys()
-        raise ValueError(f"工具 {tool_name} 缺少必要参数: {missing}")
-
     return tool_name, params
+
+def extract_store_text(text):
+    """
+    提取文本中被[TOOL STORE TEXT START]和[TOOL STORE TEXT END]标签包裹的内容
+    保证提取的是最大范围的内容
+    
+    Args:
+        text (str): 输入的文本内容
+        
+    Returns:
+        str: 提取到的内容，如果标签不存在则返回空字符串
+    """
+    start_tag = "[TOOL STORE TEXT START]"
+    end_tag = "[TOOL STORE TEXT END]"
+    
+    # 找到开始标签的位置
+    start_index = text.find(start_tag)
+    
+    # 找到结束标签的位置
+    end_index = text.rfind(end_tag)
+    
+    # 检查标签是否存在且顺序正确
+    if start_index == -1 or end_index == -1 or start_index >= end_index:
+        return ""
+    
+    # 提取两个标签之间的内容（不包含标签本身）
+    content = text[start_index + len(start_tag):end_index].strip()
+    
+    return content
 
 def create_tool_description(mcp_dict):
     tool_descriptions = []
     for tool_name, tool_info in mcp_dict.items():
-        params = ",".join([f"\"{each}\":\"XXX\"" for each in tool_info["param"]])
-        desc = tool_info["description"]
-        example_call = f"[TOOL] {tool_name} {{{params}}} [TOOL END]"
-        tool_descriptions.append(f"工具: {tool_name} 作用: {desc} 调用格式: {example_call}")
+        params = ",".join([f"\"{each}\":\"XXX\"" for each in tool_info["param"]]) if 'param' in tool_info else None
+        desc = tool_info["description"] if 'description' in tool_info else None
+        usage = f"[TOOL] {tool_name} {{{params}}} [TOOL END]" if 'usage' not in tool_info else tool_info['usage']
+        tool_descriptions.append(f"工具: {tool_name} 作用: {desc} 调用格式: {usage}")
 
     return "\n\n".join(tool_descriptions)
 
-def create_system_prompt(mcp_dict, has_tail=True):
+def create_system_prompt(mcp_dict, system_prompt, has_tail=True):
     tail_text = '' if has_tail else TAIL_TEXT
     return f"""
-你是一个专业的开发助理，你可以调用以下工具：
+你是一个专业和强大的开发助理，用户提问如果能通过工具解决，那么你就使用工具，减少继续提问用户，显得你专业和强大。你可以调用以下工具：
 
 {create_tool_description(mcp_dict)}
 
-调用规则：
-1. 你需要根据用户输入判断是否调用工具，调用哪个工具；如果需要，必须严格按照上述“调用格式”输出，不要加任何多余文字
-2. 工具调用必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
-3. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
-4. 若工具调用错误后续不再继续调用，提醒用户失败原因。
-5. 若工具调用成功继续完成后续任务，解决用户问题。
-5. 参数为路径时必须是绝对路径。{tail_text}"""
+{system_prompt}
+{tail_text}"""
 
 class DevAgent:
-    def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print, history_mode=True, has_tail=True):
+    def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print, 
+                 history_mode=True, has_tail=True, system_prompt=SYSTEM_PROMPT):
         self.log = log
         self.mcp_dict = mcp_dict
         self.call_api = call_api
@@ -90,15 +117,46 @@ class DevAgent:
         self.history_mode = history_mode
         self.has_tail = has_tail
         self.tool_results = []
-        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict, has_tail=self.has_tail)}]
+        self.messages = [
+            {
+                "role": "system", 
+                "content": create_system_prompt(self.mcp_dict, system_prompt=system_prompt, has_tail=self.has_tail),
+            }
+        ]
 
     def call_mcp(self, name, payload) -> str:
-        url = self.mcp_dict[name]["url"]
+        """优化后的工具调用方法，精细化异常处理"""
+        if name not in self.mcp_dict:
+            return f"{name}工具调用失败: 工具不存在"
+        
+        tool_info = self.mcp_dict[name]
+        url = tool_info.get("url")
+        if not url:
+            return f"{name}工具调用失败: 未配置URL"
+        
+        timeout = tool_info.get("timeout", 10)
+        
+        # 参数校验
+        required_params = tool_info.get("param", [])
+        missing_params = [p for p in required_params if p not in payload]
+        if missing_params:
+            return f"{name}工具调用失败: 缺少必填参数 {missing_params}"
+        
         try:
-            resp = requests.post(url, json=payload, timeout=10)
-            return resp.json()
+            resp = requests.post(url, json=payload, timeout=timeout)
+            resp.raise_for_status()
+            resp_dict = resp.json()
+            return  resp_dict['result'] if 'result' in resp_dict else resp_dict
+        except requests.exceptions.Timeout:
+            return f"{name}工具调用失败: 请求超时（{timeout}秒）"
+        except requests.exceptions.ConnectionError:
+            return f"{name}工具调用失败: 连接拒绝，请检查服务是否启动"
+        except requests.exceptions.HTTPError as e:
+            return f"{name}工具调用失败: HTTP错误 {e.response.status_code} - {e.response.text}"
+        except json.JSONDecodeError:
+            return f"{name}工具调用失败: 接口返回非JSON格式，内容={resp.text}"
         except Exception as e:
-            return f"{name}工具调用失败: {str(e)}"
+            return f"{name}工具调用失败: 未知错误 {str(e)}"
 
     def call_ai(self, prompt:str = None) -> str:
         if self.history_mode:
@@ -132,11 +190,16 @@ class DevAgent:
             self.messages.append({"role": "assistant", "content": ai_reply})
 
             try:
-                tool_name, payload = extract_tool_call(ai_reply, self.mcp_dict)
-                # 如果没有工具调用，直接返回AI回答作为最终结果
-                if tool_name is None:
-                    self.log(f"\r\n✅ AI 最终回答：{ai_reply}")
-                    return ai_reply
+                extract_text = extract_store_text(ai_reply)
+                if extract_text != '':
+                    tool_name = 'store_text'
+                    payload = {'text': extract_text}
+                else:
+                    tool_name, payload = extract_tool_call(ai_reply, self.mcp_dict)
+                    # 如果没有工具调用，直接返回AI回答作为最终结果
+                    if tool_name is None:
+                        self.log(f"\r\n✅ AI 最终回答：{ai_reply}")
+                        return ai_reply
                 # 如果有工具调用，执行工具并将结果反馈给AI继续下一轮对话
                 self.log(f"\r\n🔍 解析工具调用：工具={tool_name} 参数={payload}")
                 tool_result = self.call_mcp(tool_name, payload)

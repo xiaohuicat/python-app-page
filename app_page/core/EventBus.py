@@ -3,18 +3,18 @@ from PySide6.QtWidgets import QWidget
 
 # 事件总线
 class EventBus(object):
-  def __init__(self, widgets:dict={}, hasSelf=False):
-    self.widgets:dict = widgets
-    self.hasSelf = hasSelf
+  def __init__(self, widget_id_map:dict={}, has_self=False):
+    self.widget_id_map:dict = widget_id_map
+    self.has_self = has_self
     self._disconnectList = []
 
 
-  def setWidgets(self, widgets:dict):
-    self.widgets = widgets
+  def setWidgets(self, widget_id_map:dict):
+    self.widget_id_map = widget_id_map
 
 
   def getWidget(self, id:str):
-    return self.widgets.get(id, None)
+    return self.widget_id_map.get(id, None)
 
 
   def register(self, id:str, signal:str, callback):
@@ -22,7 +22,7 @@ class EventBus(object):
     widget_dict = widget.__dict__
     signalInstance = widget_dict[signal]
     if hasattr(signalInstance, 'connect'):
-      new_callback = (lambda *args: callback(self, *args)) if self.hasSelf else callback
+      new_callback = (lambda *args: callback(self, *args)) if self.has_self else callback
       signalInstance.connect(new_callback)
     if hasattr(signalInstance, 'disconnect'):
       def disconnect():
@@ -36,11 +36,11 @@ class EventBus(object):
 
   def clear(self):
     #  清理组件映射表
-    keys = list(self.widgets.keys())
+    keys = list(self.widget_id_map.keys())
     for key in keys:
-      del self.widgets[key]
+      del self.widget_id_map[key]
     
-    self.widgets = {}
+    self.widget_id_map = {}
     #  清理所有注册的事件
     for disconnect in self._disconnectList:
       disconnect()

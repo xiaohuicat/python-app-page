@@ -105,8 +105,8 @@ class Page:
         # 5. 模板渲染与组件挂载
         template_params = params if isinstance(params, dict) else {}
         render_result = render(layout, self.template, template_params)
-        self.__widgetsController.setWidgets(render_result['widgets'])
-        self.__widgetsController.setWidgetList(render_result['allWidgets'])
+        self.__widgetsController.setWidgets(render_result['widget_id_map'])
+        self.__widgetsController.setWidgetList(render_result['widget_list'])
 
     def show(self, *args) -> None:
         """显示页面"""
@@ -358,9 +358,9 @@ class Page:
         # 显示提示框
         self._tips_box.show()
 
-    def setWidgets(self, widgets: Dict[str, QWidget]) -> None:
+    def setWidgets(self, widget_id_map: Dict[str, QWidget]) -> None:
         """设置组件列表"""
-        self.__widgetsController.setWidgets(widgets)
+        self.__widgetsController.setWidgets(widget_id_map)
 
     def getWidget(self, id: Optional[str] = None) -> Optional[QWidget | Dict[str, QWidget]]:
         """
