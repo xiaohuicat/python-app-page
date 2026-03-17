@@ -7,7 +7,7 @@ from .common import updateStyle
 
 
 class WidgetsController:
-  def __init__(self, widget_id_map:dict|None=None, widget_list:list=None) -> None:
+  def __init__(self, widget_id_map:dict|None=None, widget_list:list|None=None) -> None:
     self.__widget_list = widget_list if widget_list else []
     self.__widget_id_map = widget_id_map if widget_id_map else {}
     self.__eventBus = EventBus(self.__widget_id_map)

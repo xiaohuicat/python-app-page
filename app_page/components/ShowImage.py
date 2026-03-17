@@ -1,42 +1,134 @@
 import os
 from PySide6.QtCore import Signal, Qt, QSize
-from PySide6.QtWidgets import QMainWindow
+from PySide6.QtWidgets import QMainWindow, QWidget, QLayout
 from PySide6.QtGui import QPixmap, QGuiApplication
-from ..assets.UI.ui_image import Ui_MainWindow as Ui_Image
+from ..core.render.render_main import render
+from ..core.WidgetsController import WidgetsController
 from ..core import Page
 from ..core.Device import getScreenInfo
 from ..animation import MoveWin, Shadow
+from ..utils import assetsUrl
 
 from PIL import Image
 from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 
+template = '''
+<template>
+    <div id="main-ui" class="container" width="960" height="700">
+        <v-box margins="[0,0,0,0]" spacing="0">
+            <div id="header" class="header" height="42">
+                <h-box spacing="5" margins="[6,0,6,0]">
+                    <button id="btn_left" height="28" width="28"/>
+                    <button id="btn_right" height="28" width="28"/>
+                    <button id="btn_list" height="28" width="28"/>
+                    <button id="btn_big" height="28" width="28"/>
+                    <button id="btn_small" height="28" width="28"/>
+                    <div/>
+                    <button id="btn_mini" height="28" width="28"/>
+                    <button id="btn_change" height="28" width="28"/>
+                    <button id="btn_close" height="28" width="28"/>
+                </h-box>
+            </div>
+            <div>
+                <h-box align="AlignCenter" margins="[0,0,0,0]" spacing="0">
+                    <label id="image" />
+                </h-box>
+            </div>
+        </v-box>
+    </div>
+</template>
+'''
+
+show_image_style = lambda:'''
+QPushButton {
+    font-size: 14px;
+    padding: 2px;
+    background-color: transparent;
+    border-color: transparent;
+    border-radius: 4px;
+}
+QPushButton:hover {
+    color: #fff;
+    border-color: rgba(0,0,0,0.05);
+    background-color: rgba(0,0,0,0.05);
+}
+.container {
+    background-color: #ffffff;
+}
+#btn_left {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_left.png') +''');
+}
+#btn_left_sleep {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_left_sleep.png') +''');
+}
+#btn_right {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_right.png') +''');
+}
+#btn_right_sleep {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_right_sleep.png') +''');
+}
+#btn_list {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_list.png') +''');
+}
+#btn_big {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_big.png') +''');
+}
+#btn_big_sleep {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_big_sleep.png') +''');
+}
+#btn_small {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_small.png') +''');
+}
+#btn_small_sleep {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_small_sleep.png') +''');
+}
+#btn_mini {
+    image: url('''+ assetsUrl('icon', 'image', 'minimizing.png') +''');
+}
+#btn_change {
+    padding: 6px;
+    image: url('''+ assetsUrl('icon', 'image', 'btn_change.png') +''');
+}
+#btn_change_sleep {
+    padding: 4px;
+    image: url('''+ assetsUrl('icon', 'image', 'btn_change_sleep.png') +''');
+}
+#btn_close {
+    image: url('''+ assetsUrl('icon', 'image', 'btn_close.png') +''');
+}
+'''
 
 class ShowImage(QMainWindow):
     image_request = Signal(object)
 
     def __init__(self, page: Page, savePath: str, currentPath: str):
         super().__init__()
-        self.param = page.param
+        self.page = page
 
         MoveWin(self, page.param, "image_window_position")
-
-        self.ui = Ui_Image()
-        self.ui.setupUi(self)
 
         self.setWindowFlag(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        Shadow(self.ui.frame_main)
+        # 创建UI挂载节点
+        self.ui = QWidget()
+        self.ui.setStyleSheet(show_image_style())
+        self.setCentralWidget(self.ui)
+        # 渲染UI
+        render_dict = render(self.ui, template, {})
+        self.widgetsController:WidgetsController = WidgetsController(
+            widget_id_map=render_dict['widget_id_map'], 
+            widget_list=render_dict['widget_list'])
+        # 绑定按钮事件
+        self.register('btn_change', 'clicked', self.restore_or_maximize_window)
+        self.register('btn_big', 'clicked', self.image_biger)
+        self.register('btn_small', 'clicked', self.image_smaller)
+        self.register('btn_left', 'clicked', self.left_image)
+        self.register('btn_right', 'clicked', self.right_image)
+        self.register('btn_close', 'clicked', self.closePage)
 
-        # 按钮连接
-        self.ui.btn_change.clicked.connect(self.restore_or_maximize_window)
-        self.ui.btn_mini.clicked.connect(self.showMinimized)
-        self.ui.btn_big.clicked.connect(self.image_biger)
-        self.ui.btn_small.clicked.connect(self.image_smaller)
-        self.ui.btn_left.clicked.connect(self.left_image)
-        self.ui.btn_right.clicked.connect(self.right_image)
-        self.ui.btn_close.clicked.connect(self.close)
+        Shadow(self.getWidget('main-ui'))
 
         # 路径处理
         self.savePath = savePath.rstrip('/\\')
@@ -59,6 +151,21 @@ class ShowImage(QMainWindow):
         # 显示图片并更新导航按钮
         self.show_image()
         self.update_navigation_buttons()
+
+    def register(self, id:str, signal:str, callback):
+        self.widgetsController.register(id, signal, callback)
+
+    def setClass(self, id:str, className:str):
+        self.widgetsController.setClass(id, className)
+
+    def getWidget(self, id:str) -> QWidget|QLayout:
+        return self.widgetsController.getWidget(id)
+
+    def closePage(self):
+        self.close()
+        self.image_request.emit(None)
+        self.widgetsController.destroy()
+        self.deleteLater()
 
     def refresh_file_list(self):
         """刷新文件夹中的图片文件列表（按文件名排序）"""
@@ -114,8 +221,8 @@ class ShowImage(QMainWindow):
         """显示当前索引的图片"""
         if self.file_num == 0:
             self.pix_raw = False
-            error_pix = QPixmap(os.path.join(os.getcwd(), 'assets/image/error.png'))
-            self.ui.label.setPixmap(error_pix)
+            error_pix = QPixmap(assetsUrl('image', 'error.png'))
+            self.getWidget('image').setPixmap(error_pix)
             self.setWindowTitle("无图片")
             return
 
@@ -130,10 +237,10 @@ class ShowImage(QMainWindow):
         # 生成缩略图路径（800x800）
         name_no_ext = os.path.splitext(current_file)[0]
         thumbnail_name = name_no_ext + '.png'
-        thumbnail_dir = self.param.pathJoin(
-            "tempPath", 'images/show/thumbnail_size_800',
-            os.path.basename(self.savePath)
-        )
+        thumbnail_dir = self.page.getSoftwarePath(
+            'tempPath',
+            'images/show/thumbnail_size_800',
+            os.path.basename(self.savePath))
         new_path_800 = os.path.join(thumbnail_dir, thumbnail_name)
 
         isError = False
@@ -151,18 +258,18 @@ class ShowImage(QMainWindow):
 
         if isError:
             self.pix_raw = False
-            self.pix = QPixmap(os.path.join(os.getcwd(), 'assets/image/error.png'))
+            self.pix = QPixmap(assetsUrl('image', 'error.png'))
         else:
             self.pix_raw = QPixmap(new_path_800)
             if self.pix_raw.isNull():
                 self.pix_raw = False
-                self.pix = QPixmap(os.path.join(os.getcwd(), 'assets/image/error.png'))
+                self.pix = QPixmap(assetsUrl('image', 'error.png'))
             else:
                 self.pix = self.pix_raw.scaled(
                     self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation
                 )
 
-        self.ui.label.setPixmap(self.pix)
+        self.getWidget('image').setPixmap(self.pix)
 
     # 上一张
     def left_image(self):
@@ -198,7 +305,7 @@ class ShowImage(QMainWindow):
 
         self.size = self.size * 1.2
         self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.ui.label.setPixmap(self.pix)
+        self.getWidget('image').setPixmap(self.pix)
 
         self.btn_wakeUp('btn_big')
         if current_w > 100 and current_h > 100:
@@ -218,7 +325,7 @@ class ShowImage(QMainWindow):
 
         self.size = self.size * 0.8
         self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.ui.label.setPixmap(self.pix)
+        self.getWidget('image').setPixmap(self.pix)
 
         self.btn_wakeUp('btn_small')
         if current_w < 6000 and current_h < 6000:
@@ -230,30 +337,19 @@ class ShowImage(QMainWindow):
             if self.normal_window_rect:
                 self.setGeometry(*self.normal_window_rect)
             self.isMaximized = False
-            self.ui.btn_change.setStyleSheet(
-                'image:url(./assets/icon/image/btn_change.png);padding:6px;'
-            )
+            self.setClass('btn_change', 'btn_change')
         else:
             raw = self.geometry()
             self.normal_window_rect = [raw.x(), raw.y(), raw.width(), raw.height()]
             rect = QGuiApplication.primaryScreen().availableGeometry()
             self.setGeometry(-8, -8, rect.width() + 16, rect.height() + 40)
             self.isMaximized = True
-            self.ui.btn_change.setStyleSheet(
-                'image:url(./assets/icon/image/btn_change_sleep.png);padding:4px;'
-            )
+            self.setClass('btn_change', 'btn_change_sleep')
 
     # 按钮禁用样式
     def btn_sleep(self, name):
-        btn = getattr(self.ui, name)
-        btn.setStyleSheet(
-            f'#{name}{{image:url(./assets/icon/image/{name}_sleep.png)}}'
-            f'#{name}:hover{{background-color:#fff;}}'
-        )
+        self.setClass(name, f'{name}_sleep')
 
     # 按钮启用样式
     def btn_wakeUp(self, name):
-        btn = getattr(self.ui, name)
-        btn.setStyleSheet(
-            f'#{name}{{image:url(./assets/icon/image/{name}.png)}}'
-        )
+        self.setClass(name, name)

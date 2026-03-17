@@ -4,7 +4,7 @@ from .TodoList import TodoList
 from .LocalImage import LocalImage
 from .MusicPlayer import MusicPlayer
 from .TimerBottle import TimerBottle
-from .DevAgent import DevAgent
+from .DevAgent.DevAgent import DevAgent
 
 __all__ = [
   'Skin',

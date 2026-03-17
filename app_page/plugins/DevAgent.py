@@ -19,19 +19,19 @@ MCP_DICT = {
 }
 
 SYSTEM_PROMPT = '''
-调用规则：
-1. 你需要根据用户输入判断是否调用工具，调用哪个工具；如果需要，必须严格按照上述“调用格式”输出，不要加任何多余文字
-2. 工具调用除store_text外，必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，如"[TOOL] read_file {{"path":"/Users/my_project/readme.md"}} [TOOL END]"。
-3. 工具调用store_text，必须以"[TOOL STORE TEXT START]"和"[TOOL STORE TEXT END]"标签包裹要存储的文本内容，如"[TOOL STORE TEXT START]这是要存储的文本内容[TOOL STORE TEXT END]"。
-4. 调用工具的参数为路径时必须是绝对路径。
-5. 如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
-6. 若工具调用错误后续不再继续调用，提醒用户失败原因。
-7. 若工具调用成功认真判断后续操作，避免反复调用工具。
-8. 调用工具返回的结果用户能看见你无需复述，只需要给出你觉得必要的回答。
+### 调用规则
+1. 你需要根据用户输入判断是否调用工具，如果需要，按照上述调用格式输出指令即可，不需回复多余文字。
+2. 工具调用除store_text外，必须以按照以下格式，"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，其中<JSON_PARAMS>必须是合法JSON字符串。
+3. 工具调用store_text，只需返回"[TOOL STORE TEXT START]"和"[TOOL STORE TEXT END]"标签包裹内容的指令即可。
+4. 若工具调用错误后续不再继续调用，提醒用户失败原因。
+5. 若工具调用成功认真判断后续操作，避免反复调用工具。
+6. 调用工具返回的结果用户能看见你无需复述，只需要给出你觉得必要的回答。
+7. 每次只能调用一个工具，如果不需要调用工具，请直接给出简洁、专业、像开发助理的回答。
+
+### 建议的操作
+1. 建议写入文本之前先使用store_text工具，并使用提取码来作为content写入文件。
+2. 建议认真判断工具返回的结果，分析用户的核心问题是否解决，以确定下一步是继续调用工具还是给用户最终回复。
 '''
-TAIL_TEXT = '\r\n\r\n非常重要：工具调用除store_text外，必须按这个格式"[TOOL] <tool_name> <JSON_PARAMS> [TOOL END]"，' \
-'其中<JSON_PARAMS>必须是合法JSON字符串，如"[TOOL] read_file {"path":"/Users/my_project/readme.md"} [TOOL END]"，' \
-'不要解析，否则无法调用工具！！！'
 
 def extract_tool_call(reply: str, mcp_dict):
     """优化后的工具调用解析方法，更健壮的字符串处理"""
@@ -93,34 +93,33 @@ def create_tool_description(mcp_dict):
         params = ",".join([f"\"{each}\":\"XXX\"" for each in tool_info["param"]]) if 'param' in tool_info else None
         desc = tool_info["description"] if 'description' in tool_info else None
         usage = f"[TOOL] {tool_name} {{{params}}} [TOOL END]" if 'usage' not in tool_info else tool_info['usage']
-        tool_descriptions.append(f"工具: {tool_name} 作用: {desc} 调用格式: {usage}")
+        tool_descriptions.append(f"工具: {tool_name} | 作用: {desc} | 调用格式: {usage}")
 
-    return "\n\n".join(tool_descriptions)
+    return "\n".join(tool_descriptions)
 
-def create_system_prompt(mcp_dict, system_prompt, has_tail=True):
-    tail_text = '' if has_tail else TAIL_TEXT
+def create_system_prompt(mcp_dict, system_prompt):
     return f"""
-你是一个专业和强大的开发助理，用户提问如果能通过工具解决，那么你就使用工具，减少继续提问用户，显得你专业和强大。你可以调用以下工具：
+你是一个资深开发工程师，可以帮助用户解决各种开发问题，你可以调用以下工具：
 
 {create_tool_description(mcp_dict)}
 
 {system_prompt}
-{tail_text}"""
+"""
 
 class DevAgent:
     def __init__(self, call_api, mcp_dict=MCP_DICT, max_steps=5, log=print, 
-                 history_mode=True, has_tail=True, system_prompt=SYSTEM_PROMPT):
+                    history_mode=True, system_prompt=SYSTEM_PROMPT):
         self.log = log
         self.mcp_dict = mcp_dict
         self.call_api = call_api
         self.max_steps = max_steps
         self.history_mode = history_mode
-        self.has_tail = has_tail
+        self.system_prompt = system_prompt
         self.tool_results = []
         self.messages = [
             {
                 "role": "system", 
-                "content": create_system_prompt(self.mcp_dict, system_prompt=system_prompt, has_tail=self.has_tail),
+                "content": create_system_prompt(self.mcp_dict, system_prompt=self.system_prompt),
             }
         ]
 
@@ -162,20 +161,18 @@ class DevAgent:
         if self.history_mode:
             messages = []
             for msg in self.messages:
-                if self.has_tail and isinstance(msg.get('content'), str) and TAIL_TEXT in msg['content']:
-                    msg['content'] = msg['content'].replace(TAIL_TEXT, '')
                 item = msg.copy()
                 messages.append(item)
             
             if prompt is not None:
-                msg = {"role": "user", "content": prompt + TAIL_TEXT if self.has_tail else prompt}
+                msg = {"role": "user", "content": prompt}
                 self.messages.append(msg)
                 messages.append(msg)
             
         else:
             messages = [
                 {"role": "system", "content": create_system_prompt(self.mcp_dict)},
-                {"role": "user", "content": prompt + TAIL_TEXT if self.has_tail else prompt},
+                {"role": "user", "content": prompt},
             ]
         resp = self.call_api(messages)
         return resp.strip()
@@ -227,4 +224,4 @@ class DevAgent:
     
     def reset(self):
         self.tool_results.clear()
-        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict, has_tail=self.has_tail)}]
+        self.messages = [{"role": "system", "content": create_system_prompt(self.mcp_dict, system_prompt=self.system_prompt)}]

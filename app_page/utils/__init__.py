@@ -11,6 +11,7 @@ from .file_handle import get_file_md5, create_folder, get_folder_size, clear_fol
 from ..core.common import setShadowEffect, updateStyle
 from .easy_create import empty_container_qss, empty_container_xml
 from .chat_api import call_qwen
+from .valid_json import get_valid_json, format_json
 
 __all__ = [
   'assetsPath',
@@ -54,4 +55,6 @@ __all__ = [
   'empty_container_qss',
   'empty_container_xml',
   'call_qwen',
+  'get_valid_json',
+  'format_json',
 ]
