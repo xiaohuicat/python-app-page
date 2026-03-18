@@ -3,6 +3,7 @@ from PySide6.QtCore import QObject, Signal
 from app_page import Page, getSetting
 from app_page.utils import encode, call_qwen, assetsUrl, updateStyle
 from app_page.plugins import DevAgent as DevAgentPlugin
+from .DevAgentSetting import setting
 from .mcp_dict import mcp_dict
 
 template = """
@@ -100,7 +101,10 @@ class DevAgent(Page):
     self.style = create_style()
     self.update_signal = self.ResultSignal()
     self.update_signal.signal.connect(self.update_content)
+    self.agent = None
+    self.load()
 
+  def load(self):
     def log(*args):
       print(' '.join(args))
       self.update_signal.signal.emit(' '.join(args))
@@ -112,7 +116,11 @@ class DevAgent(Page):
       resp = call_qwen(messages, api_key=getSetting('QWEN_API_KEY'))
       log(f"{BLOCK_LINE}🤖assistant: " + resp)
       return resp
-    self.agent = DevAgentPlugin(call_api, mcp_dict, max_steps=5, system_prompt=SYSTEM_PROMPT)
+    
+    user_mcp_dict = self.localStore.get('setting/mcp_dict', mcp_dict)
+    project_path = self.localStore.get('setting/project_path', '')
+    new_system_prompt = SYSTEM_PROMPT + '\r\n' + f'当前项目路径: {project_path}\r\n'
+    self.agent = DevAgentPlugin(call_api, user_mcp_dict, max_steps=5, system_prompt=new_system_prompt)
 
   def setup(self):
     return {
@@ -121,6 +129,7 @@ class DevAgent(Page):
     }
 
   def show(self, *args):
+    self.register('setting', 'clicked', lambda: setting(self, self.load))
     self.register('message', 'returnPressed', self.submit)
     self.register('submit', 'clicked', self.submit)
 

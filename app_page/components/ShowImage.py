@@ -3,7 +3,7 @@ from PySide6.QtCore import Signal, Qt, QSize
 from PySide6.QtWidgets import QMainWindow, QWidget, QLayout
 from PySide6.QtGui import QPixmap, QGuiApplication
 from ..core.render.render_main import render
-from ..core.WidgetsController import WidgetsController
+from ..core import WidgetsController
 from ..core import Page
 from ..core.Device import getScreenInfo
 from ..animation import MoveWin, Shadow
@@ -102,11 +102,10 @@ QPushButton:hover {
 class ShowImage(QMainWindow):
     image_request = Signal(object)
 
-    def __init__(self, page: Page, savePath: str, currentPath: str):
+    def __init__(self, savePath: str, currentPath: str):
         super().__init__()
-        self.page = page
 
-        MoveWin(self, page.param, "image_window_position")
+        MoveWin(self, "image_window_position")
 
         self.setWindowFlag(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
@@ -115,6 +114,13 @@ class ShowImage(QMainWindow):
         self.ui = QWidget()
         self.ui.setStyleSheet(show_image_style())
         self.setCentralWidget(self.ui)
+
+        # 添加阴影
+        self.setContentsMargins(10, 10, 10, 10)
+        self.setFixedWidth(980)
+        self.setFixedHeight(740)
+        Shadow(self.ui)
+
         # 渲染UI
         render_dict = render(self.ui, template, {})
         self.widgetsController:WidgetsController = WidgetsController(
@@ -127,8 +133,6 @@ class ShowImage(QMainWindow):
         self.register('btn_left', 'clicked', self.left_image)
         self.register('btn_right', 'clicked', self.right_image)
         self.register('btn_close', 'clicked', self.closePage)
-
-        Shadow(self.getWidget('main-ui'))
 
         # 路径处理
         self.savePath = savePath.rstrip('/\\')
@@ -237,7 +241,7 @@ class ShowImage(QMainWindow):
         # 生成缩略图路径（800x800）
         name_no_ext = os.path.splitext(current_file)[0]
         thumbnail_name = name_no_ext + '.png'
-        thumbnail_dir = self.page.getSoftwarePath(
+        thumbnail_dir = Page().getSoftwarePath(
             'tempPath',
             'images/show/thumbnail_size_800',
             os.path.basename(self.savePath))

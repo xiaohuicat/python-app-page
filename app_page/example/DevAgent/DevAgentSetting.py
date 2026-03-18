@@ -1,38 +1,35 @@
-from app_page import Page, WidgetsController, render
-from app_page.utils import assetsPath, encode, get_valid_json, format_json
-from app_page.components.CallPanel import CallPanel
+from app_page import Page, CallPanel
+from app_page.utils import encode, get_valid_json, format_json
 from .mcp_dict import mcp_dict
 
-template_setting = '''
-<template>
-  <div id="main_container">
-    <v-box margins="[0, 0, 0, 0]" align="AlignTop">
-      <div>
-        <v-box margins="[0, 10, 0, 0]" spacing="16">
-          <label text="当前项目地址" />
-          <line-edit id="project-path" text="${projectPath}" placeholder="输入当前项目地址" height="40" class="line-input" />
-        </v-box>
-      </div>
+main_template = '''
+<div id="main_container">
+  <v-box margins="[0, 0, 0, 0]" align="AlignTop">
+    <div>
+      <v-box margins="[0, 10, 0, 0]" spacing="16">
+        <label text="当前项目地址" />
+        <line-edit id="project-path" text="${projectPath}" placeholder="输入当前项目地址" height="40" class="line-input" />
+      </v-box>
+    </div>
 
-      <div>
-        <v-box margins="[0, 10, 0, 0]" spacing="16">
-          <label text="MCP配置词典" />
-          <text-edit id="mcp-dict" text="${mcpDict}" placeholder="输入MCP配置词典" height="250" class="text-input" />
-        </v-box>
-      </div>
+    <div>
+      <v-box margins="[0, 10, 0, 0]" spacing="16">
+        <label text="MCP配置词典" />
+        <text-edit id="mcp-dict" text="${mcpDict}" placeholder="输入MCP配置词典" height="250" class="text-input" />
+      </v-box>
+    </div>
 
-      <div>
-        <v-box margins="[0, 20, 0, 0]" spacing="20">
-          <button id="resume" class="light-button" height="40" text="还原" />
-          <button id="submit" class="dark-button" height="40" text="确认" />
-        </v-box>
-      </div>
-    </v-box>
-  </div>
-</template>
+    <div>
+      <v-box margins="[0, 20, 0, 0]" spacing="20">
+        <button id="resume" class="light-button" height="40" text="还原" />
+        <button id="submit" class="dark-button" height="40" text="确认" />
+      </v-box>
+    </div>
+  </v-box>
+</div>
 '''
 
-template_style = '''
+main_style = '''
 .line-input {
   padding: 0 10px;
   color: #444;
@@ -69,43 +66,33 @@ template_style = '''
 }
 '''
 
-store = {}
+PANEL_STORE = {}
 
-def setting(page:Page, onSettingDone):
+def setting(page:Page, on_setting_done):
     title = "Agent设置"
-    config = {
+    options = {
       "id": "agent-setting-pop",
-      "size_w_h": [500, 600],
-      "transparent": True,
-      "pin_to_top": True,
-      "movable": True,
-      "shadow_effect": True,
+      "height": 575,
       "title": f"    {title}",
-      "main_layout": "V",
-      "style": {
-        "background-color": '#fff',
-        "border-radius": '10px',
-      }
     }
-    setting_close()
-    panel = CallPanel(page.param, config)
-    panel.show()
-    panel.callback.add('before_close', setting_close)
     user_mcp_dict = page.localStore.get('setting/mcp_dict', mcp_dict)
     project_path = page.localStore.get('setting/project_path', '')
-    render_dict = render(panel.layout_main, template_setting, {
+    main_params = {
       'mcpDict': encode(format_json(user_mcp_dict)),
       'projectPath': encode(project_path),
-    })
-    wc = WidgetsController(render_dict['widget_id_map'], render_dict['widget_list'])
-
-    with open(assetsPath('UI', 'style.qss'), 'r', encoding='utf-8') as file:
-      commonStyle = file.read()
-      wc.getWidget('main_container').setStyleSheet(commonStyle + template_style)
+    }
+    setting_close()
+    panel = CallPanel(
+      main_template=main_template, 
+      main_params=main_params, 
+      style_sheet=main_style, 
+      options=options
+    )
+    panel.showPanel()
 
     def submit():
-      projectPath = wc.getWidget('project-path').text()
-      input_mcp_dict = wc.getWidget('mcp-dict').toPlainText()
+      projectPath = panel.getWidget('project-path').text()
+      input_mcp_dict = panel.getWidget('mcp-dict').toPlainText()
       try:
         valid_mcp_dict = get_valid_json(input_mcp_dict)
       except Exception as e:
@@ -115,8 +102,8 @@ def setting(page:Page, onSettingDone):
       page.localStore.set('setting/project_path', projectPath)
       page.localStore.set('setting/mcp_dict', valid_mcp_dict)
       page.tips('设置成功', 'success')
-      if callable(onSettingDone):
-        page.setTimeout(lambda *args:onSettingDone(), 0.1)
+      if callable(on_setting_done):
+        page.setTimeout(lambda *args:on_setting_done(), 0.1)
       setting_close()
 
     def resume():
@@ -124,22 +111,18 @@ def setting(page:Page, onSettingDone):
         page.localStore.set('setting/mcp_dict', mcp_dict)
         page.localStore.set('setting/project_path', '')
         page.tips('还原成功', 'success')
-        if callable(onSettingDone):
-          page.setTimeout(lambda *args:onSettingDone(), 0.1)
+        if callable(on_setting_done):
+          page.setTimeout(lambda *args:on_setting_done(), 0.1)
         setting_close()
       page.tipsBox('确认弹窗', '是否确认还原数据', '用户配置将丢失是否还原？', confirm)
 
-    wc.register('submit', 'clicked', submit)
-    wc.register('resume', 'clicked', resume)
-    panel._wc = wc
-    store['setting_callpanel'] = panel
+    panel.register('submit', 'clicked', submit)
+    panel.register('resume', 'clicked', resume)
+    PANEL_STORE['setting_callpanel'] = panel
 
 
 def setting_close():
-  if 'setting_callpanel' in store:
-    panel = store["setting_callpanel"]
-    panel.close()
-    if hasattr(panel, '_wc'):
-      panel._wc.destroy()
-      delattr(panel, '_wc')
-    del store["setting_callpanel"]
+  if 'setting_callpanel' in PANEL_STORE:
+    panel:CallPanel = PANEL_STORE["setting_callpanel"]
+    panel.destroy()
+    del PANEL_STORE["setting_callpanel"]

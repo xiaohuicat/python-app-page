@@ -47,6 +47,9 @@ class Waiting_time(EasyThread):
         self.response.emit(True)
 
 class ThreadManager:
+    """
+    线程管理器
+    """
     def __init__(self):
         self.threadList = []
 

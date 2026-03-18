@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, List, Union, Optional
+from typing import Any, Dict, List, Optional
 import xml.etree.ElementTree as ET
 from mako.template import Template
 from ...utils import t2d, decode

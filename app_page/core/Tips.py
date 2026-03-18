@@ -7,7 +7,7 @@ color_dict = {
     'success': '#28be28',
     'fail': '#e64035',
     'warning': '#eaa640',
-    'default': '#4d4d4d'
+    'default': "#118cff"
 }
 
 class Tips(QWidget):
@@ -47,9 +47,8 @@ class Tips(QWidget):
         self.adjustSize()
         self.center()
         # 添加淡入淡出的动画
-        self.fadeEffect = FadeEffect(self, 200, self.close)
+        self.fadeEffect = FadeEffect(self, 200)
         self.fadeEffect.show()
-        self.show()
 
     def center(self):
         """居中显示在屏幕或父窗口"""

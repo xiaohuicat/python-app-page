@@ -41,7 +41,7 @@ def assetsUrl(*args):
   return assetsPath(*args).replace("\\", "/")
 
 
-def assetsRead(*args):
+def assetsRead(*args) -> str | bytes:
   """读取资源文件内容
   Args:
       args (tuple): 目录，文件名
@@ -51,7 +51,7 @@ def assetsRead(*args):
   """
   path = assetsPath(*args)
   if not os.path.exists(path):
-    return None
+    return ""
   with open(path, 'r', encoding='utf-8') as f:
     return f.read()
 

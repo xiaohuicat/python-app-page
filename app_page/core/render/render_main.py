@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QLayout)
+from PySide6.QtWidgets import QWidget, QLayout
 from .render_vnode import render_vnode
 from .render_widget import render_widget
 

@@ -1,5 +1,5 @@
 import time
-from typing import Optional, Callable, Dict, Any, List
+from typing import Optional, Callable, Dict, Any
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication, QWidget, QLayout, QVBoxLayout,
@@ -10,7 +10,7 @@ from nanoid import generate
 # 自定义模块导入（保持原有结构）
 from app_page_core import Callback, Children, Param, Store
 from ..core.Tips import Tips
-from ..core.TipsBox import TipsBox
+from ..core.tipsBox import tipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
@@ -23,7 +23,7 @@ from ..MainWindow import MainWindow
 class Page:
     """
     基于PySide6的页面管理基类
-    提供页面生命周期、渲染、事件、异步任务等核心能力
+        提供页面生命周期、渲染、事件、异步任务等核心能力
     """
     def __init__(self, name: Optional[str] = None) -> None:
         # 基础标识属性
@@ -55,7 +55,6 @@ class Page:
         self.__global_data: Dict[str, Any] = {}                            # 页面全局数据
         self.__parent: Optional[QWidget] = None                            # 父容器
         self.__layout: Optional[QLayout] = None                            # 布局管理器
-        self._tips_box: Optional[TipsBox] = None                           # 提示框实例
 
         # 本地存储初始化（优化版）
         self.localStore: Optional[Param] = None
@@ -174,7 +173,6 @@ class Page:
             self.callback = None
             self.template = None
             self.__parent = None
-            self._tips_box = None
 
         except Exception as e:
             if getSetting('IS_DEBUG'):
@@ -330,33 +328,7 @@ class Page:
         :param cancel: 取消按钮回调
         :param close: 关闭按钮回调
         """
-        # 检查是否已有活跃的提示框
-        if hasattr(self, "_tips_box") and self._tips_box and not self._tips_box.isHidden():
-            if getSetting('IS_DEBUG'):
-                print("提示框已存在，请关闭后再打开")
-            return
-
-        # 创建提示框实例
-        self._tips_box = TipsBox(topic=topic, title=title, content=content)
-
-        def _close() -> None:
-            """提示框关闭后的清理逻辑"""
-            if self._tips_box:
-                self._tips_box.callback.remove()
-                self._tips_box.deleteLater()
-                self._tips_box = None
-                if callable(close):
-                    close()
-
-        # 注册按钮回调
-        if callable(confirm):
-            self._tips_box.callback.add("confirm", confirm)
-        if callable(cancel):
-            self._tips_box.callback.add("cancel", cancel)
-        self._tips_box.callback.add("close", _close)
-
-        # 显示提示框
-        self._tips_box.show()
+        tipsBox(topic, title, content, confirm, cancel, close)
 
     def setWidgets(self, widget_id_map: Dict[str, QWidget]) -> None:
         """设置组件列表"""
@@ -479,7 +451,11 @@ class Page:
         :return: 处理后的图片路径
         """
         folder = self.getSoftwarePath("tempPath", "blur_images")
-        return blur_image(folder, url, radius, opacity)
+        try:
+            return blur_image(folder, url, radius, opacity)
+        except Exception as e:
+            print(f"图片处理失败: {str(e)}")
+            return url
     
     def setClass(self, id: str, className: str, immediate: bool = True) -> None:
         """设置组件的class属性

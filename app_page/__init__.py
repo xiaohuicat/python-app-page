@@ -1,7 +1,7 @@
 from app_page_core import Store, Param, Callback, LocalStore
 from .core import (Page, EventBus, EventHook, EasyThread, ThreadManager,
                    PageManager, Waiting_time, Setting, Device,
-                   WidgetsController, render, render_vnode, render_widget)
+                   WidgetsController, CallPanel, tipsBox, render, render_vnode, render_widget)
 from .core.Setting import getSetting, applySetting
 from .app import createApp
 from .config import Config
@@ -33,4 +33,6 @@ __all__ = [
   "Config",
   "WidgetsController",
   "tryRun",
+  "CallPanel",
+  "tipsBox",
 ]

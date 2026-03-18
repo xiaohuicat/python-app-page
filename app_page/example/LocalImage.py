@@ -199,7 +199,6 @@ class LocalImage(Page):
         try:
             self._close_image_viewer()
             self.image_viewer = ShowImage(
-                page=self,
                 savePath=str(self.image_dir),
                 currentPath=image_path
             )

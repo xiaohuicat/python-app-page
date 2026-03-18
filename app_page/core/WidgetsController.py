@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import (QWidget, QLayout)
+from PySide6.QtWidgets import QWidget, QLayout
 from PySide6.QtGui import QIcon
 from app_page_core import Store
 from ..core.EventBus import EventBus
@@ -7,6 +7,10 @@ from .common import updateStyle
 
 
 class WidgetsController:
+  """
+  组件控制类
+    提供组件的注册、获取、设置样式、设置类名、设置父组件等操作
+  """
   def __init__(self, widget_id_map:dict|None=None, widget_list:list|None=None) -> None:
     self.__widget_list = widget_list if widget_list else []
     self.__widget_id_map = widget_id_map if widget_id_map else {}
@@ -54,7 +58,6 @@ class WidgetsController:
 
   def destroy(self) -> None:
     event_filter = Store().get('APP_EVENT_FILTER', None)
-    # 移除组件映射
     for each in self.__widget_list:
       try:
         if hasattr(each, 'has_event_filter') and each.has_event_filter and event_filter:

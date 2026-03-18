@@ -5,6 +5,9 @@ from .callfunc import call_func
 GLOBAL_DESTROY_KEY = '__destroy'
 
 class PageManager:
+  """
+  页面管理器
+  """
   def __init__(self):
     self.current_id = None
     self.current_page = None

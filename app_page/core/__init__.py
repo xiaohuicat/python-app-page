@@ -8,6 +8,8 @@ from ..core import Setting, Device
 from .render import render, render_widget, render_vnode
 from .callfunc import call_func, current_func
 from .WidgetsController import WidgetsController
+from .CallPanel import CallPanel
+from .tipsBox import tipsBox
 
 __all__ = [
   "Device",
@@ -25,4 +27,6 @@ __all__ = [
   "call_func",
   "current_func",
   "WidgetsController",
+  "CallPanel",
+  "tipsBox",
 ]

@@ -1,4 +1,4 @@
-from ..utils import timestamp
+import time
 
 
 # 事件钩子
@@ -24,7 +24,7 @@ class EventHook:
         return True
 
     def run(self, *args, **kwargs):
-        now = timestamp()
+        now = int(time.time() * 1000)
         for id, item in self.pool.items():
             last_run_time = item["last_run_time"]
             if now - last_run_time > self.delay_ms and callable(item["func"]):
