@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QWidget, QLayout
+from PySide6.QtWidgets import QWidget, QLayout, QLineEdit, QPlainTextEdit
 from PySide6.QtGui import QIcon
 from app_page_core import Store
 from ..core.EventBus import EventBus
@@ -42,18 +42,39 @@ class WidgetsController:
       widget.setIcon(QIcon(assetsPath(*args)))
 
 
-  def setClass(self, id:str, className:str) -> None:
+  def setClass(self, id:str, className:str, immediate:bool = True, updateWidget:QWidget|None = None) -> None:
     widget:QWidget = self.getWidget(id)
     if not widget:
       return
     widget.setProperty('class', className)
-    updateStyle(widget)
+    if immediate:
+      updateStyle(updateWidget if updateWidget else widget)
 
 
   def register(self, id:str, signal:str, callback) -> None:
     if not self.getWidget(id):
       return
     self.__eventBus.register(id, signal, callback)
+
+
+  def getText(self, id:str) -> str:
+    widget:QWidget = self.getWidget(id)
+    if not widget:
+      return ''
+    if isinstance(widget, QLineEdit):
+      return widget.text()
+    if isinstance(widget, QPlainTextEdit):
+      return widget.toPlainText()
+
+
+  def setText(self, id:str, value:str) -> None:
+    widget:QWidget = self.getWidget(id)
+    if not widget:
+      return
+    if isinstance(widget, QLineEdit):
+      widget.setText(value)
+    elif isinstance(widget, QPlainTextEdit):
+      widget.setPlainText(value)
 
 
   def destroy(self) -> None:

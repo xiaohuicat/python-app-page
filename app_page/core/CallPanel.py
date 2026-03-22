@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QDialog, QWidget, QLayout, QVBoxLayout
 
 from app_page_core import Callback
 from ..animation import MoveWin, Shadow, FadeEffect
-from ..utils import assetsRead
+from ..utils import assetsRead, assetsUrl
 from .render.render_main import render
 from .WidgetsController import WidgetsController
 
@@ -12,7 +12,7 @@ create_template = lambda main_content: '''
 <% title_class = 'light' if title == '' else '' %>
 <template>
     <div class="container" width="${_width}" height="${_height}" size_policy="True">
-        <v-box margins="[10,10,10,10]" spacing="0" align="AlignCenter">
+        <v-box margins="[10,10,10,10]" spacing="0">
             <!-- 头部区域 -->
             <div id="header" class="header" height="${_header_height}">
                 <h-box spacing="10" margins="${_header_margins}" align="AlignTop">
@@ -21,11 +21,12 @@ create_template = lambda main_content: '''
                     <!-- 标题显示按钮 -->
                     <button id="title" height="24" text="${_display_title}" class="${title_class}"/>
                     <!-- 关闭按钮 -->
-                    <button id="btn_close" width="24" height="24" text="×"/>
+                    <button id="btn_close" width="24" height="24" />
                 </h-box>
             </div>
             <!-- 主体内容区域 -->
             ''' + main_content + '''
+            <div />
         </v-box>
     </div>
 </template>
@@ -60,6 +61,8 @@ create_style = lambda radius: '''
     font-size: 22px;
     border: none;
     border-radius: 5px;
+    padding: 3px;
+    image: url("''' + assetsUrl('icon', 'close_black.png') + '''");
 }
 #btn_close:hover {
     background-color: #f0f0f0;
@@ -94,7 +97,7 @@ class CallPanel(QDialog):
         self.options = options if isinstance(options, dict) else {}
 
         # 动画效果
-        self.fade_effect = FadeEffect(self, 100, self._show_panel)
+        self.fade_effect = FadeEffect(self, 100)
         
         # 1. 窗口基础设置（整合所有配置逻辑）
         self._init_window()
@@ -197,17 +200,11 @@ class CallPanel(QDialog):
         """设置类名"""
         return self.widgets_controller.setClass(id, className)
 
-    def showPanel(self):
-        """支持动画和exec模式"""
-        self.fade_effect.show()
+    def showPanel(self, is_exec=False):
+        """支持带动画打开面板"""
+        self.fade_effect.show(is_exec)
 
     # ====================== 业务逻辑方法 ======================
-    def _show_panel(self):
-        if self.options.get("exec", False):  # 通用命名：exec_ -> exec
-            self.exec()
-        else:
-            super().show()
-
     def _title_click(self):
         """标题点击进入编辑状态"""
         if not self.options.get('editable_title', False):

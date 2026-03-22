@@ -1,17 +1,13 @@
 import os
-from PySide6.QtCore import Signal, Qt, QSize
-from PySide6.QtWidgets import QMainWindow, QWidget, QLayout
+from PySide6.QtCore import Signal, Qt, QSize, QPoint, QEvent, QTimer
+from PySide6.QtWidgets import QMainWindow, QWidget, QLayout, QLabel, QHBoxLayout
 from PySide6.QtGui import QPixmap, QGuiApplication
 from ..core.render.render_main import render
 from ..core import WidgetsController
-from ..core import Page
 from ..core.Device import getScreenInfo
 from ..animation import MoveWin, Shadow
 from ..utils import assetsUrl
 
-from PIL import Image
-from PIL import ImageFile
-ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 template = '''
 <template>
@@ -19,19 +15,19 @@ template = '''
         <v-box margins="[0,0,0,0]" spacing="0">
             <div id="header" class="header" height="42">
                 <h-box spacing="5" margins="[6,0,6,0]">
-                    <button id="btn_left" height="28" width="28"/>
-                    <button id="btn_right" height="28" width="28"/>
-                    <button id="btn_list" height="28" width="28"/>
-                    <button id="btn_big" height="28" width="28"/>
-                    <button id="btn_small" height="28" width="28"/>
+                    <button id="btn_left" height="28" width="28" class="btn_left"/>
+                    <button id="btn_right" height="28" width="28" class="btn_right"/>
+                    <button id="btn_list" height="28" width="28" class="btn_list"/>
+                    <button id="btn_big" height="28" width="28" class="btn_big"/>
+                    <button id="btn_small" height="28" width="28" class="btn_small"/>
                     <div/>
-                    <button id="btn_mini" height="28" width="28"/>
-                    <button id="btn_change" height="28" width="28"/>
-                    <button id="btn_close" height="28" width="28"/>
+                    <button id="btn_mini" height="28" width="28" class="btn_mini"/>
+                    <button id="btn_change" height="28" width="28" class="btn_change"/>
+                    <button id="btn_close" height="28" width="28" class="btn_close"/>
                 </h-box>
             </div>
-            <div>
-                <h-box align="AlignCenter" margins="[0,0,0,0]" spacing="0">
+            <div id="image_container">
+                <h-box id="image_layout" align="AlignCenter" margins="[0,0,0,0]" spacing="0">
                     <label id="image" />
                 </h-box>
             </div>
@@ -56,45 +52,45 @@ QPushButton:hover {
 .container {
     background-color: #ffffff;
 }
-#btn_left {
+.btn_left {
     image: url('''+ assetsUrl('icon', 'image', 'btn_left.png') +''');
 }
-#btn_left_sleep {
+.btn_left_sleep {
     image: url('''+ assetsUrl('icon', 'image', 'btn_left_sleep.png') +''');
 }
-#btn_right {
+.btn_right {
     image: url('''+ assetsUrl('icon', 'image', 'btn_right.png') +''');
 }
-#btn_right_sleep {
+.btn_right_sleep {
     image: url('''+ assetsUrl('icon', 'image', 'btn_right_sleep.png') +''');
 }
-#btn_list {
+.btn_list {
     image: url('''+ assetsUrl('icon', 'image', 'btn_list.png') +''');
 }
-#btn_big {
+.btn_big {
     image: url('''+ assetsUrl('icon', 'image', 'btn_big.png') +''');
 }
-#btn_big_sleep {
+.btn_big_sleep {
     image: url('''+ assetsUrl('icon', 'image', 'btn_big_sleep.png') +''');
 }
-#btn_small {
+.btn_small {
     image: url('''+ assetsUrl('icon', 'image', 'btn_small.png') +''');
 }
-#btn_small_sleep {
+.btn_small_sleep {
     image: url('''+ assetsUrl('icon', 'image', 'btn_small_sleep.png') +''');
 }
-#btn_mini {
+.btn_mini {
     image: url('''+ assetsUrl('icon', 'image', 'minimizing.png') +''');
 }
-#btn_change {
+.btn_change {
     padding: 6px;
     image: url('''+ assetsUrl('icon', 'image', 'btn_change.png') +''');
 }
-#btn_change_sleep {
+.btn_change_sleep {
     padding: 4px;
     image: url('''+ assetsUrl('icon', 'image', 'btn_change_sleep.png') +''');
 }
-#btn_close {
+.btn_close {
     image: url('''+ assetsUrl('icon', 'image', 'btn_close.png') +''');
 }
 '''
@@ -106,53 +102,55 @@ class ShowImage(QMainWindow):
         super().__init__()
 
         MoveWin(self, "image_window_position")
-
         self.setWindowFlag(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # 创建UI挂载节点
         self.ui = QWidget()
         self.ui.setStyleSheet(show_image_style())
         self.setCentralWidget(self.ui)
 
-        # 添加阴影
         self.setContentsMargins(10, 10, 10, 10)
         self.setFixedWidth(980)
         self.setFixedHeight(740)
         Shadow(self.ui)
 
-        # 渲染UI
         render_dict = render(self.ui, template, {})
         self.widgetsController:WidgetsController = WidgetsController(
             widget_id_map=render_dict['widget_id_map'], 
             widget_list=render_dict['widget_list'])
-        # 绑定按钮事件
+        
+        self.image_label: QLabel = self.getWidget('image')
+        self.image_container: QWidget = self.getWidget('image_container')
+        self.image_layout: QHBoxLayout = self.getWidget('image_layout')
+        
         self.register('btn_change', 'clicked', self.restore_or_maximize_window)
         self.register('btn_big', 'clicked', self.image_biger)
         self.register('btn_small', 'clicked', self.image_smaller)
         self.register('btn_left', 'clicked', self.left_image)
         self.register('btn_right', 'clicked', self.right_image)
-        self.register('btn_close', 'clicked', self.closePage)
+        self.register('btn_close', 'clicked', self.close_page)
 
-        # 路径处理
         self.savePath = savePath.rstrip('/\\')
         self.currentPath = currentPath
-
-        # 显示参数
         self.size = QSize(960, 672)
         self.isMaximized = False
         self.normal_window_rect = None
-
         self.screen = getScreenInfo()
-
-        # 支持的图片格式
         self.supported_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.tiff', '.svg'}
 
-        # 初始化文件列表并定位当前图片
         self.refresh_file_list()
         self.locate_current_image()
 
-        # 显示图片并更新导航按钮
+        # 拖拽变量
+        self.is_dragging = False
+        self.drag_start_offset = QPoint() 
+
+        # 初始化图片层级关系
+        self.image_layout.removeWidget(self.image_label)
+        self.image_label.setParent(self.image_container)
+        self.image_label.setMouseTracking(True)
+        self.image_label.installEventFilter(self)
+
         self.show_image()
         self.update_navigation_buttons()
 
@@ -165,177 +163,140 @@ class ShowImage(QMainWindow):
     def getWidget(self, id:str) -> QWidget|QLayout:
         return self.widgetsController.getWidget(id)
 
-    def closePage(self):
-        self.close()
-        self.image_request.emit(None)
-        self.widgetsController.destroy()
-        self.deleteLater()
-
-    def refresh_file_list(self):
-        """刷新文件夹中的图片文件列表（按文件名排序）"""
-        if not os.path.isdir(self.savePath):
-            self.files = []
-            self.file_num = 0
+    def _reset_image_position(self):
+        """重置图片位置为容器居中"""
+        if not self.image_label.pixmap() or self.image_label.pixmap().isNull():
             return
+        
+        container_rect = self.image_container.contentsRect()
+        pix_size = self.image_label.pixmap().size()
+        
+        center_x = (container_rect.width() - pix_size.width()) // 2
+        center_y = (container_rect.height() - pix_size.height()) // 2
+        
+        self.image_label.resize(pix_size)
+        self.image_label.move(center_x, center_y)
 
-        all_files = os.listdir(self.savePath)
-        self.files = sorted([
-            f for f in all_files
-            if os.path.splitext(f)[1].lower() in self.supported_extensions
-            and os.path.isfile(os.path.join(self.savePath, f))
-        ])
-        self.file_num = len(self.files)
+    def eventFilter(self, obj, event):
+        if obj == self.image_label:
+            if not hasattr(self, 'pix_raw') or not self.pix_raw:
+                return super().eventFilter(obj, event)
 
-    def locate_current_image(self):
-        """根据 currentPath 定位到对应的图片索引"""
-        if self.file_num == 0:
-            self.current = 0
+            if event.type() == QEvent.MouseButtonPress:
+                if event.button() == Qt.LeftButton:
+                    self.is_dragging = True
+                    # 记录点击位置相对于图片左上角的偏移
+                    self.drag_start_offset = event.pos()
+                    self.image_label.setCursor(Qt.ClosedHandCursor)
+                    return True
+
+            elif event.type() == QEvent.MouseMove:
+                if self.is_dragging:
+                    # 将全局坐标转换为容器内的相对坐标，并减去点击时的偏移
+                    global_pos = event.globalPos()
+                    container_pos = self.image_container.mapFromGlobal(global_pos)
+                    new_pos = container_pos - self.drag_start_offset
+                    
+                    # 限制位置
+                    limited_pos = self._limit_image_position(new_pos)
+                    self.image_label.move(limited_pos)
+                    return True
+
+            elif event.type() == QEvent.MouseButtonRelease:
+                if event.button() == Qt.LeftButton:
+                    self.is_dragging = False
+                    self.image_label.setCursor(Qt.OpenHandCursor)
+                    return True
+
+            elif event.type() == QEvent.Enter:
+                self.image_label.setCursor(Qt.OpenHandCursor)
+            
+            # 滚轮缩放支持 (可选增加)
+            elif event.type() == QEvent.Wheel:
+                if event.angleDelta().y() > 0:
+                    self.image_biger()
+                else:
+                    self.image_smaller()
+                return True
+
+        return super().eventFilter(obj, event)
+
+    def _limit_image_position(self, pos: QPoint) -> QPoint:
+        """确保图片至少有10px留在容器可见区域内"""
+        container_rect = self.image_container.contentsRect()
+        img_size = self.image_label.size()
+        margin = 20 # 留存边距
+
+        # X轴限制：左边缘不能超过右边界-margin，右边缘不能小于左边界+margin
+        min_x = container_rect.left() - img_size.width() + margin
+        max_x = container_rect.right() - margin
+        
+        # Y轴限制
+        min_y = container_rect.top() - img_size.height() + margin
+        max_y = container_rect.bottom() - margin
+
+        # 如果图片比容器小，限制它不完全跑出中心区域
+        new_x = max(min_x, min(pos.x(), max_x))
+        new_y = max(min_y, min(pos.y(), max_y))
+        
+        return QPoint(new_x, new_y)
+
+    def apply_zoom(self, factor):
+        """执行缩放并保持中心点不变"""
+        if not self.pix_raw: return
+        
+        old_size = self.image_label.size()
+        old_pos = self.image_label.pos()
+        
+        # 计算新尺寸
+        new_size = self.size * factor
+        if new_size.width() > 5000:
+            self.btn_sleep('btn_big')
             return
-
-        target_filename = os.path.basename(self.currentPath)
-
-        if target_filename in self.files:
-            self.current = self.files.index(target_filename)
-        else:
-            # 如果指定图片不在文件夹中（可能被删除或路径错误），默认显示第一张
-            self.current = 0
-
-    def update_navigation_buttons(self):
-        """根据当前图片位置更新左右按钮的可用状态"""
-        if self.file_num <= 1:
-            self.btn_sleep('btn_left')
-            self.btn_sleep('btn_right')
+        if new_size.width() < 100:
+            self.btn_sleep('btn_small')
             return
+            
+        self.size = new_size
+        self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.image_label.setPixmap(self.pix)
+        self.image_label.resize(self.pix.size())
 
-        if self.current == 0:
-            self.btn_sleep('btn_left')
-            self.btn_wakeUp('btn_right')
-        elif self.current == self.file_num - 1:
-            self.btn_sleep('btn_right')
-            self.btn_wakeUp('btn_left')
-        else:
-            self.btn_wakeUp('btn_left')
-            self.btn_wakeUp('btn_right')
+        # 计算位置偏移：保持图片中心点位置不变
+        # Offset = (OldSize - NewSize) / 2
+        diff_w = (old_size.width() - self.image_label.width()) // 2
+        diff_h = (old_size.height() - self.image_label.height()) // 2
+        
+        new_pos = QPoint(old_pos.x() + diff_w, old_pos.y() + diff_h)
+        self.image_label.move(self._limit_image_position(new_pos))
 
-        # 缩放按钮初始状态（假设图片可放大）
+    def image_biger(self):
+        self.apply_zoom(1.2)
+        self.btn_wakeUp('btn_small')
+
+    def image_smaller(self):
+        self.apply_zoom(0.8)
         self.btn_wakeUp('btn_big')
-        self.btn_sleep('btn_small')  # 初始不允许缩小（因为还没放大）
 
     def show_image(self):
-        """显示当前索引的图片"""
         if self.file_num == 0:
-            self.pix_raw = False
-            error_pix = QPixmap(assetsUrl('image', 'error.png'))
-            self.getWidget('image').setPixmap(error_pix)
-            self.setWindowTitle("无图片")
+            self.pix_raw = None
+            self.getWidget('image').setPixmap(QPixmap(assetsUrl('image', 'error.png')))
             return
 
         current_file = self.files[self.current]
         raw_path = os.path.join(self.savePath, current_file)
-
-        print('正在查看:', raw_path)
-
-        # 更新窗口标题为当前图片文件名
+        
         self.setWindowTitle(current_file)
 
-        # 生成缩略图路径（800x800）
-        name_no_ext = os.path.splitext(current_file)[0]
-        thumbnail_name = name_no_ext + '.png'
-        thumbnail_dir = Page().getSoftwarePath(
-            'tempPath',
-            'images/show/thumbnail_size_800',
-            os.path.basename(self.savePath))
-        new_path_800 = os.path.join(thumbnail_dir, thumbnail_name)
-
-        isError = False
-        if os.path.isfile(new_path_800):
-            print('缩略图已存在:', new_path_800)
-        else:
-            os.makedirs(thumbnail_dir, exist_ok=True)
-            try:
-                with Image.open(raw_path) as img:
-                    img.thumbnail((800, 800))
-                    img.save(new_path_800)
-            except Exception as e:
-                print("无法打开或处理图片:", raw_path, e)
-                isError = True
-
-        if isError:
-            self.pix_raw = False
-            self.pix = QPixmap(assetsUrl('image', 'error.png'))
-        else:
-            self.pix_raw = QPixmap(new_path_800)
-            if self.pix_raw.isNull():
-                self.pix_raw = False
-                self.pix = QPixmap(assetsUrl('image', 'error.png'))
-            else:
-                self.pix = self.pix_raw.scaled(
-                    self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation
-                )
-
-        self.getWidget('image').setPixmap(self.pix)
-
-    # 上一张
-    def left_image(self):
-        if self.current > 0:
-            self.current -= 1
-            self.refresh_file_list()  # 防止文件被外部删除
-            if self.current >= self.file_num:
-                self.current = self.file_num - 1
-            self.show_image()
-            self.update_navigation_buttons()
-
-    # 下一张
-    def right_image(self):
-        if self.current < self.file_num - 1:
-            self.current += 1
-            self.refresh_file_list()
-            if self.current >= self.file_num:
-                self.current = 0
-            self.show_image()
-            self.update_navigation_buttons()
-
-    # 放大
-    def image_biger(self):
-        if not self.pix_raw or self.pix_raw.isNull():
-            print('没有加载有效原图')
-            return
-
-        current_w, current_h = self.size.width(), self.size.height()
-        if current_w >= 6000 or current_h >= 6000:
-            print('已达到最大放大')
-            self.btn_sleep('btn_big')
-            return
-
-        self.size = self.size * 1.2
+        self.pix_raw = QPixmap(raw_path)
+        self.size = QSize(960, 672) # 重置基准尺寸
         self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.getWidget('image').setPixmap(self.pix)
+        self.image_label.setPixmap(self.pix)
+        self.image_label.resize(self.pix.size())
+        
+        QTimer.singleShot(30, self._reset_image_position)
 
-        self.btn_wakeUp('btn_big')
-        if current_w > 100 and current_h > 100:
-            self.btn_wakeUp('btn_small')
-
-    # 缩小
-    def image_smaller(self):
-        if not self.pix_raw or self.pix_raw.isNull():
-            print('没有加载有效原图')
-            return
-
-        current_w, current_h = self.size.width(), self.size.height()
-        if current_w <= 100 or current_h <= 100:
-            print('已达到最小尺寸')
-            self.btn_sleep('btn_small')
-            return
-
-        self.size = self.size * 0.8
-        self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-        self.getWidget('image').setPixmap(self.pix)
-
-        self.btn_wakeUp('btn_small')
-        if current_w < 6000 and current_h < 6000:
-            self.btn_wakeUp('btn_big')
-
-    # 最大化 / 还原
     def restore_or_maximize_window(self):
         if self.isMaximized:
             if self.normal_window_rect:
@@ -346,14 +307,57 @@ class ShowImage(QMainWindow):
             raw = self.geometry()
             self.normal_window_rect = [raw.x(), raw.y(), raw.width(), raw.height()]
             rect = QGuiApplication.primaryScreen().availableGeometry()
-            self.setGeometry(-8, -8, rect.width() + 16, rect.height() + 40)
+            self.setGeometry(rect.x(), rect.y(), rect.width(), rect.height())
             self.isMaximized = True
             self.setClass('btn_change', 'btn_change_sleep')
+        
+        QTimer.singleShot(100, self._reset_image_position)
 
-    # 按钮禁用样式
+    def left_image(self):
+        if self.current > 0:
+            self.current -= 1
+            self.show_image()
+            self.update_navigation_buttons()
+
+    def right_image(self):
+        if self.current < self.file_num - 1:
+            self.current += 1
+            self.show_image()
+            self.update_navigation_buttons()
+
+    def refresh_file_list(self):
+        if not os.path.isdir(self.savePath):
+            self.files = []; self.file_num = 0
+            return
+        self.files = sorted([f for f in os.listdir(self.savePath) if os.path.splitext(f)[1].lower() in self.supported_extensions])
+        self.file_num = len(self.files)
+
+    def locate_current_image(self):
+        target = os.path.basename(self.currentPath)
+        self.current = self.files.index(target) if target in self.files else 0
+
+    def update_navigation_buttons(self):
+        if self.file_num <= 1:
+            self.btn_sleep('btn_left'); 
+            self.btn_sleep('btn_right')
+        elif self.current == 0:
+            self.btn_sleep('btn_left'); 
+            self.btn_wakeUp('btn_right')
+        elif self.current == self.file_num - 1:
+            self.btn_sleep('btn_right'); 
+            self.btn_wakeUp('btn_left')
+        else:
+            self.btn_wakeUp('btn_left'); 
+            self.btn_wakeUp('btn_right')
+
     def btn_sleep(self, name):
         self.setClass(name, f'{name}_sleep')
 
-    # 按钮启用样式
     def btn_wakeUp(self, name):
         self.setClass(name, name)
+    
+    def close_page(self):
+        self.close()
+        self.image_request.emit(None)
+        self.widgetsController.destroy()
+        self.deleteLater()

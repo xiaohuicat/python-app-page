@@ -3,7 +3,7 @@ from PySide6.QtCore import QObject, Signal
 from app_page import Page, getSetting
 from app_page.utils import encode, call_qwen, assetsUrl, updateStyle
 from app_page.plugins import DevAgent as DevAgentPlugin
-from .DevAgentSetting import setting
+from .DevAgentSetting import setting, setting_close
 from .mcp_dict import mcp_dict
 
 template = """
@@ -132,6 +132,9 @@ class DevAgent(Page):
     self.register('setting', 'clicked', lambda: setting(self, self.load))
     self.register('message', 'returnPressed', self.submit)
     self.register('submit', 'clicked', self.submit)
+
+  def hide(self, *args):
+    setting_close()
 
   def submit(self, *args):
     if self.pageParam.get('loading', False):

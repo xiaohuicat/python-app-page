@@ -22,7 +22,7 @@ editor_template = """
   <div class="container" height="250">
     <v-box>
       <label text="${title}" class="title" />
-      <text-edit id="editor" style="edit-content" />
+      <text-edit id="editor" class="edit-content" />
       <button id="help" text="${button_text}" height="32" width="100" class="button" />
     </v-box>
   </div>

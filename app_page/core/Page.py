@@ -457,7 +457,7 @@ class Page:
             print(f"图片处理失败: {str(e)}")
             return url
     
-    def setClass(self, id: str, className: str, immediate: bool = True) -> None:
+    def setClass(self, id:str, className:str, immediate:bool = True, updateWidget:QWidget|None = None) -> None:
         """设置组件的class属性
         :param id: 组件ID
         :param className: 要设置的class名称
@@ -467,7 +467,7 @@ class Page:
         if widget:
             widget.setProperty('class', className)
             if immediate:
-                updateStyle(widget)
+                updateStyle(updateWidget if updateWidget else widget)
         else:
             if getSetting('IS_DEBUG'):
                 print(f"组件 {id} 不存在，无法设置class")

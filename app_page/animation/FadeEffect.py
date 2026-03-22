@@ -36,14 +36,16 @@ class FadeEffect:
         self._target = target
         # 确定动画结束后的回调函数，默认关闭窗口
         self._finish = finish if callable(finish) else target.close
+        self.is_exec = False
 
-    def show(self):
+    def show(self, is_exec=False):
         """
         执行窗口淡入显示动画
         
         先停止当前可能正在运行的动画，设置透明度从0到1的动画过程，
         启动动画并显示窗口，实现从完全透明到不透明的淡入效果。
         """
+        self.is_exec = is_exec
         # 停止当前动画（防止动画叠加）
         self._target._fade_animation.stop()
         # 设置动画起始透明度（完全透明）
@@ -53,7 +55,11 @@ class FadeEffect:
         # 启动淡入动画
         self._target._fade_animation.start()
         # 显示窗口（确保窗口可见）
-        self._target.show()
+        if is_exec:
+            if hasattr(self._target, "exec"):
+                self._target.exec()
+        else:
+            self._target.show()
 
     def close(self):
         """
@@ -80,10 +86,13 @@ class FadeEffect:
         移除目标窗口的动画属性，执行预设的结束回调（默认关闭窗口），
         并清空实例属性，释放资源。
         """
-        # 删除目标窗口的动画属性，避免内存泄漏
         delattr(self._target, '_fade_animation')
-        # 执行动画结束的回调函数
-        self._finish()
-        # 清空属性，释放资源
+        if not self.is_exec:
+            self._finish()
+        else:
+            if hasattr(self._target, 'accept'):
+                self._target.accept()
+            else:
+                self._finish()
         self._target = None
         self._finish = None

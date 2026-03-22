@@ -87,6 +87,7 @@ class PageManager:
     
     def remove_page():
       last = self.current_page
+      last.status = 'hide'
       last.destroy()
 
     # 隐藏当前页面

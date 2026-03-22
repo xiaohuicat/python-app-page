@@ -205,6 +205,7 @@ class LocalImage(Page):
             self.image_viewer.show_image()
             self.image_viewer.show()
         except Exception as e:
+            print(f"打开图片失败: {str(e)}")
             self.tips(f"打开图片失败: {str(e)}", 'error')
 
     def copy_image(self, image_path: str):
