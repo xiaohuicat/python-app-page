@@ -1,6 +1,6 @@
 import os
 from PySide6.QtCore import Signal, Qt, QSize, QPoint, QEvent, QTimer
-from PySide6.QtWidgets import QMainWindow, QWidget, QLayout, QLabel, QHBoxLayout
+from PySide6.QtWidgets import QMainWindow, QWidget, QLayout, QLabel, QHBoxLayout, QGridLayout
 from PySide6.QtGui import QPixmap, QGuiApplication
 from ..core.render.render_main import render
 from ..core import WidgetsController
@@ -26,9 +26,16 @@ template = '''
                     <button id="btn_close" height="28" width="28" class="btn_close"/>
                 </h-box>
             </div>
-            <div id="image_container">
-                <h-box id="image_layout" align="AlignCenter" margins="[0,0,0,0]" spacing="0">
-                    <label id="image" />
+            <div>
+                <h-box spacing="0" margins="[0,0,0,0]">
+                    <div id="image_container">
+                        <h-box id="image_layout" align="AlignCenter" margins="[0,0,0,0]" spacing="0">
+                            <label id="image" />
+                        </h-box>
+                    </div>
+                    <div id="right_panel" width="0" class="side_panel">
+                        <grid id="list_grid" grid="[0, 3]" spacing="8" margins="[10,10,10,10]" align="AlignTop"/>
+                    </div>
                 </h-box>
             </div>
         </v-box>
@@ -101,23 +108,19 @@ QPushButton:hover {
 '''
 
 class ShowImage(QMainWindow):
-    # 图片切换信号
     image_request = Signal(object)
 
     def __init__(self, currentPath:str|None = None, images:list|None = None):
         super().__init__()
-        # 初始化图片列表与当前索引
         self.images = images if images else []
         self.image_num = len(self.images)
         self.currentPath = currentPath if currentPath else ''
         self.current = self.images.index(self.currentPath) if self.currentPath in self.images else 0
 
-        # 窗口设置：无边框、透明背景、窗口拖动、阴影
         MoveWin(self, "image_window_position")
         self.setWindowFlag(Qt.FramelessWindowHint)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # 主界面初始化
         self.ui = QWidget()
         self.ui.setStyleSheet(show_image_style())
         self.setCentralWidget(self.ui)
@@ -126,19 +129,23 @@ class ShowImage(QMainWindow):
         self.setFixedHeight(740)
         Shadow(self.ui)
 
-        # 渲染模板并获取控件控制器
         render_dict = render(self.ui, template, {})
         self.widgetsController:WidgetsController = WidgetsController(
             widget_id_map=render_dict['widget_id_map'], 
             widget_list=render_dict['widget_list']
         )
         
-        # 获取图片相关控件
+        # 基础控件
         self.image_label: QLabel = self.getWidget('image')
         self.image_container: QWidget = self.getWidget('image_container')
         self.image_layout: QHBoxLayout = self.getWidget('image_layout')
         
-        # 按钮绑定事件
+        # 列表控件
+        self.right_panel: QWidget = self.getWidget('right_panel')
+        self.list_grid: QGridLayout = self.getWidget('list_grid')
+        self.is_list_show = False
+
+        # 信号绑定
         self.register('btn_change', 'clicked', self.restore_or_maximize_window)
         self.register('btn_mini', 'clicked', self.showMinimized)
         self.register('btn_big', 'clicked', self.image_biger)
@@ -146,189 +153,180 @@ class ShowImage(QMainWindow):
         self.register('btn_left', 'clicked', self.left_image)
         self.register('btn_right', 'clicked', self.right_image)
         self.register('btn_close', 'clicked', self.close_page)
+        self.register('btn_list', 'clicked', self.toggle_list)
 
-        # 基础参数初始化
         self.size = QSize(960, 672)
         self.isMaximized = False
         self.normal_window_rect = None
         self.supported_extensions = {'.png', '.jpg', '.jpeg', '.bmp', '.gif', '.webp', '.tiff', '.svg'}
 
-        # 图片拖拽变量
         self.is_dragging = False
         self.drag_start_offset = QPoint() 
 
-        # 调整图片层级，启用鼠标追踪与事件过滤
         self.image_layout.removeWidget(self.image_label)
         self.image_label.setParent(self.image_container)
         self.image_label.setMouseTracking(True)
         self.image_label.installEventFilter(self)
 
-        # 加载并显示图片
         if self.has_image():
             self.show_image()
 
-    # 注册控件信号
     def register(self, id:str, signal:str, callback):
         self.widgetsController.register(id, signal, callback)
 
-    # 设置控件样式类
     def setClass(self, id:str, className:str):
         self.widgetsController.setClass(id, className)
 
-    # 根据ID获取控件
     def getWidget(self, id:str) -> QWidget|QLayout:
         return self.widgetsController.getWidget(id)
 
-    # 加载指定文件夹下的所有图片
-    def load_images(self, folderPath: str, currentPath: str | None = None):
-        folder = folderPath.rstrip('/\\')
-        self.images = sorted([
-            os.path.join(folder, f) 
-            for f in os.listdir(folder) 
-            if os.path.splitext(f)[1].lower() in self.supported_extensions
-        ])
-        self.image_num = len(self.images)
-        self.currentPath = currentPath if currentPath else (self.images[0] if self.image_num > 0 else '')
-        self.currentPath = self.currentPath.replace('/', '\\')
-        self.current = self.images.index(self.currentPath) if self.currentPath in self.images else 0
+    # --- 列表功能实现 ---
+    def toggle_list(self):
+        """展开或收起侧边列表"""
+        if self.is_list_show:
+            self.right_panel.setFixedWidth(0)
+            self.is_list_show = False
+        else:
+            self.right_panel.setFixedWidth(240)
+            self.is_list_show = True
+            if self.list_grid.count() == 0:
+                self.refresh_thumb_list()
+            else:
+                self._update_list_highlight()
+        
+        # 布局改变后重新计算主图位置
+        QTimer.singleShot(50, self._reset_image_position)
 
-    # 重置图片到容器居中位置
-    def _reset_image_position(self):
-        if not self.image_label.pixmap() or self.image_label.pixmap().isNull():
-            return
-        
-        container_rect = self.image_container.contentsRect()
-        pix_size = self.image_label.pixmap().size()
-        
-        center_x = (container_rect.width() - pix_size.width()) // 2
-        center_y = (container_rect.height() - pix_size.height()) // 2
-        
-        self.image_label.resize(pix_size)
-        self.image_label.move(center_x, center_y)
+    def refresh_thumb_list(self):
+        """生成64x64缩略图列表"""
+        # 清空旧列表
+        while self.list_grid.count():
+            item = self.list_grid.takeAt(0)
+            if item.widget(): item.widget().deleteLater()
 
-    # 事件过滤：处理图片拖拽、缩放
+        for index, path in enumerate(self.images):
+            thumb = QLabel()
+            thumb.setFixedSize(64, 64)
+            thumb.setScaledContents(True)
+            thumb.setProperty("path_index", index)
+            thumb.setCursor(Qt.PointingHandCursor)
+            
+            # 缩略图加载
+            pix = QPixmap(path).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+            thumb.setPixmap(pix)
+            thumb.installEventFilter(self)
+            
+            row, col = divmod(index, 3)
+            self.list_grid.addWidget(thumb, row, col)
+            
+        self._update_list_highlight()
+
+    def _update_list_highlight(self):
+        """更新列表中的选中状态样式"""
+        if not self.is_list_show: return
+        for i in range(self.list_grid.count()):
+            widget = self.list_grid.itemAt(i).widget()
+            if widget:
+                if widget.property("path_index") == self.current:
+                    widget.setStyleSheet("border: 2px solid #0078d7; border-radius:0px; background: rgba(0,120,215,0.1);")
+                else:
+                    widget.setStyleSheet("border: 2px solid transparent;")
+
+    # --- 核心逻辑 ---
     def eventFilter(self, obj, event):
+        # 拦截缩略图点击
+        if isinstance(obj, QLabel) and obj.property("path_index") is not None:
+            if event.type() == QEvent.MouseButtonPress:
+                self.current = obj.property("path_index")
+                self.show_image()
+                return True
+
+        # 主图交互逻辑
         if obj == self.image_label:
             if not hasattr(self, 'pix_raw') or not self.pix_raw:
                 return super().eventFilter(obj, event)
 
-            # 鼠标按下：开始拖拽
-            if event.type() == QEvent.MouseButtonPress:
-                if event.button() == Qt.LeftButton:
-                    self.is_dragging = True
-                    self.drag_start_offset = event.pos()
-                    self.image_label.setCursor(Qt.ClosedHandCursor)
-                    return True
+            if event.type() == QEvent.MouseButtonPress and event.button() == Qt.LeftButton:
+                self.is_dragging = True
+                self.drag_start_offset = event.pos()
+                self.image_label.setCursor(Qt.ClosedHandCursor)
+                return True
 
-            # 鼠标移动：拖拽图片
-            elif event.type() == QEvent.MouseMove:
-                if self.is_dragging:
-                    global_pos = event.globalPos()
-                    container_pos = self.image_container.mapFromGlobal(global_pos)
-                    new_pos = container_pos - self.drag_start_offset
-                    limited_pos = self._limit_image_position(new_pos)
-                    self.image_label.move(limited_pos)
-                    return True
+            elif event.type() == QEvent.MouseMove and self.is_dragging:
+                container_pos = self.image_container.mapFromGlobal(event.globalPos())
+                new_pos = container_pos - self.drag_start_offset
+                self.image_label.move(self._limit_image_position(new_pos))
+                return True
 
-            # 鼠标松开：结束拖拽
             elif event.type() == QEvent.MouseButtonRelease:
-                if event.button() == Qt.LeftButton:
-                    self.is_dragging = False
-                    self.image_label.setCursor(Qt.OpenHandCursor)
-                    return True
+                self.is_dragging = False
+                self.image_label.setCursor(Qt.OpenHandCursor)
+                return True
 
-            # 鼠标进入：显示抓手
             elif event.type() == QEvent.Enter:
                 self.image_label.setCursor(Qt.OpenHandCursor)
             
-            # 鼠标滚轮：缩放图片
             elif event.type() == QEvent.Wheel:
-                if event.angleDelta().y() > 0:
-                    self.image_biger()
-                else:
-                    self.image_smaller()
+                self.image_biger() if event.angleDelta().y() > 0 else self.image_smaller()
                 return True
 
         return super().eventFilter(obj, event)
 
-    # 限制图片位置，保证部分区域在容器内
+    def _reset_image_position(self):
+        if not self.image_label.pixmap(): return
+        container_rect = self.image_container.contentsRect()
+        pix_size = self.image_label.pixmap().size()
+        center_x = (container_rect.width() - pix_size.width()) // 2
+        center_y = (container_rect.height() - pix_size.height()) // 2
+        self.image_label.resize(pix_size)
+        self.image_label.move(center_x, center_y)
+
     def _limit_image_position(self, pos: QPoint) -> QPoint:
         container_rect = self.image_container.contentsRect()
         img_size = self.image_label.size()
         margin = 20 
+        min_x, max_x = container_rect.left() - img_size.width() + margin, container_rect.right() - margin
+        min_y, max_y = container_rect.top() - img_size.height() + margin, container_rect.bottom() - margin
+        return QPoint(max(min_x, min(pos.x(), max_x)), max(min_y, min(pos.y(), max_y)))
 
-        min_x = container_rect.left() - img_size.width() + margin
-        max_x = container_rect.right() - margin
-        min_y = container_rect.top() - img_size.height() + margin
-        max_y = container_rect.bottom() - margin
-
-        new_x = max(min_x, min(pos.x(), max_x))
-        new_y = max(min_y, min(pos.y(), max_y))
-        
-        return QPoint(new_x, new_y)
-
-    # 图片缩放（保持中心点）
     def apply_zoom(self, factor):
-        if not self.pix_raw: return
-        
-        old_size = self.image_label.size()
-        old_pos = self.image_label.pos()
-        
+        if not hasattr(self, 'pix_raw') or self.pix_raw.isNull(): return
+        old_size, old_pos = self.image_label.size(), self.image_label.pos()
         new_size = self.size * factor
-        # 限制最大/最小尺寸
-        if new_size.width() > 5000:
-            self.btn_sleep('btn_big')
-            return
-        if new_size.width() < 100:
-            self.btn_sleep('btn_small')
-            return
+        if new_size.width() > 5000 or new_size.width() < 100: return
         
-        # 应用缩放
         self.size = new_size
         self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.image_label.setPixmap(self.pix)
-        self.image_label.resize(self.pix.size())
-
-        # 保持中心点不变
+        self.image_label.setFixedSize(self.pix.size())
+        
         diff_w = (old_size.width() - self.image_label.width()) // 2
         diff_h = (old_size.height() - self.image_label.height()) // 2
-        
-        new_pos = QPoint(old_pos.x() + diff_w, old_pos.y() + diff_h)
-        self.image_label.move(self._limit_image_position(new_pos))
+        self.image_label.move(self._limit_image_position(QPoint(old_pos.x() + diff_w, old_pos.y() + diff_h)))
 
-    # 放大图片
     def image_biger(self):
         self.apply_zoom(1.2)
-        self.btn_wakeUp('btn_small')
-
-    # 缩小图片
     def image_smaller(self):
         self.apply_zoom(0.8)
-        self.btn_wakeUp('btn_big')
-
-    # 判断是否有图片可显示
     def has_image(self):
-        return isinstance(self.current, int) and self.image_num > 0
+        return self.image_num > 0
 
-    # 显示当前图片
     def show_image(self):
-        no_image = self.current == None or self.image_num == 0
-        raw_path = self.images[self.current] if not no_image else assetsUrl('image', 'error.png')
+        if self.image_num == 0:
+            return
+        raw_path = self.images[self.current]
         self.setWindowTitle(os.path.basename(raw_path))
-        
-        # 加载并缩放图片
         self.pix_raw = QPixmap(raw_path)
-        self.size = QSize(960, 672) if not no_image else QSize(64, 64)
+        self.size = QSize(960, 672)
         self.pix = self.pix_raw.scaled(self.size, Qt.KeepAspectRatio, Qt.SmoothTransformation)
         self.image_label.setPixmap(self.pix)
-        self.image_label.resize(self.pix.size())
+        self.image_label.setFixedSize(self.pix.size())
         
-        # 延迟居中并刷新按钮状态
         QTimer.singleShot(30, self._reset_image_position)
-        self.show()
         self.update_navigation_buttons()
+        self._update_list_highlight()
+        self.show()
 
-    # 窗口最大化/还原
     def restore_or_maximize_window(self):
         if self.isMaximized:
             if self.normal_window_rect:
@@ -342,22 +340,18 @@ class ShowImage(QMainWindow):
             self.setGeometry(rect.x(), rect.y(), rect.width(), rect.height())
             self.isMaximized = True
             self.setClass('btn_change', 'btn_change_sleep')
-        
         QTimer.singleShot(100, self._reset_image_position)
 
-    # 上一张图片
     def left_image(self):
         if self.current > 0:
             self.current -= 1
             self.show_image()
 
-    # 下一张图片
     def right_image(self):
         if self.current < self.image_num - 1:
             self.current += 1
             self.show_image()
 
-    # 更新左右按钮可用状态
     def update_navigation_buttons(self):
         if self.image_num <= 1:
             self.btn_sleep('btn_left')
@@ -372,15 +366,11 @@ class ShowImage(QMainWindow):
             self.btn_wakeUp('btn_left')
             self.btn_wakeUp('btn_right')
 
-    # 按钮置为禁用样式
     def btn_sleep(self, name):
         self.setClass(name, f'{name}_sleep')
-
-    # 按钮恢复正常样式
     def btn_wakeUp(self, name):
         self.setClass(name, name)
     
-    # 关闭窗口并释放资源
     def close_page(self):
         self.close()
         self.image_request.emit(None)
