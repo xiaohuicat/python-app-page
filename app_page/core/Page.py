@@ -296,15 +296,15 @@ class Page:
             """确保在Qt主线程执行UI操作"""
             # 清理旧提示
             if hasattr(self.app, "tips_widget"):
-                hook = self.mainWin.win.mouseMoveEventHook
-                hook.remove(id="tips")
+                hook = self.mainWin.moveWin.moveWinHook
+                hook.remove(hook_id="move_win_hook")
                 self.app.tips_widget.deleteLater()
                 delattr(self.app, "tips_widget")
 
             # 创建新提示
             self.app.tips_widget = Tips(msg, type)
-            hook = self.mainWin.win.mouseMoveEventHook
-            hook.add(id="tips", func=lambda *args: self.app.tips_widget.center())
+            hook = self.mainWin.moveWin.moveWinHook
+            hook.add(hook_id="move_win_hook", func=lambda *args: self.app.tips_widget.center())
 
         # 确保UI操作在主线程执行
         if self.app and self.app.thread() != self.app.thread():
@@ -471,6 +471,12 @@ class Page:
         else:
             if getSetting('IS_DEBUG'):
                 print(f"组件 {id} 不存在，无法设置class")
+
+    def getText(self, id:str) -> str:
+        return self.__widgetsController.getText(id)
+    
+    def setText(self, id:str, value:str) -> None:
+        self.__widgetsController.setText(id, value)
 
     @property
     def info(self) -> str:

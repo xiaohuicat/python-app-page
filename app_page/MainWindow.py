@@ -148,7 +148,7 @@ class MainWindow(QMainWindow):
     self.setWindowFlag(QtCore.Qt.FramelessWindowHint)  # 去除原来的边框
     self.setAttribute(QtCore.Qt.WA_TranslucentBackground)  # 透明背景
     # 添加窗口移动功能
-    self.win = MoveWin(self, "main_window_position", (1080+self.margin*2, 753+self.margin*2))
+    self.moveWin = MoveWin(self, "main_window_position", (1080+self.margin*2, 753+self.margin*2))
     # 创建UI挂载节点
     self.ui = QWidget()
     self.ui.setStyleSheet(main_window_style())
@@ -197,7 +197,7 @@ class MainWindow(QMainWindow):
       current_position = self.getPosition()
       self.setPosition(current_position)
       print("切换到最大化状态，当前窗口位置和尺寸:", current_position)
-      self.win.setPosition()
+      self.moveWin.setPosition()
       self.param.set("is_maximized", True)
       self.widgetsController.setClass('btn_change', 'btn_restore')
     else:
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
       print("还原窗口位置和尺寸:", position)
       self.setGeometry(*position)
       self.setPosition(position)
-      self.win.setPosition()
+      self.moveWin.setPosition()
       self.param.set("is_maximized", False)
       self.widgetsController.setClass('btn_change', 'btn_big')
 

@@ -31,7 +31,7 @@ class MoveWin(QMainWindow):
     self.m_flag = False
     self.move_id = move_id
     self.param:Param = Store().get('param', None)
-    self.mouseMoveEventHook = EventHook(10)
+    self.moveWinHook = EventHook(10)
 
     if self.move_id:
       self.window_position = self.param.get(move_id, None)
@@ -76,7 +76,7 @@ class MoveWin(QMainWindow):
   def mouseMoveEvent(self, mouse_event):
     if QtCore.Qt.LeftButton and self.m_flag:
       self.target.move(mouse_event.globalPos() - self.m_Position)   # 更改窗口位置
-      self.mouseMoveEventHook.run(mouse_event.globalPos() - self.m_Position)
+      self.moveWinHook.emit('move_win_hook', mouse_event.globalPos() - self.m_Position)
       mouse_event.accept()
 
 

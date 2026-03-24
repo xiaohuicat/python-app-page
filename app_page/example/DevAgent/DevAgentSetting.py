@@ -1,5 +1,6 @@
 from app_page import Page, CallPanel
 from app_page.utils import encode, get_valid_json, format_json
+from app_page.plugins import PanelStore
 from .mcp_dict import mcp_dict
 
 main_template = '''
@@ -66,7 +67,9 @@ main_style = '''
 }
 '''
 
-PANEL_STORE = {}
+ps = PanelStore()
+
+setting_close = lambda: ps.close()
 
 def setting(page:Page, on_setting_done):
     title = "Agent设置"
@@ -81,14 +84,12 @@ def setting(page:Page, on_setting_done):
       'mcpDict': encode(format_json(user_mcp_dict)),
       'projectPath': encode(project_path),
     }
-    setting_close()
     panel = CallPanel(
       main_template=main_template, 
       main_params=main_params, 
       style_sheet=main_style, 
       options=options
     )
-    panel.showPanel()
 
     def submit():
       projectPath = panel.getWidget('project-path').text()
@@ -96,7 +97,7 @@ def setting(page:Page, on_setting_done):
       try:
         valid_mcp_dict = get_valid_json(input_mcp_dict)
       except Exception as e:
-        page.tips(f'JSON格式错误: {str(e)}', 'fail')
+        page.tips(str(e), 'fail')
         return
       
       page.localStore.set('setting/project_path', projectPath)
@@ -104,7 +105,7 @@ def setting(page:Page, on_setting_done):
       page.tips('设置成功', 'success')
       if callable(on_setting_done):
         page.setTimeout(lambda *args:on_setting_done(), 0.1)
-      setting_close()
+      ps.close()
 
     def resume():
       def confirm():
@@ -113,16 +114,11 @@ def setting(page:Page, on_setting_done):
         page.tips('还原成功', 'success')
         if callable(on_setting_done):
           page.setTimeout(lambda *args:on_setting_done(), 0.1)
-        setting_close()
+        ps.close()
       page.tipsBox('确认弹窗', '是否确认还原数据', '用户配置将丢失是否还原？', confirm)
 
     panel.register('submit', 'clicked', submit)
     panel.register('resume', 'clicked', resume)
-    PANEL_STORE['setting_callpanel'] = panel
-
-
-def setting_close():
-  if 'setting_callpanel' in PANEL_STORE:
-    panel:CallPanel = PANEL_STORE["setting_callpanel"]
-    panel.destroy()
-    del PANEL_STORE["setting_callpanel"]
+    
+    ps.add(panel)
+    panel.showPanel()

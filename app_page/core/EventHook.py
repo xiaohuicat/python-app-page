@@ -1,35 +1,47 @@
 import time
+from typing import Callable, Any, Dict, Optional
 
-
-# 事件钩子
 class EventHook:
-    def __init__(self, delay_ms:int=10):
-        self.pool = {}
-        self.delay_ms = delay_ms  # 防抖触发，默认10ms
-    
-    def add(self, id:str, func):
-        self.pool[id] = {
+    def __init__(self, interval_ms: int = 10):
+        self._pool: Dict[str, Dict[str, Any]] = {}
+        self.interval_ms = interval_ms
+
+    def register(self, hook_id: str):
+        """装饰器：更方便地注册函数"""
+        def wrapper(func: Callable):
+            self.add(hook_id, func)
+            return func
+        return wrapper
+
+    def add(self, hook_id: str, func: Callable):
+        self._pool[hook_id] = {
             "func": func,
-            "last_run_time": 0  # 初始化上次运行时间为0
+            "last_run": 0
         }
 
-    def get(self, id:str):
-        return self.pool.get(id)
-
-    def remove(self, id=None):
-        if id is None:
-            self.pool.clear()
+    def remove(self, hook_id: Optional[str] = None):
+        if hook_id is None:
+            self._pool.clear()
         else:
-            self.pool.pop(id, None)
-        return True
+            self._pool.pop(hook_id, None)
 
-    def run(self, *args, **kwargs):
+    def emit(self, hook_id: Optional[str] = None, *args, **kwargs):
+        """
+        触发事件。
+        :param hook_id: 如果指定 ID，则只触发该事件；否则触发全部。
+        """
         now = int(time.time() * 1000)
-        for id, item in self.pool.items():
-            last_run_time = item["last_run_time"]
-            if now - last_run_time > self.delay_ms and callable(item["func"]):
+        
+        # 确定需要检查的任务列表
+        targets = [hook_id] if hook_id in self._pool else (self._pool.keys() if hook_id is None else [])
+
+        for _id in list(targets):  # 使用 list 包裹防止字典在迭代时改变
+            item = self._pool.get(_id)
+            if not item: continue
+            
+            if now - item["last_run"] >= self.interval_ms:
                 try:
                     item["func"](*args, **kwargs)
-                    self.pool[id]["last_run_time"] = now
+                    item["last_run"] = now # 更新执行时间
                 except Exception as e:
-                    print(f"运行函数失败，ID: {id}，错误: {e}")
+                    print(f"[EventHook] ID: {_id} execution failed: {e}")

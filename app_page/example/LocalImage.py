@@ -19,18 +19,19 @@ TEMPLATE = """
                     <button class="primary-button" id="openFolder" text="打开" width="60" height="26" />
                 </h-box>
             </div>
-            <div>
+            <div id="image-container">
                 <v-box scroll="True" margins="[0,0,0,0]">
                 % if len(images) > 0:
                     % for index, img in enumerate(images):
                         <div>
                             <h-box spacing="10" margins="[0,10,0,0]">
                                 <button
+                                    id="${img['id']}"
+                                    class="image-main"
                                     width="180"
                                     height="120"
                                     index="${index}"
                                     event-filter="open"
-                                    style="${getImageStyle(img)}"
                                 />
                                 <div>
                                     <v-box spacing="5">
@@ -88,6 +89,9 @@ STYLE = """
 .love-full-button {
     border-image: url('"""+assetsUrl('icon', 'local-image', 'love_full.png')+"""');
 }
+.image-main {
+    border-radius: 8px;
+}
 .image-name {
     color: #333;
     font-weight: bold;
@@ -109,6 +113,16 @@ PAGE_TITLE_DEFAULT = "我的图片"
 # 临时目录相对路径
 THUMBNAIL_REL_PATH = ("tempPath", "images", "local-images")
 
+def create_image_style(images: list[dict]):
+    style_sheet = ''
+    for img in images:
+        path = img['small-path']
+        style_sheet += '''
+#'''+img['id']+''' {
+    border-image: url("'''+path+'''");
+}
+'''
+    return style_sheet
 
 class LocalImage(Page):
     """
@@ -146,7 +160,6 @@ class LocalImage(Page):
             'title': title,
             'images': images,
             'isLoading': self.pageParam.get('isLoading', False),
-            'getImageStyle': self._get_image_style,  # 替换lambda为独立方法，更易维护
             'empty_container_xml': empty_container_xml,
         }
 
@@ -175,6 +188,10 @@ class LocalImage(Page):
         # 注册点击代理事件
         self.regist_filter(self._click_filter)
 
+        # 渲染图片样式
+        style_sheet = create_image_style(self.pageParam.get('images', []))
+        self.getWidget('image-container').setStyleSheet(style_sheet)
+
     def hide(self, *args):
         """页面隐藏时清理资源"""
         self._close_image_viewer()
@@ -198,12 +215,12 @@ class LocalImage(Page):
         """
         try:
             self._close_image_viewer()
+            images = self.pageParam.get('images', [])
+            images = [img['path'] for img in images]
             self.image_viewer = ShowImage(
-                savePath=str(self.image_dir),
-                currentPath=image_path
+                currentPath=image_path,
+                images=images
             )
-            self.image_viewer.show_image()
-            self.image_viewer.show()
         except Exception as e:
             print(f"打开图片失败: {str(e)}")
             self.tips(f"打开图片失败: {str(e)}", 'error')

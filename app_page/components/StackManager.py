@@ -4,8 +4,16 @@ from PySide6.QtWidgets import QWidget, QVBoxLayout, QPushButton
 from ..plugins import Record
 from ..animation import RightClick_Menu
 from .Stack import Stack
-from ..utils import layout_clear
+from ..utils import layout_clear, assetsUrl
 
+LEFT_BAR_BUTTON_STYLE = '''
+.left_bar_btn {
+  background-color: transparent;
+}
+.left_bar_btn:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+'''
 
 class StackManager(Stack):
   def __init__(self, options:dict):
@@ -88,12 +96,12 @@ class StackManager(Stack):
         right_menu = []
         index != 0  and right_menu.append({
           "name": "上移",
-          "icon": "./assets/icon/menu/up-arrow.png",
+          "icon": assetsUrl('icon', 'menu', 'up-arrow.png'),
           "callback": self.refreshLeftBtn("up", each['id'])
         })
         index != len(self.pageOptionList)-1 and  right_menu.append({
           "name": "下移",
-          "icon": "./assets/icon/menu/down-arrow.png",
+          "icon": assetsUrl('icon', 'menu', 'down-arrow.png'),
           "callback": self.refreshLeftBtn("down", each['id'])
         })
         if "right_menu" in each:
@@ -142,22 +150,13 @@ class StackManager(Stack):
 
   # 设置当前激活按钮的样式
   def setActiveStyle(self, id:str):
-    old_id = self.current_btn
     active_style = '#%s {background-color:rgba(0,0,0,0.04);font-weight:bold;font-size:18px}' % id
-    styleSheetList = self.button_container.styleSheet().split('\n')
-    # 删除旧的值
-    if old_id and styleSheetList[-1].find(f'#{old_id}') > -1:
-      styleSheetList.pop()
-    styleSheetList.append(active_style)
-    # 将新的样式表设置到程序中
-    self.button_container.setStyleSheet('\n'.join(styleSheetList))
+    self.button_container.setStyleSheet(LEFT_BAR_BUTTON_STYLE + active_style)
 
 
   # 清除当前激活按钮的样式
   def clearActiveStyle(self):
-    styleSheetList = self.button_container.styleSheet().split('\n')
-    new_styleSheetList = [line for line in styleSheetList if not line.startswith(f'#{self.current_btn}')]
-    self.button_container.setStyleSheet('\n'.join(new_styleSheetList))
+    self.button_container.setStyleSheet(LEFT_BAR_BUTTON_STYLE)
     self.current_btn = None
 
 
