@@ -10,7 +10,7 @@ from nanoid import generate
 # 自定义模块导入（保持原有结构）
 from app_page_core import Callback, Children, Param, Store
 from ..core.Tips import Tips
-from ..core.tipsBox import tipsBox
+from .showTipsBox import showTipsBox
 from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
@@ -215,8 +215,7 @@ class Page:
         :return: 线程ID（用于取消定时器）
         """
         if not self.threadManager:
-            if getSetting('IS_DEBUG'):
-                print("线程管理器未初始化，无法创建定时器")
+            print("线程管理器未初始化，无法创建定时器")
             return None
 
         # 生成唯一线程ID
@@ -227,17 +226,17 @@ class Page:
             try:
                 callback(*args, **kwargs)
             except Exception as e:
-                if getSetting('IS_DEBUG'):
-                    print(f"定时器 {thread_id} 回调执行失败: {e}")
+                print(f"定时器 {thread_id} 回调执行失败: {e}")
             finally:
                 self.threadManager.remove(thread_id)
 
         # 添加线程任务
-        self.threadManager.add({
-            "id": thread_id,
-            "callback": wrapper,
-            "function": lambda: time.sleep(seconds)
-        }, True)
+        self.threadManager.add(
+            thread_id=thread_id,
+            function=lambda: time.sleep(seconds),
+            callback=wrapper,
+            start=True
+        )
 
         return thread_id
 
@@ -278,12 +277,12 @@ class Page:
                 self.threadManager.remove(thread_id)
 
         # 添加线程任务
-        self.threadManager.add({
-            "id": thread_id,
-            "callback": wrapper,
-            "function": lambda: function(*args, **kwargs)
-        }, True)
-
+        self.threadManager.add(
+            thread_id=thread_id,
+            function=lambda: function(*args, **kwargs),
+            callback=wrapper,
+            start=True
+        )
         return thread_id
 
     def tips(self, msg: str, type: str = 'default') -> None:
@@ -328,7 +327,7 @@ class Page:
         :param cancel: 取消按钮回调
         :param close: 关闭按钮回调
         """
-        tipsBox(topic, title, content, confirm, cancel, close)
+        showTipsBox(topic, title, content, confirm, cancel, close)
 
     def setWidgets(self, widget_id_map: Dict[str, QWidget]) -> None:
         """设置组件列表"""
@@ -505,7 +504,3 @@ class Page:
         except:
             # 当store未初始化时直接返回实例属性
             return super().__getattribute__(name)
-
-
-# 类型别名（方便后续扩展）
-PageType = Page

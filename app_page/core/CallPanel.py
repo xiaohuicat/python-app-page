@@ -2,7 +2,9 @@ from PySide6.QtCore import Signal, Qt
 from PySide6.QtWidgets import QDialog, QWidget, QLayout, QVBoxLayout
 
 from app_page_core import Callback
-from ..animation import MoveWin, Shadow, FadeEffect
+from ..animation.Shadow import Shadow
+from ..animation.MoveWin import MoveWin
+from ..animation.FadeEffect import FadeEffect
 from ..utils import assetsRead, assetsUrl
 from .render.render_main import render
 from .WidgetsController import WidgetsController

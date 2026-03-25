@@ -8,7 +8,8 @@ from .image_handle import image_to_base64, base64_to_image, copy_image, png_to_i
 from .control_volume import get_system_volume, set_system_volume
 from .blur_image import blur_image
 from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder, open_folder, delete_file
-from ..core.common import setShadowEffect, updateStyle
+from ..core.common import setShadowEffect, updateStyle, tryRun
+from ..core import showTipsBox
 from .easy_create import empty_container_qss, empty_container_xml
 from .chat_api import call_qwen
 from .valid_json import get_valid_json, format_json
@@ -40,6 +41,7 @@ __all__ = [
   'set_system_volume',
   'setShadowEffect',
   'updateStyle',
+  'tryRun',
   's2t',
   'd2t',
   't2d',
@@ -57,4 +59,5 @@ __all__ = [
   'call_qwen',
   'get_valid_json',
   'format_json',
+  'showTipsBox',
 ]

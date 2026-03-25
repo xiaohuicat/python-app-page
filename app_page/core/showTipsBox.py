@@ -1,5 +1,6 @@
 from typing import Optional, Callable
-from ..core.CallPanel import CallPanel
+from .CallPanel import CallPanel
+from .PanelStore import PanelStore
 from ..utils import encode
 
 main_template = '''
@@ -35,7 +36,6 @@ main_style = '''
   font-size: 16px;
   border: 1px solid #000;
 }
-
 .dark-button {
   padding: 0 10px;
   color: #fff;
@@ -45,10 +45,9 @@ main_style = '''
 }
 '''
 
-store = {}
+ps = PanelStore()
 
-
-def tipsBox(
+def showTipsBox(
     topic:str="更新提醒", 
     title:str="提示窗的标题", 
     content:str="提示的内容",
@@ -76,27 +75,21 @@ def tipsBox(
       "radius": 14,
       "topic": topic,
     }
-    close_panel()
     panel = CallPanel(main_template, main_params, main_style, options)
     panel.callback.add('before_close', close)
-    panel.showPanel()
 
     def handle_confirm():
         if callable(confirm):
             confirm()
-        close_panel()
+        ps.close()
 
     def handle_cancel():
         if callable(cancel):
             cancel()
-        close_panel()
+        ps.close()
     
     panel.register('submit', 'clicked', handle_confirm)
     panel.register('cancel', 'clicked', handle_cancel)
-    store['store_panel'] = panel
 
-
-def close_panel():
-  if 'store_panel' in store:
-    store['store_panel'].destroy()
-    del store['store_panel']
+    ps.add(panel)
+    panel.showPanel()

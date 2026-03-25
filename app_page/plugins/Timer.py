@@ -1,20 +1,14 @@
 import time
-import random
-import string
 from app_page import Page
 from app_page.utils import timestamp
-
-
-def random_string(length: int) -> str:
-    """生成指定长度的随机字母字符串"""
-    return ''.join(random.choices(string.ascii_letters, k=length))
+from nanoid import generate
 
 
 class Timer(Page):
     def __init__(self, callback, delay: int = 0, immediately: bool = True):
         super().__init__()
         # 生成唯一计时器ID
-        self._timer_thread_id = f"timer_{timestamp()}_{random_string(6)}"
+        self._timer_thread_id = f"timer_{timestamp()}_{generate(size=6)}"
         self._callback = callback
         self._delay = delay  # 确保延迟为非负值
         self._is_running = False  # 新增运行状态标记
@@ -28,11 +22,12 @@ class Timer(Page):
             return
 
         self._is_running = True
-        self.threadManager.add({
-            'id': self._timer_thread_id,
-            'function': self._delay_execution,  # 分离延迟逻辑
-            'callback': self._on_callback,
-        }, True)
+        self.threadManager.add(
+            thread_id=self._timer_thread_id,
+            function=self._delay_execution,
+            callback=self._on_callback,
+            start=True
+        )
 
     def _delay_execution(self) -> None:
         """执行延迟等待（可扩展添加中断逻辑）"""
@@ -54,7 +49,7 @@ class Timer(Page):
 
         # 继续下一轮计时
         if self._is_running:
-            self.threadManager.run(self._timer_thread_id)
+            self.threadManager.start(self._timer_thread_id)
 
     def set_callback(self, callback) -> None:
         """更新回调函数"""

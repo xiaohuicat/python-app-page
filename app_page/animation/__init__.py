@@ -5,7 +5,7 @@ from .MoveWin import MoveWin
 from .RightClick import RightClick_Menu, Click_RightClick_Menu
 from .Shadow import Shadow
 from .ShakeEffect import ShakeEffect
-from ..animation import ScrollMethod
+from .ScrollMethod import smoothScroll
 
 __all__ = [
   "FadeEffect",
@@ -15,5 +15,5 @@ __all__ = [
   "Click_RightClick_Menu",
   "Shadow",
   "ShakeEffect",
-  "ScrollMethod"
+  "smoothScroll",
 ]

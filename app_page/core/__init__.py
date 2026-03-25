@@ -2,14 +2,15 @@
 from .EventBus import EventBus
 from .EventHook import EventHook
 from .Page import Page
-from .Thread import EasyThread, Waiting_time, ThreadManager
+from .Thread import EasyThread, ThreadManager
 from .PageManager import PageManager
 from ..core import Setting, Device
 from .render import render, render_widget, render_vnode
 from .callfunc import call_func, current_func
 from .WidgetsController import WidgetsController
 from .CallPanel import CallPanel
-from .tipsBox import tipsBox
+from .showTipsBox import showTipsBox
+from .PanelStore import PanelStore
 
 __all__ = [
   "Device",
@@ -20,7 +21,6 @@ __all__ = [
   "Page",
   "EasyThread",
   "ThreadManager",
-  "Waiting_time",
   "render",
   "render_widget",
   "render_vnode",
@@ -28,5 +28,6 @@ __all__ = [
   "current_func",
   "WidgetsController",
   "CallPanel",
-  "tipsBox",
+  "showTipsBox",
+  "PanelStore",
 ]

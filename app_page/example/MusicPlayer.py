@@ -2,10 +2,10 @@ import os
 from PySide6.QtWidgets import QFileDialog, QSlider, QWidget
 from PySide6.QtCore import Qt, QDir
 from app_page_core import Param
-from app_page.core import Page
+from app_page import Page
 from app_page.utils import assetsUrl, d2t, get_system_volume, encode, empty_container_qss, empty_container_xml
 from app_page.plugins import Player, PlayMode
-from app_page.animation.ScrollMethod import smoothScroll
+from app_page.animation import smoothScroll
 from app_page.utils.date_time import format_milliseconds
 
 

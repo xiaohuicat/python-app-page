@@ -1,149 +1,101 @@
-import time
 from PySide6.QtCore import QThread, Signal
 
-def default_function(*args):
-    # 此处调用函数
-    print("6秒后返回数据")
-    time.sleep(6)
-    return {"data","测试数据"}
 
 class EasyThread(QThread):
     response = Signal(object)
 
-    def __init__(self, function=None):
+    def __init__(self, function, payload=None):
         super().__init__()
-        self.function = function if function else default_function
-
-    def kill(self, is_wait=True):
-        if is_wait:
-            self.wait()
-        else:
-            self.quit()
-        self.terminate()
-        self.payload = None
-        self.function = None
-        self.response = None
-        if self.isFinished():  # 如果线程还在运行
-            del self
-
-    def setPayload(self, payload):
+        self.function = function
         self.payload = payload
+        # 任务完成后自动销毁对象，防止内存泄漏
+        self.finished.connect(self.deleteLater)
 
     def run(self):
-        if hasattr(self, "payload"):
-            ret = self.function(self.payload)
-        else:
-            ret = self.function()
-        self.response and self.response.emit(ret)
+        try:
+            # 兼容有参和无参调用
+            if self.payload is not None:
+                if isinstance(self.payload, dict):
+                    ret = self.function(**self.payload)
+                elif isinstance(self.payload, (list, tuple)):
+                    ret = self.function(*self.payload)
+                else:
+                    ret = self.function(self.payload)
+            else:
+                ret = self.function()
+            self.response.emit(ret)
+        except Exception as e:
+            print(f"Thread execution error: {e}")
 
-class Waiting_time(EasyThread):
-    def __init__(self, second):
-        super().__init__()
-        self.second = second
-
-    def run(self):
-        # print(f'即将在{self.second}s后尝试')
-        time.sleep(self.second)
-        self.response.emit(True)
 
 class ThreadManager:
-    """
-    线程管理器
-    """
     def __init__(self):
-        self.threadList = []
+        self._tasks = {}  # 使用字典代替列表，查询复杂度 O(1)
 
-    # dict = {"thread", "function", "callback", "payload", "id"}
-    def add(self, dict, isRun=False):
-        thread = "thread" in dict and dict["thread"]
-        # 如果没有thread, 创建thread
-        if not thread:
-            thread = EasyThread(lambda *args: dict["function"](*args))
-            dict["thread"] = thread
-        # 如果有payload，给thread设置payload
-        payload = "payload" in dict and dict["payload"]
-        if payload:
-            thread.setPayload(payload)
-        # 如有有callback，绑定返回信号给callback函数
-        if "callback" in dict and callable(dict["callback"]):
-            thread.response.connect(dict["callback"])
-        self.threadList.append(dict)
-        isRun and thread.start()
+    def add(self, thread_id, function, payload=None, callback=None, start=False):
+        """
+        Args:
+            thread_id: 唯一标识
+            function: 执行函数
+            payload: 参数
+            callback: 回调函数
+            start: 是否立即启动
+        """
+        thread = EasyThread(function, payload)
+        self.add_thread(thread_id, thread, callback, start)
 
-    def run(self, id, payload=None):
-        item = self.getOne(id)
-        if item:
-            if payload:
-                # 如果有参数使用当前的参数
-                item["thread"].setPayload(payload)
-            else:
-                # 如果没有参数使用初始化的参数
-                if "payload" in item:
-                    item["thread"].setPayload(item["payload"])
-            # 运行线程
-            item["thread"].start()
-        else:
-            print("没有可用线程")
+    def add_thread(self, thread_id:str, thread:EasyThread, callback=None, start=False):
+        # 如果已存在同名任务且在运行，先停止（或根据业务逻辑跳过）
+        if thread_id in self._tasks:
+            self.stop(thread_id)
+            self.remove(thread_id)
+        
+        if callback:
+            thread.response.connect(callback)
 
-    def get(self, id):
-        if callable(id):
-            # 如果id是规则函数，直接传入
-            return list(filter(id, self.threadList))
-        elif isinstance(id, str):
-            # 如果id是字符串，与每项的id进行比较
-            return list(filter(lambda each: each.get("id") == id, self.threadList))
+        # 记录任务
+        self._tasks[thread_id] = thread
+        
+        # 线程结束后自动从管理字典中移除，避免野指针
+        thread.finished.connect(lambda: self._tasks.pop(thread_id, None))
 
-    def getOne(self, id):
-        threadList = self.get(id)
-        if len(threadList) > 0:
-            item = threadList.pop()
-            return item
-        else:
-            return False
+        if start:
+            thread.start()
 
-    def changeCallback(self, id: str, callback):
-        thread = self.getOne(id)
+    def start(self, thread_id, payload=None):
+        thread:EasyThread = self._tasks.get(thread_id)
         if thread:
-            thread["callback"] = callback
-            return True
-        return False
-
-    def remove(self, id=None, param="SYSTEM"):
-        if not id:
-            threadList = self.threadList
-            for each in threadList:
-                print('移除线程：', each["id"] if "id" in each else "NULL", "  param:", param)
-                thread = each["thread"]
-                if hasattr(thread, "destroy"):
-                    try:
-                        thread.destroy(param)
-                    except Exception as e:
-                        print("============>关闭线程失败 e", e, "    id=", id)
-                try:
-                    thread.response.disconnect()      # 解除信号与回调函数的连接
-                except Exception as e:
-                    print("解除信号与槽的绑定失败 e:", e)
-                if param == 'SYSTEM' or hasattr(thread, "ENABLE"):
-                    thread.kill(False)
-                else:
-                    thread.kill()
-                self.threadList = []
+            if payload is not None:
+                thread.payload = payload
+            if not thread.isRunning():
+                thread.start()
         else:
-            threadList = self.get(id)
-            for each in threadList:
-                print('移除线程：', each["id"] if "id" in each else "NULL", "  param:", param)
-                thread = each["thread"]
-                if hasattr(thread, "destroy"):
-                    try:
-                        thread.destroy(param)
-                    except Exception as e:
-                        print("============>关闭线程失败 e", e, "    id=", id)
-                try:
-                    thread.response.disconnect()      # 解除信号与回调函数的连接
-                except Exception as e:
-                    print("解除信号与槽的绑定失败 e:", e)
-                if param == 'SYSTEM' or hasattr(thread, "ENABLE"):
-                    thread.kill(False)
-                else:
-                    thread.kill()
-                self.threadList.remove(each)
+            print(f"Task '{thread_id}' not found.")
+
+    def stop(self, thread_id, wait=False):
+        thread:EasyThread = self._tasks.get(thread_id)
+        if thread and thread.isRunning():
+            thread.quit() # 安全退出循环
+            if wait:
+                thread.wait()
+            else:
+                # 如果任务不支持 quit (没有事件循环)，强行结束
+                thread.terminate() 
+            self._tasks.pop(thread_id, None)
+
+    def stop_all(self, wait=False):
+        for tid in list(self._tasks.keys()):
+            self.stop(tid, wait)
+
+    def has(self, thread_id):
+        return thread_id in self._tasks
+    
+    def remove(self, thread_id=None, wait=False):
+        if thread_id is None:
+            self.stop_all(wait)
+            self._tasks.clear()
+            return
+
+        if thread_id in self._tasks:
+            self.stop(thread_id, wait)
+            self._tasks.pop(thread_id)

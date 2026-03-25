@@ -1,9 +1,9 @@
 # app_page_timer_bottle.py
 import time
 from datetime import datetime, timedelta
-from app_page import Page, tryRun, updateStyle
-from app_page.utils import assetsUrl, d2t
-from app_page.animation.ScrollMethod import smoothScroll
+from app_page import Page
+from app_page.utils import assetsUrl, d2t, tryRun, updateStyle
+from app_page.animation import smoothScroll
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QPushButton
 

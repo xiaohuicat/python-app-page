@@ -1,6 +1,5 @@
-from app_page import Page, CallPanel
+from app_page import Page, CallPanel, PanelStore
 from app_page.utils import encode, get_valid_json, format_json
-from app_page.plugins import PanelStore
 from .mcp_dict import mcp_dict
 
 main_template = '''
