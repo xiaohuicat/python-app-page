@@ -15,7 +15,7 @@ from ..core.PageManager import PageManager
 from ..core.Thread import ThreadManager
 from ..core.Setting import getSetting
 from ..core.render import render
-from ..core.WidgetsController import WidgetsController
+from ..core.WidgetManager import WidgetManager
 from ..utils import layout_clear, blur_image, updateStyle
 from ..MainWindow import MainWindow
 
@@ -51,7 +51,7 @@ class Page:
         self.playMedia: Optional[Callable] = None
 
         # 私有核心对象
-        self.__widgetsController: WidgetsController = WidgetsController()  # 组件控制器
+        self.__widgetManager: WidgetManager = WidgetManager()  # 组件控制器
         self.__global_data: Dict[str, Any] = {}                            # 页面全局数据
         self.__parent: Optional[QWidget] = None                            # 父容器
         self.__layout: Optional[QLayout] = None                            # 布局管理器
@@ -71,7 +71,7 @@ class Page:
     def rerender(self, params: Dict[str, Any], save_local_store: bool = False) -> None:
         """
         重新渲染页面
-        :param params: 传递给模板的渲染参数
+            :param params: 传递给模板的渲染参数
         """
         # 校验模板有效性
         if not hasattr(self, 'template') or not self.template.strip():
@@ -104,8 +104,8 @@ class Page:
         # 5. 模板渲染与组件挂载
         template_params = params if isinstance(params, dict) else {}
         render_result = render(layout, self.template, template_params)
-        self.__widgetsController.setWidgets(render_result['widget_id_map'])
-        self.__widgetsController.setWidgetList(render_result['widget_list'])
+        self.__widgetManager.setWidgets(render_result['widget_id_map'])
+        self.__widgetManager.setWidgetList(render_result['widget_list'])
 
     def show(self, *args) -> None:
         """显示页面"""
@@ -125,8 +125,8 @@ class Page:
             self.__layout = None
 
         # 销毁组件管理器
-        if self.__widgetsController:
-            self.__widgetsController.destroy()
+        if self.__widgetManager:
+            self.__widgetManager.destroy()
 
         # 清理子页面和回调
         if self.children:
@@ -147,7 +147,7 @@ class Page:
             self.hide()
 
             # 销毁组件控制器
-            self.__widgetsController = None
+            self.__widgetManager = None
 
             # 清理本地存储
             if self.localStore:
@@ -163,11 +163,6 @@ class Page:
                 if getSetting('IS_DEBUG'):
                     print(f"移除全局事件过滤器失败: {e}")
 
-            # 清理页面参数
-            if self.pageParam:
-                self.pageParam.clear()
-                self.pageParam = None
-
             # 清空引用，帮助GC回收
             self.children = None
             self.callback = None
@@ -181,11 +176,11 @@ class Page:
     def register(self, id: str, signal: str, callback: Callable) -> None:
         """
         注册组件事件
-        :param id: 组件ID
-        :param signal: 信号名称
-        :param callback: 回调函数
+            :param id: 组件ID
+            :param signal: 信号名称
+            :param callback: 回调函数
         """
-        self.__widgetsController.register(id, signal, callback)
+        self.__widgetManager.register(id, signal, callback)
 
     def regist_filter(self, callback: Callable) -> None:
         """注册全局事件过滤器"""
@@ -200,19 +195,18 @@ class Page:
         :param args: 页面参数
         """
         if self.pageManager:
-            self.pageManager.open(*(page_id, *args))
+            self.pageManager.open(page_id, *args)
         else:
-            if getSetting('IS_DEBUG'):
-                print("页面管理器未初始化，无法导航")
+            print("页面管理器未初始化，无法导航")
 
-    def setTimeout(self, callback: Callable, seconds: float, *args, **kwargs) -> Optional[str]:
+    def setTimeout(self, callback: Callable, seconds: float) -> Optional[str]:
         """
         设置定时器
-        :param callback: 回调函数
-        :param seconds: 延迟秒数
-        :param args: 回调函数位置参数
-        :param kwargs: 回调函数关键字参数
-        :return: 线程ID（用于取消定时器）
+            :param callback: 回调函数
+            :param seconds: 延迟秒数
+            :param args: 回调函数位置参数
+            :param kwargs: 回调函数关键字参数
+            :return: 线程ID（用于取消定时器）
         """
         if not self.threadManager:
             print("线程管理器未初始化，无法创建定时器")
@@ -221,10 +215,10 @@ class Page:
         # 生成唯一线程ID
         thread_id = f"timeout_{self.id}_{generate(size=6)}"
 
-        def wrapper(*args) -> None:
+        def wrapper(*params) -> None:
             """定时器包装函数（带异常处理和参数传递）"""
             try:
-                callback(*args, **kwargs)
+                callback()
             except Exception as e:
                 print(f"定时器 {thread_id} 回调执行失败: {e}")
             finally:
@@ -258,21 +252,19 @@ class Page:
         :return: 线程ID
         """
         if not self.threadManager:
-            if getSetting('IS_DEBUG'):
-                print("线程管理器未初始化，无法执行异步任务")
+            print("线程管理器未初始化，无法执行异步任务")
             return None
 
         # 生成唯一线程ID
         thread_id = f"async_{self.id}_{generate(size=6)}"
 
-        def wrapper(*args) -> None:
+        def wrapper(*params) -> None:
             """异步任务包装函数"""
             try:
                 if callable(callback):
-                    callback(*args)
+                    callback(*params)
             except Exception as e:
-                if getSetting('IS_DEBUG'):
-                    print(f"异步任务 {thread_id} 执行失败: {e}")
+                print(f"异步任务 {thread_id} 执行失败: {e}")
             finally:
                 self.threadManager.remove(thread_id)
 
@@ -331,7 +323,7 @@ class Page:
 
     def setWidgets(self, widget_id_map: Dict[str, QWidget]) -> None:
         """设置组件列表"""
-        self.__widgetsController.setWidgets(widget_id_map)
+        self.__widgetManager.setWidgets(widget_id_map)
 
     def getWidget(self, id: Optional[str] = None) -> Optional[QWidget | Dict[str, QWidget]]:
         """
@@ -339,7 +331,7 @@ class Page:
         :param id: 组件ID（None时返回所有组件）
         :return: 组件实例或组件字典
         """
-        return self.__widgetsController.getWidget(id)
+        return self.__widgetManager.getWidget(id)
 
     def setStatus(self, status: str) -> None:
         """设置页面状态"""
@@ -472,10 +464,12 @@ class Page:
                 print(f"组件 {id} 不存在，无法设置class")
 
     def getText(self, id:str) -> str:
-        return self.__widgetsController.getText(id)
+        """获取组件的文本内容"""
+        return self.__widgetManager.getText(id)
     
     def setText(self, id:str, value:str) -> None:
-        self.__widgetsController.setText(id, value)
+        """设置组件的文本内容"""
+        self.__widgetManager.setText(id, value)
 
     @property
     def info(self) -> str:

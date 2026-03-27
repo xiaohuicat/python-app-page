@@ -8,7 +8,8 @@ from .image_handle import image_to_base64, base64_to_image, copy_image, png_to_i
 from .control_volume import get_system_volume, set_system_volume
 from .blur_image import blur_image
 from .file_handle import get_file_md5, create_folder, get_folder_size, clear_folder, open_folder, delete_file
-from ..core.common import setShadowEffect, updateStyle, tryRun
+from ..core.common import (setShadowEffect, updateStyle, tryRun, set_relative_top, set_relative_left, 
+                            set_relative_right, set_relative_bottom, set_relative_center)
 from ..core import showTipsBox
 from .easy_create import empty_container_qss, empty_container_xml
 from .chat_api import call_qwen
@@ -60,4 +61,9 @@ __all__ = [
   'get_valid_json',
   'format_json',
   'showTipsBox',
+  'set_relative_top',
+  'set_relative_left',
+  'set_relative_right',
+  'set_relative_bottom',
+  'set_relative_center',
 ]

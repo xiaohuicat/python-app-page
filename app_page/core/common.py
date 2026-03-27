@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QWidget
-
+from typing import Callable
 
 def setShadowEffect(target:QWidget, options:dict={}):
     """设置阴影效果"""
@@ -26,9 +26,44 @@ def updateStyle(target:QWidget):
     target.style().polish(target)
 
 
-def tryRun(func, *args, **kwargs):
+def tryRun(func:Callable, *args, **kwargs):
     """尝试执行函数，捕获异常并打印"""
     try:
         return func(*args, **kwargs)
     except Exception as e:
         print(f"tryRun执行函数 {func.__name__} 出错：", e)
+
+
+def set_relative_bottom(target:QWidget, parent:QWidget, margin:int=30):
+    """水平居中，贴近底部"""
+    x = (parent.width() - target.width()) // 2
+    y = parent.height() - target.height() - margin
+    target.move(x, y)
+
+
+def set_relative_top(target:QWidget, parent:QWidget, margin:int=30):
+    """水平居中，贴近顶部"""
+    x = (parent.width() - target.width()) // 2
+    y = margin
+    target.move(x, y)
+
+
+def set_relative_center(target:QWidget, parent:QWidget):
+    """水平居中，垂直居中"""
+    x = (parent.width() - target.width()) // 2
+    y = (parent.height() - target.height()) // 2
+    target.move(x, y)
+
+
+def set_relative_left(target:QWidget, parent:QWidget, margin:int=30):
+    """水平靠左，垂直居中"""
+    x = margin
+    y = (parent.height() - target.height()) // 2
+    target.move(x, y)
+
+
+def set_relative_right(target:QWidget, parent:QWidget, margin:int=30):
+    """水平靠右，垂直居中"""
+    x = parent.width() - target.width() - margin
+    y = (parent.height() - target.height()) // 2
+    target.move(x, y)

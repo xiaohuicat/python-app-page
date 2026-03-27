@@ -2,8 +2,7 @@ import os
 from PySide6.QtWidgets import QMainWindow, QWidget, QLayout
 from PySide6 import QtCore
 from app_page_core import Param, Callback
-from .core.render.render_main import render
-from .core.WidgetsController import WidgetsController
+from .core.WidgetManager import WidgetManager
 from .core.Setting import getSetting
 from .animation import MoveWin
 from .config import Config
@@ -154,11 +153,7 @@ class MainWindow(QMainWindow):
     self.ui.setStyleSheet(main_window_style())
     self.setCentralWidget(self.ui)
     # 渲染UI
-    render_dict = render(self.ui, template, {"title": getSetting('APP_TITLE')})
-    self.widgetsController:WidgetsController = WidgetsController(
-        widget_id_map=render_dict['widget_id_map'],
-        widget_list=render_dict['widget_list']
-    )
+    self.widgetManager:WidgetManager = WidgetManager(self.ui, template, {"title": getSetting('APP_TITLE')})
     # 绑定按钮事件
     self.register('btn_close', 'clicked', self.closePage)
     self.register('btn_small', 'clicked', self.showMinimized)
@@ -168,15 +163,15 @@ class MainWindow(QMainWindow):
 
 
   def register(self, id:str, signal:str, callback):
-    self.widgetsController.register(id, signal, callback)
+    self.widgetManager.register(id, signal, callback)
 
 
   def setClass(self, id:str, className:str):
-    self.widgetsController.setClass(id, className)
+    self.widgetManager.setClass(id, className)
 
 
   def getWidget(self, id:str) -> QWidget|QLayout:
-    return self.widgetsController.getWidget(id)
+    return self.widgetManager.getWidget(id)
 
 
   def closePage(self):
@@ -199,7 +194,7 @@ class MainWindow(QMainWindow):
       print("切换到最大化状态，当前窗口位置和尺寸:", current_position)
       self.moveWin.setPosition()
       self.param.set("is_maximized", True)
-      self.widgetsController.setClass('btn_change', 'btn_restore')
+      self.widgetManager.setClass('btn_change', 'btn_restore')
     else:
       # 1. 还原到原始位置和尺寸
       position = self.param.get('original_position')
@@ -208,7 +203,7 @@ class MainWindow(QMainWindow):
       self.setPosition(position)
       self.moveWin.setPosition()
       self.param.set("is_maximized", False)
-      self.widgetsController.setClass('btn_change', 'btn_big')
+      self.widgetManager.setClass('btn_change', 'btn_big')
 
 
   def getPosition(self):
@@ -218,7 +213,7 @@ class MainWindow(QMainWindow):
 
 
   def setPosition(self, position:list):
-    mainUI = self.widgetsController.getWidget('main-ui')
+    mainUI = self.widgetManager.getWidget('main-ui')
     mainUI.setFixedHeight(position[3] - self.margin*2)
     mainUI.setFixedWidth(position[2] - self.margin*2)
 
@@ -226,8 +221,8 @@ class MainWindow(QMainWindow):
   def setUserInfo(self, userName:str, avatarPath:str):
     if not os.path.exists(avatarPath):
       avatarPath = assetsUrl('image', 'avatar.png')
-    self.widgetsController.getWidget('btn_login_icon').setStyleSheet(f'border-image:url({avatarPath});')
-    self.widgetsController.getWidget('btn_login_text').setText(userName[:3])
+    self.widgetManager.getWidget('btn_login_icon').setStyleSheet(f'border-image:url({avatarPath});')
+    self.widgetManager.getWidget('btn_login_text').setText(userName[:3])
 
 
   def setAppStyle(self):

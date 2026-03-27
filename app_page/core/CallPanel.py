@@ -6,8 +6,7 @@ from ..animation.Shadow import Shadow
 from ..animation.MoveWin import MoveWin
 from ..animation.FadeEffect import FadeEffect
 from ..utils import assetsRead, assetsUrl
-from .render.render_main import render
-from .WidgetsController import WidgetsController
+from .WidgetManager import WidgetManager
 
 # ====================== UI模板定义 ======================
 create_template = lambda main_content: '''
@@ -159,18 +158,18 @@ class CallPanel(QDialog):
         """渲染UI模板并初始化Widget控制器"""
         # 渲染UI模板
         title = self.options.get('title', '')
-        render_dict = render(self.ui, create_template(self.main_template), {
-            '_width': self.options.get('width', 400),
-            '_height': self.options.get('height', 600),
-            '_header_height': self.options.get('header_height', 30),
-            '_header_margins': self.options.get('header_margins', [0,0,0,0]),
-            '_title': title,
-            '_display_title': title if title else "请输入标题",
-            **self.main_params,
-        })
-        self.widgets_controller: WidgetsController = WidgetsController(
-            widget_id_map=render_dict['widget_id_map'],
-            widget_list=render_dict['widget_list']
+        self.widgets_controller: WidgetManager = WidgetManager(
+            self.ui, 
+            create_template(self.main_template), 
+            {
+                '_width': self.options.get('width', 400),
+                '_height': self.options.get('height', 600),
+                '_header_height': self.options.get('header_height', 30),
+                '_header_margins': self.options.get('header_margins', [0,0,0,0]),
+                '_title': title,
+                '_display_title': title if title else "请输入标题",
+                **self.main_params,
+            }
         )
         # 设置样式
         panel_radius = self.options.get('radius', 10)

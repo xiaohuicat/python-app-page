@@ -7,7 +7,7 @@ from .PageManager import PageManager
 from ..core import Setting, Device
 from .render import render, render_widget, render_vnode
 from .callfunc import call_func, current_func
-from .WidgetsController import WidgetsController
+from .WidgetManager import WidgetManager
 from .CallPanel import CallPanel
 from .showTipsBox import showTipsBox
 from .PanelStore import PanelStore
@@ -26,7 +26,7 @@ __all__ = [
   "render_vnode",
   "call_func",
   "current_func",
-  "WidgetsController",
+  "WidgetManager",
   "CallPanel",
   "showTipsBox",
   "PanelStore",

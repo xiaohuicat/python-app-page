@@ -189,13 +189,9 @@ self.setClass("id", "class")
 ## 小结
 之所以Page对象支持以上方法是初始化的时候进行了模板的解析和渲染。其原理如下：
 ```python
-from app_page import render, WidgetsController
-# 渲染UI，参数分别是挂载对象，模板，变量词典
-render_dict = render(self.ui, template, {})
-# 组件的管理，参数是组件id映射，所有组件列表
-widgetsController:WidgetsController = WidgetsController(
-    widget_id_map=render_dict['widget_id_map'], 
-    widget_list=render_dict['widget_list'])
+from app_page import WidgetManager
+# 组件的管理
+widgetManager:WidgetManager = WidgetManager(self.ui, template, {})
 ```
 widgetsController对象提供了以下方法：
 - getWidget(id) 获取组件对象

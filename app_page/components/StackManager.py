@@ -7,10 +7,10 @@ from .Stack import Stack
 from ..utils import layout_clear, assetsUrl
 
 LEFT_BAR_BUTTON_STYLE = '''
-.left_bar_btn {
+.left-bar-btn {
   background-color: transparent;
 }
-.left_bar_btn:hover {
+.left-bar-btn:hover {
   background-color: rgba(0, 0, 0, 0.03);
 }
 '''
@@ -89,8 +89,9 @@ class StackManager(Stack):
       if each.get('filter', None) == 'leftBar':
         button = QPushButton(each["name"], self.button_container)
         button.setObjectName(each["id"])
-        button.clicked.connect(self.click(each["id"]))
         button.setFixedHeight(36)
+        button.setProperty("class", "left-bar-btn")
+        button.clicked.connect(self.click(each["id"]))
 
         # 添加右键菜单
         right_menu = []

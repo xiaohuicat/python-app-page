@@ -8,6 +8,10 @@ from PIL import Image, ImageDraw, ImageFont
 
 class FileTools:
     def __init__(self, filePath: str) -> None:
+        """
+        文件工具类，用于处理文件信息，如加载文件列表、获取文件大小、计算MD5等
+            :param filePath: str, 待处理的文件或目录路径
+        """
         self.filePath: str = os.path.abspath(filePath)
         # 存储所有文件信息的字典，key为文件绝对路径，value为文件详细信息
         self.file_info_map: Dict[str, Dict] = {}
@@ -32,9 +36,9 @@ class FileTools:
     def load(self, option: Optional[Dict] = None) -> None:
         """
         唯一的目录遍历函数，加载所有文件信息到file_info_map
-        :param option: 可选配置字典，支持的key：
-                    - skip_folders: 列表，需要跳过的文件夹名称（如['__pycache__', '.git']）
-                    - enable_md5: 布尔值，是否开启MD5计算（默认True）
+            :param option: 可选配置字典，支持的key：
+            - skip_folders: 列表，需要跳过的文件夹名称（如['__pycache__', '.git']）
+            - enable_md5: 布尔值，是否开启MD5计算（默认True）
         """
         if self._loaded:
             return  # 已加载过则直接返回，避免重复遍历
@@ -110,8 +114,8 @@ class FileTools:
     def get_all_size(self, unit: str = "byte") -> float:
         """
         获取所有文件的总大小
-        :param unit: 单位，可选值：byte(字节)、kb(千字节)、mb(兆字节)、gb(吉字节)
-        :return: 总大小（保留2位小数）
+            :param unit: 单位，可选值：byte(字节)、kb(千字节)、mb(兆字节)、gb(吉字节)
+            :return: 总大小（保留2位小数）
         """
         if not self._loaded:
             self.load()  # 懒加载：未加载则先执行load
@@ -234,8 +238,8 @@ class FileTools:
     def print(self, show_size: bool = True, show_md5: bool = False) -> None:
         """
         绘制README风格的文件目录结构
-        :param show_size: 是否显示文件大小（默认显示）
-        :param show_md5: 是否显示文件MD5（默认不显示，避免结构过长）
+            :param show_size: 是否显示文件大小（默认显示）
+            :param show_md5: 是否显示文件MD5（默认不显示，避免结构过长）
         """
         if not self._loaded:
             self.load()  # 懒加载：未加载则先执行load
@@ -251,16 +255,16 @@ class FileTools:
             img_width: Optional[int] = None) -> str:
         """
         将目录结构绘制为PNG图片（修复符号显示问题，新增系统字体自动适配）
-        :param output_path: 输出图片路径（默认：原目录名+_tree.png）
-        :param show_size: 是否显示文件大小（默认显示）
-        :param show_md5: 是否显示文件MD5（默认不显示）
-        :param font_path: 字体文件路径（可选，优先级高于系统默认字体）
-        :param font_size: 字体大小（默认12）
-        :param bg_color: 背景颜色（默认white）
-        :param text_color: 文字颜色（默认black）
-        :param line_height: 行高（可选，默认 font_size + 3）
-        :param img_width: 图片宽度（可选，默认根据文本宽度自动计算）
-        :return: 生成的图片文件路径
+            :param output_path: 输出图片路径（默认：原目录名+_tree.png）
+            :param show_size: 是否显示文件大小（默认显示）
+            :param show_md5: 是否显示文件MD5（默认不显示）
+            :param font_path: 字体文件路径（可选，优先级高于系统默认字体）
+            :param font_size: 字体大小（默认12）
+            :param bg_color: 背景颜色（默认white）
+            :param text_color: 文字颜色（默认black）
+            :param line_height: 行高（可选，默认 font_size + 3）
+            :param img_width: 图片宽度（可选，默认根据文本宽度自动计算）
+            :return: 生成的图片文件路径
         """
         if not self._loaded:
             self.load()  # 懒加载：未加载则先执行load
@@ -324,11 +328,11 @@ class FileTools:
             title: str = "目录结构") -> str:
         """
         将目录结构写入Markdown文件
-        :param output_path: 输出md文件路径（默认：原目录名+_tree.md）
-        :param show_size: 是否显示文件大小（默认显示）
-        :param show_md5: 是否显示文件MD5（默认不显示）
-        :param title: md文件中的标题（默认：目录结构）
-        :return: 生成的md文件路径
+            :param output_path: 输出md文件路径（默认：原目录名+_tree.md）
+            :param show_size: 是否显示文件大小（默认显示）
+            :param show_md5: 是否显示文件MD5（默认不显示）
+            :param title: md文件中的标题（默认：目录结构）
+            :return: 生成的md文件路径
         """
         if not self._loaded:
             self.load()  # 懒加载：未加载则先执行load

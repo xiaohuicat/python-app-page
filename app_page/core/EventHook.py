@@ -37,7 +37,8 @@ class EventHook:
 
         for _id in list(targets):  # 使用 list 包裹防止字典在迭代时改变
             item = self._pool.get(_id)
-            if not item: continue
+            if not item:
+                continue
             
             if now - item["last_run"] >= self.interval_ms:
                 try:

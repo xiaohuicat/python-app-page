@@ -2,10 +2,9 @@ import os
 from PySide6.QtCore import Signal, Qt, QSize, QPoint, QEvent, QTimer
 from PySide6.QtWidgets import QMainWindow, QWidget, QLayout, QLabel, QHBoxLayout, QGridLayout
 from PySide6.QtGui import QPixmap, QGuiApplication
-from ..core.render.render_main import render
-from ..core import WidgetsController
+from ..core import WidgetManager
 from ..animation import MoveWin, Shadow
-from ..utils import assetsUrl
+from ..utils import assetsUrl, assetsRead
 
 
 # 界面布局模板
@@ -33,8 +32,12 @@ template = '''
                             <label id="image" />
                         </h-box>
                     </div>
-                    <div id="right_panel" width="0" class="side_panel">
-                        <grid id="list_grid" grid="[0, 3]" spacing="8" margins="[10,10,10,10]" align="AlignTop"/>
+                    <div id="right_panel" class="side_panel" width="0">
+                        <h-box scroll="True" margins="[10,10,10,10]">
+                            <div>
+                                <grid id="list_grid" grid="[0, 3]" spacing="8" margins="[0,0,0,0]" align="AlignTop"/>
+                            </div>
+                        </h-box>
                     </div>
                 </h-box>
             </div>
@@ -105,15 +108,19 @@ QPushButton:hover {
     background-color: rgba(255, 0, 0, 0.7);
     image: url('''+ assetsUrl('icon', 'close.png') +''');
 }
+.side_panel {
+    background-color: #eaf5ff;
+}
 '''
 
 class ShowImage(QMainWindow):
     image_request = Signal(object)
 
-    def __init__(self, currentPath:str|None = None, images:list|None = None):
+    def __init__(self, currentPath:str|None = None, images:list|None = None, small_images:list|None = None):
         super().__init__()
         self.images = images if images else []
         self.image_num = len(self.images)
+        self.small_images = small_images if small_images else []
         self.currentPath = currentPath if currentPath else ''
         self.current = self.images.index(self.currentPath) if self.currentPath in self.images else 0
 
@@ -122,18 +129,14 @@ class ShowImage(QMainWindow):
         self.setAttribute(Qt.WA_TranslucentBackground)
 
         self.ui = QWidget()
-        self.ui.setStyleSheet(show_image_style())
+        self.ui.setStyleSheet(assetsRead("style.qss") + show_image_style())
         self.setCentralWidget(self.ui)
         self.setContentsMargins(10, 10, 10, 10)
         self.setFixedWidth(980)
         self.setFixedHeight(740)
         Shadow(self.ui)
 
-        render_dict = render(self.ui, template, {})
-        self.widgetsController:WidgetsController = WidgetsController(
-            widget_id_map=render_dict['widget_id_map'], 
-            widget_list=render_dict['widget_list']
-        )
+        self.widgetManager:WidgetManager = WidgetManager(self.ui, template, {})
         
         # 基础控件
         self.image_label: QLabel = self.getWidget('image')
@@ -172,13 +175,13 @@ class ShowImage(QMainWindow):
             self.show_image()
 
     def register(self, id:str, signal:str, callback):
-        self.widgetsController.register(id, signal, callback)
+        self.widgetManager.register(id, signal, callback)
 
     def setClass(self, id:str, className:str):
-        self.widgetsController.setClass(id, className)
+        self.widgetManager.setClass(id, className)
 
     def getWidget(self, id:str) -> QWidget|QLayout:
-        return self.widgetsController.getWidget(id)
+        return self.widgetManager.getWidget(id)
 
     # --- 列表功能实现 ---
     def toggle_list(self):
@@ -187,7 +190,7 @@ class ShowImage(QMainWindow):
             self.right_panel.setFixedWidth(0)
             self.is_list_show = False
         else:
-            self.right_panel.setFixedWidth(240)
+            self.right_panel.setFixedWidth(240 if len(self.images) > 24 else 230)
             self.is_list_show = True
             if self.list_grid.count() == 0:
                 self.refresh_thumb_list()
@@ -204,7 +207,8 @@ class ShowImage(QMainWindow):
             item = self.list_grid.takeAt(0)
             if item.widget(): item.widget().deleteLater()
 
-        for index, path in enumerate(self.images):
+        images:list = self.small_images if len(self.small_images) > 0 else self.images
+        for index, path in enumerate(images):
             thumb = QLabel()
             thumb.setFixedSize(64, 64)
             thumb.setScaledContents(True)
@@ -374,5 +378,5 @@ class ShowImage(QMainWindow):
     def close_page(self):
         self.close()
         self.image_request.emit(None)
-        self.widgetsController.destroy()
+        self.widgetManager.destroy()
         self.deleteLater()

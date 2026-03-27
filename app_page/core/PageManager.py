@@ -65,7 +65,7 @@ class PageManager:
   def open(self, id, *args):
     temp_dict = {}
     
-    def create_page(param, stack):
+    def create_page(pageInfo, stack):
       Page = self.page_dict[id]
       current = Page()
       # 添加全局数据
@@ -83,7 +83,7 @@ class PageManager:
       if current.template:
         current.rerender(params if params else {})
       current.status = 'show'
-      current.show(*{*args, *param})
+      current.show(pageInfo, *args)
     
     def remove_page():
       last = self.current_page
@@ -104,19 +104,19 @@ class PageManager:
     if id in self.button_dict:
       temp_dict["id"] = id
       # 跳转到页面
-      param = self.button_dict.get(id, None)
-      index = param.get("stack_index", 0)
+      pageInfo:dict = self.button_dict.get(id, None)
+      index = pageInfo.get("stack_index", 0)
       self.stack.setCurrentIndex(index)
       stack = self.stack.widget(index)
       if id in self.page_dict:
         if not getSetting("IS_DEBUG"):
           try:
-            create_page(param, stack)
+            create_page(pageInfo, stack)
           except Exception as error:
             print("打开页面出错：", error)
             return
         else:
-          create_page(param, stack)
+          create_page(pageInfo, stack)
 
     # 将当前页面赋值
     if id in self.button_dict:

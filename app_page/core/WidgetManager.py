@@ -1,17 +1,30 @@
 from PySide6.QtWidgets import QWidget, QLayout, QLineEdit, QPlainTextEdit
 from PySide6.QtGui import QIcon
 from app_page_core import Store
-from ..core.EventBus import EventBus
+from .EventBus import EventBus
+from .render.render_main import render
 from ..utils import assetsPath
 from .common import updateStyle
 
 
-class WidgetsController:
+class WidgetManager:
   """
   组件控制类
     提供组件的注册、获取、设置样式、设置类名、设置父组件等操作
   """
-  def __init__(self, widget_id_map:dict|None=None, widget_list:list|None=None) -> None:
+  def __init__(self, parent:QWidget=None, template:str=None, params:dict=None) -> None:
+    """
+    初始化组件管理器
+      :param parent: QWidget 父组件
+      :param template: str 模板名称
+      :param params: dict 参数
+    """
+    if parent:
+      render_dict = render(parent, template, params)
+      widget_list, widget_id_map = render_dict.get('widget_list', None), render_dict.get('widget_id_map', None)
+    else:
+      widget_list, widget_id_map = [], {}
+
     self.__widget_list = widget_list if widget_list else []
     self.__widget_id_map = widget_id_map if widget_id_map else {}
     self.__eventBus = EventBus(self.__widget_id_map)

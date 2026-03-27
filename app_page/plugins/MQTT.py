@@ -23,11 +23,15 @@ class MQTT(EasyThread):
         self.password = option.get("password", None)
         self.keepalive = option.get("keepalive", 60)
         self.reconnect_delay = option.get("reconnect_delay", 5)
+        self.callback = option.get("callback", None)
+
         self.client_id = f'mqtt_Qt_{generate(size=6)}'
         self.client: Optional[mqtt.Client] = None
         self.is_connected = False
-        self.response = option.get("response", None)
         self._connection_count = 0
+
+        if callable(self.callback):
+            self.response.connect(self.callback)
         
     def _on_connect(self, client: mqtt.Client, userdata, flags, rc: int):
         """连接回调函数"""
@@ -35,10 +39,10 @@ class MQTT(EasyThread):
         self._connection_count += 1
         if rc == 0:
             logger.info(f"Connected to MQTT Broker! (Connection #{self._connection_count})")
-            self._emit_response({"status": 0, "msg": "Connected to MQTT Broker!", "connection_count": self._connection_count})
+            self._emit({"status": 0, "msg": "Connected to MQTT Broker!", "connection_count": self._connection_count})
         else:
             logger.error(f"Failed to connect, return code {rc}")
-            self._emit_response({"status": -1, "msg": f"Connection failed with code {rc}"})
+            self._emit({"status": -1, "msg": f"Connection failed with code {rc}"})
             self.is_connected = False
             # 尝试重连
             time.sleep(self.reconnect_delay)
@@ -52,7 +56,7 @@ class MQTT(EasyThread):
         try:
             payload = msg.payload.decode('utf-8')
             logger.debug(f"Received message from {msg.topic}: {payload[:100]}...")
-            self._emit_response({
+            self._emit({
                 "status": 1,
                 "msg": payload,
                 "topic": msg.topic,
@@ -61,7 +65,7 @@ class MQTT(EasyThread):
         except Exception as e:
             logger.error(f"Error processing message: {e}")
 
-    def _emit_response(self, data: Dict[str, Any]) -> None:
+    def _emit(self, data: Dict[str, Any]) -> None:
         """安全发送响应"""
         if self.response and callable(getattr(self.response, 'emit', None)):
             self.response.emit(data)
@@ -91,14 +95,14 @@ class MQTT(EasyThread):
             
         except Exception as e:
             logger.error(f"Failed to initialize MQTT client: {e}")
-            self._emit_response({"status": -1, "msg": f"Client initialization failed: {str(e)}"})
+            self._emit({"status": -1, "msg": f"Client initialization failed: {str(e)}"})
             return False
 
     def publish(self, msg: str, topic: str = None, qos: int = 0) -> bool:
         """发布消息到指定主题"""
         if not self.client or not self.is_connected:
             logger.warning("Cannot publish: Not connected to MQTT broker")
-            self._emit_response({"status": -1, "msg": "Not connected to MQTT broker"})
+            self._emit({"status": -1, "msg": "Not connected to MQTT broker"})
             return False
             
         try:
@@ -112,16 +116,16 @@ class MQTT(EasyThread):
             
             if result[0] == mqtt.MQTT_ERR_SUCCESS:
                 logger.info(f"Published message to {target_topic}")
-                self._emit_response({"status": 0, "msg": f"Sent to {target_topic}"})
+                self._emit({"status": 0, "msg": f"Sent to {target_topic}"})
                 return True
             else:
                 logger.error(f"Failed to publish to {target_topic}, error code: {result[0]}")
-                self._emit_response({"status": -1, "msg": f"Publish failed with code {result[0]}"})
+                self._emit({"status": -1, "msg": f"Publish failed with code {result[0]}"})
                 return False
                 
         except Exception as e:
             logger.error(f"Publish exception: {e}")
-            self._emit_response({"status": -1, "msg": f"Exception: {str(e)}"})
+            self._emit({"status": -1, "msg": f"Exception: {str(e)}"})
             return False
 
     def subscribe(self) -> bool:
@@ -164,6 +168,7 @@ class MQTT(EasyThread):
             except Exception as e:
                 logger.error(f"Error during disconnect: {e}")
         self.is_connected = False
+        self.callback = None
         logger.info(f"MQTT instance destroyed. Param: {param}")
 
     def run(self) -> None:

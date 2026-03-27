@@ -1,6 +1,6 @@
 from app_page_core import Store, Param, Callback, LocalStore
 from .core import (Page, EventBus, EventHook, EasyThread, ThreadManager,
-                   PageManager, Setting, Device, PanelStore,WidgetsController, 
+                   PageManager, Setting, Device, PanelStore, WidgetManager, 
                    CallPanel, render, render_vnode, render_widget)
 from .core.Setting import getSetting, applySetting
 from .app import createApp
@@ -19,17 +19,15 @@ __all__ = [
   "EventBus",
   "EasyThread",
   "ThreadManager",
-  "setShadowEffect",
-  "updateStyle",
   "Setting",
   "Device",
-  "render",
-  "render_vnode",
-  "render_widget",
   "getSetting",
   "applySetting",
   "Config",
-  "WidgetsController",
+  "WidgetManager",
   "CallPanel",
+  "render",
+  "render_vnode",
+  "render_widget",
   "PanelStore",
 ]
