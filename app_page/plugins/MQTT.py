@@ -66,9 +66,8 @@ class MQTT(EasyThread):
             logger.error(f"Error processing message: {e}")
 
     def _emit(self, data: Dict[str, Any]) -> None:
-        """安全发送响应"""
-        if self.response and callable(getattr(self.response, 'emit', None)):
-            self.response.emit(data)
+        """发送响应"""
+        self.response.emit(data)
 
     def connect_mqtt(self) -> bool:
         """建立MQTT连接"""

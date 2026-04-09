@@ -150,7 +150,7 @@ class DevAgent(Page):
     self.pageParam.set('message', message)
     self.pageParam.set('start_time', time.time())
 
-    self.getWidget('message').setText('')
+    self.setText('message', '')
     self.setClass('submit', 'loading')
     self.setClass('shell', 'shell running')
     updateStyle(self.getWidget('main-ui'))

@@ -57,6 +57,7 @@ def createApp(SETTING: dict):
   param.set('systemPath', defaultValue.get('systemPath', ''))
   param.set('tempPath', defaultValue.get('tempPath', ''))
   param.set('userPath', defaultValue.get('userPath', ''))
+  param.set('softwarePath', defaultValue.get('softwarePath', ''))
   playMedia = initPlayer(app)
   
   APP_CALLBACK = Callback()

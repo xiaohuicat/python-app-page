@@ -4,6 +4,7 @@ from .Record import Record
 from .Timer import Timer
 from .FileTools import FileTools
 from .DevAgent import DevAgent
+from .Screenshot import Screenshot
 
 __all__ = [
   "Player",
@@ -12,4 +13,5 @@ __all__ = [
   "Timer",
   "FileTools",
   "DevAgent",
+  "Screenshot",
 ]

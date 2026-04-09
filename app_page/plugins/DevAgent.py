@@ -1,4 +1,5 @@
 import requests, re, json
+from urllib.parse import urljoin
 
 MCP_DICT = {
     "read_project": {
@@ -141,6 +142,9 @@ class DevAgent:
         if missing_params:
             return f"{name}工具调用失败: 缺少必填参数 {missing_params}"
         
+        full_url = url if '://' in url else f'http://{url}'
+        parsed = urljoin(full_url, '')
+        target = parsed.netloc if parsed.netloc else parsed.path
         try:
             resp = requests.post(url, json=payload, timeout=timeout)
             resp.raise_for_status()
@@ -149,7 +153,7 @@ class DevAgent:
         except requests.exceptions.Timeout:
             return f"{name}工具调用失败: 请求超时（{timeout}秒）"
         except requests.exceptions.ConnectionError:
-            return f"{name}工具调用失败: 连接拒绝，请检查服务是否启动"
+            return f"{name}工具调用失败: 连接 {target} 被拒绝，请检查服务状态"
         except requests.exceptions.HTTPError as e:
             return f"{name}工具调用失败: HTTP错误 {e.response.status_code} - {e.response.text}"
         except json.JSONDecodeError:

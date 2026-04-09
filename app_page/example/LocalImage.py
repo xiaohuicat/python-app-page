@@ -6,7 +6,7 @@ from app_page.utils import (encode, s2t, assetsUrl, get_file_md5, create_folder,
 from PySide6.QtWidgets import QWidget
 from app_page.utils.date_time import timestamp_to_str
 from app_page.components import ShowImage
-
+from app_page.plugins.Screenshot import Screenshot
 
 # 页面模板
 TEMPLATE = """
@@ -16,6 +16,7 @@ TEMPLATE = """
             <div height="40">
                 <h-box margins="[0,0,0,0]">
                     <label class="title" text="${title}" />
+                    <button class="primary-button" id="screenshot" text="截图" width="60" height="26" />
                     <button class="primary-button" id="openFolder" text="打开" width="60" height="26" />
                 </h-box>
             </div>
@@ -183,8 +184,12 @@ class LocalImage(Page):
             self.load_images()
             return
         
+        def take_screenshot():
+            Screenshot(save_folder=self.image_dir, callback=self.load_images)
+        
         # 注册打开文件夹事件
         self.register('openFolder', 'clicked', lambda *args: self._open_image_folder())
+        self.register('screenshot', 'clicked', lambda *args: take_screenshot())
         # 注册点击代理事件
         self.regist_filter(self._click_filter)
 
